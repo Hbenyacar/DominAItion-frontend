@@ -1,0 +1,58 @@
+body, html, #root {
+    height: 100%;   /* ensure parent containers fill the viewport */
+    margin: 0;      /* remove default spacing */
+}
+.register {
+    height: 100vh;
+    width: 100vw;
+    background: url("/public/path.jpg");
+    background-size: 2400px auto;
+    background-position: -150px 45%;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;    /* center the wrapper vertically */
+    justify-content: center; /* center the wrapper horizontally */
+    color: white;
+    font-size: 2rem;
+  }
+  
+
+.form-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  
+    width: 300px;    
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  
+
+.form-container > *:not(:last-child) {
+    margin-bottom: .5rem;
+}
+
+.title {
+    font-size: 2rem;           /* bigger font for "Login" */
+    font-weight: bold;
+}
+
+.name {
+    display: flex;
+}
+
+.email {
+    font-weight: bold;
+}
+  
+
+
+  
+  
