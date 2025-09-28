@@ -1,19 +1,26 @@
-import React from "react";
-import "../index.css"; // ensure CSS is loaded
+import React, {useEffect, useState, useRef} from "react";
+import '../../index.css';
+import '../../App.css';
+
 import "./Register.css"
 import Box from '@mui/material/Box';
-import CustomTextField from './Components/CustomTextField.tsx';
+import CustomTextField from '../../components/CustomTextField';
 import Button from '@mui/material/Button';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SendIcon from '@mui/icons-material/Send';
-import Stack from '@mui/material/Stack';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PersonIcon from '@mui/icons-material/Person';
+import { useNavigate } from 'react-router-dom';
 
-import "../App.css";
+
+
 import { emit } from "process";
 
 function Register() {
+
+  const navigate = useNavigate();
+
+  const toLogin = () => {
+    navigate("/login");
+  }
+
   return (
     <div className="register">
   <div
@@ -64,7 +71,7 @@ function Register() {
           textDecoration: 'underline',
           fontWeight: 500,
         }}
-        onClick={() => console.log('Create an account clicked')}
+        onClick={() => toLogin()}
       >
         Have an account?
       </div>

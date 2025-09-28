@@ -1,25 +1,38 @@
 import React from "react";
-import "../index.css"; // ensure CSS is loaded
+import '../../index.css';
+import '../../App.css';
+
 import "./Login.css"
 import Box from '@mui/material/Box';
-import CustomTextField from './Components/CustomTextField.tsx';
+import CustomTextField from '../../components/CustomTextField';
 import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
 import Stack from '@mui/material/Stack';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import { useNavigate } from 'react-router-dom';
 
-import "../App.css";
+
 import { emit } from "process";
+import Navbar from "../navbar/NavBar";
 
 function Login() {
+
+  const navigate = useNavigate();
+
+  const toRegister = () => {
+    navigate("/register");
+  }
+
   return (
-    <div className="login">
+
+  <div className="login">
       <div
         style={{
           display: 'flex',
           flexDirection: 'column', // stack form + links vertically
           alignItems: 'center',    // center horizontally
+          paddingTop: '60px'
         }}
       >
         {/* Form container */}
@@ -57,7 +70,7 @@ function Login() {
         >
           <div
             style={{ color: 'white', cursor: 'pointer', textDecoration: 'underline', fontWeight: 500 }}
-            onClick={() => console.log('Create an account clicked')}
+            onClick={() => toRegister()}
           >
             Create an account
           </div>

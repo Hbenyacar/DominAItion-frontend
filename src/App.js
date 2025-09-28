@@ -1,14 +1,16 @@
-import logo from './logo.svg';
+
 import './App.css';
-import Register from './Pages/Register.tsx';
-import Login from './Pages/Login.tsx';
+import Register from './scenes/Register/Register';
+import Login from './scenes/Login/Login';
 import { Routes, Route } from 'react-router-dom';
+import Home from './scenes/Home/Home';
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/home" element={<Home/>} />
     </Routes>
   );
 }
