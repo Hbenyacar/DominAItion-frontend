@@ -1,13 +1,19 @@
 import React from "react";
 import './NavBar.css';
 import Avatar from '@mui/material/Avatar';
+import { useNavigate } from "react-router-dom";
 
 function Navbar() {
-
-  return (
+  const navigate = useNavigate();
+  const toHome = () => {
+    navigate('/home');
+  }
+    return (
     <div className="navbar">
       <div className="logo">
-        <img src="Domination Logo.png"/>
+        <img src="Domination Logo.png"
+          onClick={() => (toHome())}
+          style={{cursor: 'pointer'}}/>
       </div>
       <div className="nav-links">
         <Avatar alt="Cindy Baker" 
