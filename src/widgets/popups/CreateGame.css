@@ -1,0 +1,9 @@
+/* target the Paper element directly via the custom class */
+.custom-dialog-paper {
+    width: 600px;
+    max-width: 90vw;   /* responsive cap */
+    height: 400px;
+    padding: 20px;
+    border-radius: 12px;
+  }
+  

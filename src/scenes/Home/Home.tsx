@@ -19,22 +19,62 @@ import Button from "@mui/material/Button"
 import Stack from "@mui/material/Stack";
 import { useNavigate } from "react-router-dom";
 import CreateGame from "../../widgets/popups/CreateGame";
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function CustomTabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `simple-tab-${index}`,
+    'aria-controls': `simple-tabpanel-${index}`,
+  };
+}
 
 function Home() {
     const [selectedIndex, setSelectedIndex] = React.useState(1);
     const [selectedMode, setSelectedMode] = React.useState(0);
     const [popupOpen, setPopupOpen] = useState(false);
     const navigate = useNavigate();
+    const [alignment, setAlignment] = React.useState('web');
+
+  const handleChange1 = (
+    event: React.MouseEvent<HTMLElement>,
+    newAlignment: string,
+  ) => {
+    setAlignment(newAlignment);
+  };
     const toCreateGame = () => {
       navigate('/createGame');
     }
 
-    const handleGameClick = (
-      event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-      index: number,
-      ) => {
-        setSelectedMode(index);
-      };
+    const [value, setValue] = React.useState(0);
+
+  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    setValue(newValue);
+  };
 
   const handleListItemClick = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -180,28 +220,52 @@ function Home() {
                 {selectedIndex == 1 && <div className="games">
                   <h1>Games</h1>
                       <div>
-                      <Stack spacing={2} direction="row">
-                        <Button onClick={() => setPopupOpen(true)} sx={{background:'black', 
-                        '&:hover': {
-                          background: 'white',
-                          outline: 'black',
-                          color: 'black',
-                        },
-                        transition: 'all 0.5s ease-in-out'
-                      }}
-                        variant="contained">Create Game</Button>
-                        <Button sx={{background: 'black',
-                        '&:hover': {
-                          background: 'white',
-                          outline: 'black',
-                          color: 'black',
-                        },
-                        transition: 'all 0.5s ease-in-out'
-                      }}
+                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                          <Tabs value={value} onChange={handleChange} aria-label="basic tabs example"
+                            sx={{
+                              color: 'black',
+                              "& .MuiTabs-indicator": {
+                                backgroundColor: "black",  // sets the underline color
+                                height: 3                  // optional: thicker underline
+                              }
+                            }}>
+                            <Tab label="Create Game" {...a11yProps(0)} sx={{ 
+                            "&.Mui-selected": { color: 'rgb(207, 78, 10)' } // text black when selected
+                            }}/>
+                            <Tab label="Join Game" {...a11yProps(1)} sx={{ 
+                            "&.Mui-selected": { color: "rgb(207, 78, 10)" } // text black when selected
+                            }}/>
+                            <Tab label="History" {...a11yProps(2)} sx={{ 
+                            "&.Mui-selected": { color: 'rgb(207, 78, 10)' } // text black when selected
+                            }}/>
+                          </Tabs>
+                        </Box>
+                        <CustomTabPanel value={value} index={0} >
+                          <div>
+                          <h2>Game Mode</h2>
+                          <ToggleButtonGroup
+                            color="primary"
+                            value={alignment}
+                            exclusive
+                            onChange={handleChange1}
+                            aria-label="Platform"
+                          >
+                            <ToggleButton value="web">Single Player</ToggleButton>
+                            <ToggleButton value="android">Multi-player</ToggleButton>
+                          </ToggleButtonGroup>
+                          </div>
+                          <div style={{marginTop: '50px'}} className="points-req">
+                            <h2>Points Required</h2>
+                          </div> 
 
-                        variant="contained">Join Game</Button>
-                      </Stack>
-                      <CreateGame open={popupOpen} onClose={() => {setPopupOpen(false)}}/>
+
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={1}>
+                          Join Game Coming Soon!
+                        </CustomTabPanel>
+                        <CustomTabPanel value={value} index={2}>
+                          History Coming Soon!
+                        </CustomTabPanel>
                       </div>
                 </div> }
             </div>

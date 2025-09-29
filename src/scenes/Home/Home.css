@@ -26,5 +26,9 @@ body, html, #root {
 .games {
     margin-top: 100px;
 }
+
+.points-req {
+    margin-top: 20px;
+}
   
 
