@@ -23,6 +23,11 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Slider from '@mui/material/Slider';
+
+function valuetext(value: number) {
+  return `${value} Points`;
+}
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -59,6 +64,7 @@ function Home() {
     const [popupOpen, setPopupOpen] = useState(false);
     const navigate = useNavigate();
     const [alignment, setAlignment] = React.useState('web');
+    const [value1, setValue1] = useState(30);
 
   const handleChange1 = (
     event: React.MouseEvent<HTMLElement>,
@@ -256,6 +262,27 @@ function Home() {
                           </div>
                           <div style={{marginTop: '50px'}} className="points-req">
                             <h2>Points Required</h2>
+                            <Box sx={{ 
+                                  width: 400, 
+                                  display: 'flex', 
+                                  alignItems: 'center',  // vertically center the text with slider
+                                  gap: 4                 // space between slider and text
+                                }}>
+                              <Slider
+                                aria-label="Temperature"
+                                defaultValue={30}
+                                getAriaValueText={valuetext}
+                                valueLabelDisplay="auto"
+                                shiftStep={30}
+                                step={10}
+                                marks
+                                onChange={(e, newValue) => setValue1(newValue as number)}
+                                min={10}
+                                max={110}
+                              />
+                              <p style={{whiteSpace: 'nowrap'}}>{valuetext(value1)}</p>
+                            </Box>
+            
                           </div> 
 
 
