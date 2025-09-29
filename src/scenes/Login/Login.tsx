@@ -11,6 +11,7 @@ import SendIcon from '@mui/icons-material/Send';
 import Stack from '@mui/material/Stack';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { useNavigate } from 'react-router-dom';
+import Avatar from '@mui/material/Avatar';
 
 
 import { emit } from "process";
