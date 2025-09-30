@@ -1,7 +1,8 @@
 body, html, #root {
-    height: 100%;   /* ensure parent containers fill the viewport */
-    margin: 0;      /* remove default spacing */
-}
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
 
 .menu {
     background: rgba(255, 195, 149, 0.7);
@@ -23,12 +24,25 @@ body, html, #root {
     gap: 20px; /* optional spacing between menu and content */
   }
 
-.games {
+  .games {
     margin-top: 100px;
-}
+  }
 
 .points-req {
     margin-top: 20px;
 }
-  
+
+.white-box {
+    background-color: white;       /* keep it white */
+    border: 1px solid black;       /* black border */
+    border-radius: 12px;           /* rounded corners */
+    padding: 16px;                 /* spacing inside */
+    max-height: 450px;             /* optional: limit height */
+    min-height: 450px;
+    min-width: 600px;
+    max-width: 1100px;
+    overflow-y: auto;              /* scroll if content is too tall */
+    padding-left: 50px;
+    position: relative; /* enables absolute positioning inside */
+  }
 
