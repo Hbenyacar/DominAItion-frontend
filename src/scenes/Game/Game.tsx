@@ -10,7 +10,8 @@ function Game() {
                     <div>Game Chat</div>
                 </div>
                 <div className="img">
-                    <img src="USMap.png" width="800" height="auto" />
+                    <InteractiveUSMap/>
+                    {/*<img src="USMap.png" width="800" height="auto" />*/}
                 </div>
                 <div className="game-chat">
                     <div>Story Board</div>
