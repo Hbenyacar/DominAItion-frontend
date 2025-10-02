@@ -29,6 +29,8 @@ import ImageListItem from "@mui/material/ImageListItem";
 import ImageListItemBar from "@mui/material/ImageListItemBar";
 import Radio from "@mui/material/Radio";
 
+// test
+
 function valuetext(value: number) {
   return `${value} Points`;
 }
@@ -82,12 +84,12 @@ function Home() {
   };
 
   const toGame = () => {
-    navigate('/game');
-  }
+    navigate("/game");
+  };
 
   const handleChange1 = (
     event: React.MouseEvent<HTMLElement>,
-    newAlignment: string,
+    newAlignment: string
   ) => {
     setAlignment(newAlignment);
   };
@@ -103,7 +105,7 @@ function Home() {
 
   const handleListItemClick = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-    index: number,
+    index: number
   ) => {
     setSelectedIndex(index);
   };
@@ -276,7 +278,10 @@ function Home() {
 
               <CustomTabPanel value={value} index={0}>
                 <div className="white-box">
-                  <Button onClick={() => {toGame()}}
+                  <Button
+                    onClick={() => {
+                      toGame();
+                    }}
                     disabled={alignment == "" || selectedImg == null}
                     variant="contained"
                     color="primary"
@@ -366,8 +371,14 @@ function Home() {
                           onClick={() => setSelectedImg(item.img)}
                         >
                           <img
-                            src={`${item.img}?w=${180 * (item.cols || 2)}&h=${180 * (item.rows || 1)}&fit=crop&auto=format`}
-                            srcSet={`${item.img}?w=${180 * (item.cols || 2)}&h=${180 * (item.rows || 1)}&fit=crop&auto=format&dpr=2 2x`}
+                            src={`${item.img}?w=${180 * (item.cols || 2)}&h=${
+                              180 * (item.rows || 1)
+                            }&fit=crop&auto=format`}
+                            srcSet={`${item.img}?w=${
+                              180 * (item.cols || 2)
+                            }&h=${
+                              180 * (item.rows || 1)
+                            }&fit=crop&auto=format&dpr=2 2x`}
                             alt={item.title}
                             loading="lazy"
                             style={{
