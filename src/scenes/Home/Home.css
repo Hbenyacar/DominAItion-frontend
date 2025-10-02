@@ -46,3 +46,11 @@ body, html, #root {
     position: relative; /* enables absolute positioning inside */
   }
 
+  .friends {
+    margin-top: 100px;
+  }
+
+  .messages {
+    margin-top: 100px;
+  }
+
