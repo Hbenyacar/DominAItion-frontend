@@ -9,6 +9,9 @@ function Navbar() {
   const toHome = () => {
     navigate("/home");
   };
+  const toProfile = () => {
+    navigate("/profile");
+  };
   return (
     <Box className="navbar">
       <div className="logo">
@@ -20,10 +23,8 @@ function Navbar() {
       </div>
       <div className="nav-links">
         <Avatar
-          alt="Cindy Baker"
-          onClick={() => {
-            console.log("Avatar");
-          }}
+          alt="Profile"
+          onClick={toProfile}
           sx={{ cursor: "pointer" }}
           src="avatar-icon-human-a-person-s-badge-social-media-profile-symbol-the-symbol-of-a-person-vector.jpg"
         />
