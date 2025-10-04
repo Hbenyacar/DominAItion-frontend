@@ -17,10 +17,14 @@ import Avatar from '@mui/material/Avatar';
 
 import { emit } from "process";
 import Navbar from "../navbar/NavBar";
+import { Email } from "@mui/icons-material";
 
 function Login() {
 
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
   const [fields, setFields] = useState({
     email: { value: "", error: "" },
@@ -29,6 +33,7 @@ function Login() {
 
   const handleFieldChange = (field: string, value: string, error: string) => {
     setFields(prev => ({ ...prev, [field]: { value, error } }));
+    
   };
 
   // Button is disabled if any field has an error or is empty
@@ -37,6 +42,19 @@ function Login() {
   const toRegister = () => {
     navigate("/register");
   }
+
+  const login = async (email: string, password: string) => {
+    const response = await fetch("http://localhost:8080/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
+  
+    const data = await response.text(); // For now backend returns plain text
+    console.log(data);
+  };
 
   return (
 
@@ -71,6 +89,7 @@ function Login() {
         variant="outlined"
         startIcon={<LockOpenIcon />}
         disabled={hasErrors}
+        onClick={() => login(fields.email.value, fields.password.value)}
         sx={{
           color: hasErrors ? 'gray !important' : 'white',
           borderColor: hasErrors ? 'gray !important' : 'white',
@@ -110,7 +129,6 @@ function Login() {
 
           <div
             style={{ color: 'white', cursor: 'pointer', textDecoration: 'underline', fontWeight: 500 }}
-            onClick={() => console.log('Join as Guest clicked')}
           >
             Join as Guest
           </div>
