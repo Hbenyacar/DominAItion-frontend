@@ -10,6 +10,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
 import Stack from '@mui/material/Stack';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 
@@ -20,6 +21,18 @@ import Navbar from "../navbar/NavBar";
 function Login() {
 
   const navigate = useNavigate();
+
+  const [fields, setFields] = useState({
+    email: { value: "", error: "" },
+    password: { value: "", error: "" },
+  });
+
+  const handleFieldChange = (field: string, value: string, error: string) => {
+    setFields(prev => ({ ...prev, [field]: { value, error } }));
+  };
+
+  // Button is disabled if any field has an error or is empty
+  const hasErrors = Object.values(fields).some(f => f.error !== "" || f.value === "");
 
   const toRegister = () => {
     navigate("/register");
@@ -40,23 +53,42 @@ function Login() {
         <div className="form-container">
           <div className="title">Login</div>
 
-          <CustomTextField title={"Email *"} placeholder={"JohnDoe@gmail.com"} />
-          <CustomTextField title={"Password *"} placeholder={""} />
+          <CustomTextField
+        title="Email"
+        placeholder="JohnDoe@gmail.com"
+        type="email"
+        onValueChange={(val, err) => handleFieldChange("email", val, err)}
+      />
 
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              startIcon={<LockOpenIcon />}
-              sx={{
-                color: 'white',
-                borderColor: 'white',
-                '&:hover': { backgroundColor: 'rgba(0,0,0,0.05)', borderColor: 'black' },
-                '& .MuiSvgIcon-root': { color: 'white' },
-              }}
-            >
-              Login
-            </Button>
-          </Stack>
+      <CustomTextField
+        title="Password"
+        placeholder=""
+        type="password"
+        onValueChange={(val, err) => handleFieldChange("password", val, err)}
+      />
+
+      <Button
+        variant="outlined"
+        startIcon={<LockOpenIcon />}
+        disabled={hasErrors}
+        sx={{
+          color: hasErrors ? 'gray !important' : 'white',
+          borderColor: hasErrors ? 'gray !important' : 'white',
+          '&:hover': {
+            backgroundColor: hasErrors ? 'transparent' : 'rgba(0,0,0,0.05)',
+            borderColor: hasErrors ? 'gray !important' : 'black',
+          },
+          '&.Mui-disabled': {
+            color: hasErrors ? 'gray !important' : 'white',
+            borderColor: hasErrors ? 'gray !important' : 'white',
+            '& .MuiSvgIcon-root': {
+              color: hasErrors ? 'gray !important' : 'white',
+            },
+          },
+        }}
+      >
+        Login
+      </Button>
         </div>
 
         {/* Links below the form */}
