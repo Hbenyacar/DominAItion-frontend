@@ -1,0 +1,105 @@
+import React, { useState } from "react";
+import './Avatar.css'
+import { Avatar, Button } from "@mui/material";
+import ButtonBase from '@mui/material/ButtonBase';
+import { useDispatch, UseDispatch } from "react-redux";
+import { setAvatar } from "../../store/authSlice";
+import { useNavigate } from "react-router-dom";
+
+function AvatarSelect() {
+    const avatarImages = [
+        "Default Profile Icons/boy.png",
+        "Default Profile Icons/girl.png",
+        "Default Profile Icons/woman.png",
+        "Default Profile Icons/man.png",
+    ];
+
+    const [avatarSrc, setAvatarSrc] = useState("");
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    const setNewAvatar = (src: string) => {
+        setAvatarSrc(src);
+        dispatch(setAvatar(src));
+    }
+
+    const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+        // Read the file as a data URL
+        const reader = new FileReader();
+        reader.onload = () => {
+            const newAvatar = reader.result as string;
+            setAvatarSrc(newAvatar);
+            dispatch(setAvatar(newAvatar));
+            localStorage.setItem("avatarSrc", newAvatar);
+        };
+        reader.readAsDataURL(file);
+        }
+    };
+
+    return (
+
+        <div className="avatar-container">
+            <Avatar
+                alt="User Avatar"
+                src={avatarSrc}
+                sx={{ width: 170, height: 170 }}
+            />
+
+      <Button
+      component="label">
+        Upload Custom Avatar
+        <input
+        type="file"
+        accept="image/*"
+        style={{
+          border: 0,
+          clip: 'rect(0 0 0 0)',
+          height: '1px',
+          margin: '-1px',
+          overflow: 'hidden',
+          padding: 0,
+          position: 'absolute',
+          whiteSpace: 'nowrap',
+          width: '1px',
+        }}
+        onChange={handleAvatarChange}
+      />
+      </Button>
+
+            <div className="avatar-row">
+                {avatarImages.map((src, index) => (
+                <Avatar
+                    key={index}
+                    alt={`Avatar ${index + 1}`}
+                    src={src}
+                    onClick={() => setNewAvatar(src)}
+                    sx={{ width: 50, height: 50, cursor: 'pointer' }}
+                    className="avatar-option"
+                />
+                ))}
+            </div>
+
+            <div className="buttons">
+                <Button
+                onClick={() => {navigate("/home")}}
+                >
+                    Skip
+                </Button>
+                <Button
+                disabled={avatarSrc == ""}
+                onClick={() => {navigate("/home")}}
+                >
+                    Submit
+                </Button>
+            </div>
+
+        </div>
+
+
+        
+    );
+}
+
+export default AvatarSelect;

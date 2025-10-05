@@ -16,8 +16,8 @@ const PlayerActionInput = ({ maxLength = 250, placeholder = "Make Your Move..." 
                 display: 'flex',
                 flexDirection: 'column',
                 width: '100%',
-                paddingLeft: '20px',
-                paddingRight: '20px',
+                paddingLeft: '0px',
+                paddingRight: '0px',
 
             }}>
             <textarea

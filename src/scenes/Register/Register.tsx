@@ -72,6 +72,7 @@ function Register() {
         variant="outlined"
         startIcon={<PersonIcon />}
         disabled={hasErrors}
+        onClick={() => navigate("/avatar")}
         sx={{
           color: hasErrors ? 'gray !important' : 'white',
           borderColor: hasErrors ? 'gray !important' : 'white',

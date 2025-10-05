@@ -3,8 +3,11 @@ import "./NavBar.css";
 import Avatar from "@mui/material/Avatar";
 import { useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
 
 function Navbar() {
+  const avatarSrc = useSelector((state: RootState) => state.auth.avatarSrc);
   const navigate = useNavigate();
   const toHome = () => {
     navigate("/home");
@@ -26,7 +29,7 @@ function Navbar() {
           alt="Profile"
           onClick={toProfile}
           sx={{ cursor: "pointer" }}
-          src="avatar-icon-human-a-person-s-badge-social-media-profile-symbol-the-symbol-of-a-person-vector.jpg"
+          src={avatarSrc}
         />
       </div>
     </Box>

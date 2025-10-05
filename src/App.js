@@ -7,6 +7,7 @@ import Home from './scenes/Home/Home';
 import Game from './scenes/Game/Game';
 import Profile from './scenes/Profile/Profile';
 import Landing from './scenes/Landing/Landing';
+import AvatarSelect from './scenes/Avatar/Avatar';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <Route path="/game" element={<Game/>} />
       <Route path="/profile" element={<Profile/>} />
       <Route path='/' element={<Landing/>} />
+      <Route path='/avatar' element={<AvatarSelect/>} />
     </Routes>
   );
 }
