@@ -1,0 +1,5 @@
+.playerActionInput {
+    display: flex;
+    flexDirection: column;
+    width: 500px;
+}

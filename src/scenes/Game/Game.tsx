@@ -1,22 +1,28 @@
 import Navbar from "../navbar/NavBar";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA"
+import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput"
+
 import "./Game.css"
+
 function Game() {
     return (
         <div>
             <Navbar/>
             <div className="content">
-                <div className="game-chat">
-                    <div>Game Chat</div>
+                <div className="story-board">
+                    <div>Story Board</div>
                 </div>
                 <div className="img">
                     <InteractiveUSMap/>
                     {/*<img src="USMap.png" width="800" height="auto" />*/}
                 </div>
                 <div className="game-chat">
-                    <div>Story Board</div>
+                    <div>Game Chat</div>
                 </div>
 
+            </div>
+            <div>
+                <div><PlayerActionInput/></div>
             </div>
             
         </div>
