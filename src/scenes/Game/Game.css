@@ -46,3 +46,9 @@ body, html {
   align-items: center;
   text-align: center;
 }
+
+.game-page .content {
+  display: flex !important;
+  flex-direction: row !important;
+}
+

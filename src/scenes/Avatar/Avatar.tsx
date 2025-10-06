@@ -32,7 +32,6 @@ function AvatarSelect() {
             const newAvatar = reader.result as string;
             setAvatarSrc(newAvatar);
             dispatch(setAvatar(newAvatar));
-            localStorage.setItem("avatarSrc", newAvatar);
         };
         reader.readAsDataURL(file);
         }

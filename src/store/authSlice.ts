@@ -21,7 +21,7 @@ const initialState: AuthState = {
   pantry: [],
   restaurant: null,
   userMealSelection: "all",
-  avatarSrc: localStorage.getItem("avatarSrc") || "", // default avatar
+  avatarSrc: "", // default avatar
 };
 
 const authSlice = createSlice({
@@ -44,7 +44,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.resetToken = null;
-      state.avatarSrc = "/avatars/default.png";
+      state.avatarSrc = "";
     },
 
     // Optional: toggle dark/light mode
