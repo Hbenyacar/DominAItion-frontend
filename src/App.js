@@ -5,6 +5,10 @@ import Login from './scenes/Login/Login';
 import { Routes, Route } from 'react-router-dom';
 import Home from './scenes/Home/Home';
 import Game from './scenes/Game/Game';
+import Profile from './scenes/Profile/Profile';
+import Landing from './scenes/Landing/Landing';
+import AvatarSelect from './scenes/Avatar/Avatar';
+import Europe from './widgets/Maps/USA/Europe';
 
 function App() {
   return (
@@ -13,6 +17,10 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/home" element={<Home/>} />
       <Route path="/game" element={<Game/>} />
+      <Route path="/profile" element={<Profile/>} />
+      <Route path='/' element={<Landing/>} />
+      <Route path='/avatar' element={<AvatarSelect/>} />
+      <Route path='/europe' element={<Europe/>} />
     </Routes>
   );
 }

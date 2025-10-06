@@ -10,20 +10,51 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
 import Stack from '@mui/material/Stack';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 
 
 import { emit } from "process";
 import Navbar from "../navbar/NavBar";
+import { Email } from "@mui/icons-material";
 
 function Login() {
 
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+
+  const [fields, setFields] = useState({
+    email: { value: "", error: "" },
+    password: { value: "", error: "" },
+  });
+
+  const handleFieldChange = (field: string, value: string, error: string) => {
+    setFields(prev => ({ ...prev, [field]: { value, error } }));
+    
+  };
+
+  // Button is disabled if any field has an error or is empty
+  const hasErrors = Object.values(fields).some(f => f.error !== "" || f.value === "");
 
   const toRegister = () => {
     navigate("/register");
   }
+
+  const login = async (email: string, password: string) => {
+    const response = await fetch("http://localhost:8080/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
+  
+    const data = await response.text(); // For now backend returns plain text
+    console.log(data);
+  };
 
   return (
 
@@ -40,23 +71,43 @@ function Login() {
         <div className="form-container">
           <div className="title">Login</div>
 
-          <CustomTextField title={"Email *"} placeholder={"JohnDoe@gmail.com"} />
-          <CustomTextField title={"Password *"} placeholder={""} />
+          <CustomTextField
+        title="Email"
+        placeholder="JohnDoe@gmail.com"
+        type="email"
+        onValueChange={(val, err) => handleFieldChange("email", val, err)}
+      />
 
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              startIcon={<LockOpenIcon />}
-              sx={{
-                color: 'white',
-                borderColor: 'white',
-                '&:hover': { backgroundColor: 'rgba(0,0,0,0.05)', borderColor: 'black' },
-                '& .MuiSvgIcon-root': { color: 'white' },
-              }}
-            >
-              Login
-            </Button>
-          </Stack>
+      <CustomTextField
+        title="Password"
+        placeholder=""
+        type="password"
+        onValueChange={(val, err) => handleFieldChange("password", val, err)}
+      />
+
+      <Button
+        variant="outlined"
+        startIcon={<LockOpenIcon />}
+        disabled={hasErrors}
+        onClick={() => login(fields.email.value, fields.password.value)}
+        sx={{
+          color: hasErrors ? 'gray !important' : 'white',
+          borderColor: hasErrors ? 'gray !important' : 'white',
+          '&:hover': {
+            backgroundColor: hasErrors ? 'transparent' : 'rgba(0,0,0,0.05)',
+            borderColor: hasErrors ? 'gray !important' : 'black',
+          },
+          '&.Mui-disabled': {
+            color: hasErrors ? 'gray !important' : 'white',
+            borderColor: hasErrors ? 'gray !important' : 'white',
+            '& .MuiSvgIcon-root': {
+              color: hasErrors ? 'gray !important' : 'white',
+            },
+          },
+        }}
+      >
+        Login
+      </Button>
         </div>
 
         {/* Links below the form */}
@@ -78,7 +129,6 @@ function Login() {
 
           <div
             style={{ color: 'white', cursor: 'pointer', textDecoration: 'underline', fontWeight: 500 }}
-            onClick={() => console.log('Join as Guest clicked')}
           >
             Join as Guest
           </div>

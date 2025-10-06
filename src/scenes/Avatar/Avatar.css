@@ -1,0 +1,22 @@
+.content {
+    flex-direction: column;
+}
+.avatar-container {
+    position: fixed;        /* keep it stuck to top */
+    top: 100px;              /* distance from top */
+    left: 50%;              /* move horizontally to center */
+    transform: translateX(-50%); /* perfectly center horizontally */
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .avatar-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px; /* space between avatars */
+  }
+  

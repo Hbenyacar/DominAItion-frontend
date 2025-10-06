@@ -17,6 +17,20 @@ function Register() {
 
   const navigate = useNavigate();
 
+  const [fields, setFields] = useState({
+    username: { value: "", error: "" },
+    email: { value: "", error: "" },
+    password: { value: "", error: "" },
+  });
+
+  const handleFieldChange = (field: string, value: string, error: string) => {
+    setFields(prev => ({ ...prev, [field]: { value, error } }));
+  };
+
+  // Button is disabled if any field has an error or is empty
+  const hasErrors = Object.values(fields).some(f => f.error !== "" || f.value === "");
+
+
   const toLogin = () => {
     navigate("/login");
   }
@@ -33,25 +47,51 @@ function Register() {
     {/* Form container */}
     <div className="form-container">
       <div className="title">Register</div>
-      <CustomTextField title={"Name"} placeholder={"John Doe"} />
-      <CustomTextField title={"Email *"} placeholder={"JohnDoe@gmail.com"} />
-      <CustomTextField title={"Password *"} placeholder={""} />
+      <CustomTextField
+        title="Username"
+        placeholder="John Doe"
+        type="text"
+        onValueChange={(val, err) => handleFieldChange("username", val, err)}
+      />
+
+      <CustomTextField
+        title="Email"
+        placeholder="JohnDoe@gmail.com"
+        type="email"
+        onValueChange={(val, err) => handleFieldChange("email", val, err)}
+      />
+
+      <CustomTextField
+        title="Password"
+        placeholder=""
+        type="password"
+        onValueChange={(val, err) => handleFieldChange("password", val, err)}
+      />
 
       <Button
         variant="outlined"
         startIcon={<PersonIcon />}
+        disabled={hasErrors}
+        onClick={() => navigate("/avatar")}
         sx={{
-          color: 'white',
-          borderColor: 'white',
+          color: hasErrors ? 'gray !important' : 'white',
+          borderColor: hasErrors ? 'gray !important' : 'white',
           '&:hover': {
-            backgroundColor: 'rgba(0,0,0,0.05)',
-            borderColor: 'black',
+            backgroundColor: hasErrors ? 'transparent' : 'rgba(0,0,0,0.05)',
+            borderColor: hasErrors ? 'gray !important' : 'black',
           },
-          '& .MuiSvgIcon-root': { color: 'white' },
+          '&.Mui-disabled': {
+            color: hasErrors ? 'gray !important' : 'white',
+            borderColor: hasErrors ? 'gray !important' : 'white',
+            '& .MuiSvgIcon-root': {
+              color: hasErrors ? 'gray !important' : 'white',
+            },
+          },
         }}
       >
         Register
       </Button>
+
     </div>
 
     {/* Links under the form */}
