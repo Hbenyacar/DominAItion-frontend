@@ -1,23 +1,59 @@
+import { useSelector } from "react-redux";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
 import Navbar from "../navbar/NavBar";
+import { RootState } from "../../store/store";
 import "./Game.css";
+import Europe from "../../widgets/Maps/USA/Europe";
+
 
 function Game() {
+  const map = useSelector((state: RootState) => state.map.map);
+
   return (
     <div className="game-page">
       <Navbar />
 
       {/* Outer wrapper: full viewport width */}
       <div className="content-wrapper">
-        {/* Force content to be a flex row, independent of parent */}
-        <div className="content">
-          <div className="game-chat">Game Chat</div>
-          <div> <InteractiveUSMap/></div>
-          <div className="game-chat">Story Board</div>
-        </div>
-      </div>
+  <div className="content">
+    {/* Left box */}
+    <div
+      className="game-chat"
+      style={{
+        marginLeft: map === "Medieval Europe" ? "70px" : map === "USA" ? "50px" : "10px",
+      }}
+    >
+      Game Chat
+    </div>
+
+    {/* Center map */}
+    <div className="map-wrapper"
+    style={{
+      marginLeft: map === "Medieval Europe" ? "-100px" : "0px",
+    }}>
+      {map === "USA" && <InteractiveUSMap />}
+      {map === "Medieval Europe" && <Europe/>}
+      {/* other maps */}
+    </div>
+
+    {/* Right box */}
+    <div
+      className="game-chat"
+      style={{
+        marginRight: map === "Medieval Europe" ? "70px" : map === "USA" ? "50px" : "10px",
+      }}
+    >
+      Story Board
+    </div>
+  </div>
+
+</div >
+      <div  style={{
+      marginTop: "20px",
+    }}>
       <PlayerActionInput/>
+      </div>
     </div>
   );
 }

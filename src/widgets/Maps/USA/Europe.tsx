@@ -343,7 +343,7 @@ const Europe: React.FC = () => {
         </div>
       )}
 
-      <svg viewBox="0 0 1000 700" width="800" height="auto">
+      <svg viewBox="0 0 1000 700" width="600" height="auto">
         {states.map((state) => (
           <path
             key={state.id}

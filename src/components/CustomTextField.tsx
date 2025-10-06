@@ -31,7 +31,7 @@ function CustomTextField({ title, placeholder, type = "text", onValueChange }: C
             err = `${title} is required`;
         } else if (type === "email" && !/^\S+@\S+\.\S+$/.test(val)) {
             err = "Please enter a valid email";
-        } else if (type === "password" && (val.length < 8 || val.length > 32)) {
+        } else if (type === "password" && (val.length < 8)) {
             err = "Password must be at least 6 characters";
         }
         setError(err);
