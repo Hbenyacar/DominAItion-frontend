@@ -25,6 +25,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [invalidCredentials, setInvalidCredentials] = useState(false);
 
   const [fields, setFields] = useState({
     email: { value: "", error: "" },
@@ -54,6 +55,12 @@ function Login() {
   
     const data = await response.text(); // For now backend returns plain text
     console.log(data);
+    if (data !== "Invalid credentials") {
+      console.log(data);
+      navigate("/home");
+    } else {
+      setInvalidCredentials(true);
+    }
   };
 
   return (
@@ -70,6 +77,20 @@ function Login() {
         {/* Form container */}
         <div className="form-container">
           <div className="title">Login</div>
+          {invalidCredentials && (
+    <small
+      style={{ 
+        color: '#b00020', 
+        fontSize: '0.8rem', 
+        marginTop: '4px', 
+        display: 'block' 
+      }}
+      role="alert"
+      aria-live="assertive"
+    >
+      Incorrect Username and/or Password
+    </small>
+  )}
 
           <CustomTextField
         title="Email"

@@ -26,8 +26,10 @@ function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const currentUserEmail = "jackrdar@gmail.com";
+
   useEffect(() => {
-    fetch("http://localhost:8080/api/users/email/jackrdar@gmail.com")
+    fetch(`http://localhost:8080/api/users/email/${currentUserEmail}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch user");
         return res.json();
@@ -104,7 +106,7 @@ function Profile() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <TextField
               label="Password"
-              value={password}
+              value="********"
               type="password"
               disabled
               fullWidth
