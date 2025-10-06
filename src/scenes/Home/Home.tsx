@@ -35,6 +35,8 @@ import {
 
 import FriendsPage from "./Friends/Friends";
 import Messages from "./Messages/Messages";
+import { useDispatch, useSelector } from "react-redux";
+import { setMap } from "../../store/mapSlice";
 
 function valuetext(value: number) {
   return `${value} Points`;
@@ -77,6 +79,12 @@ function Home() {
   const [alignment, setAlignment] = React.useState("");
   const [value1, setValue1] = useState(30);
   const [selectedImg, setSelectedImg] = React.useState<string | null>(null);
+
+  const dispatch = useDispatch();
+  const handleMap = (title: string, image: string) => {
+    setSelectedImg(image);
+    dispatch(setMap({map: title}));
+  }
 
   const [openFind, setOpenFind] = useState(false);
 
@@ -431,7 +439,7 @@ function Home() {
                               cursor: "pointer",
                               position: "relative",
                             }}
-                            onClick={() => setSelectedImg(item.img)}
+                            onClick={() => handleMap(item.title, item.img)}
                           >
                             <img
                               src={`${item.img}?w=${180 * (item.cols || 2)}&h=${
@@ -489,6 +497,12 @@ const itemData = [
   {
     img: "Screenshot 2025-09-29 at 3.46.24 PM.png",
     title: "USA",
+    cols: 1,
+    rows: 1,
+  },
+  {
+    img: "europe.jpeg",
+    title: "Medieval Europe",
     cols: 1,
     rows: 1,
   },

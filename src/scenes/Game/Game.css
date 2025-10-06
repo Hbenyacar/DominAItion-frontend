@@ -22,22 +22,18 @@ body, html {
 
 /* Flex container: this is now independent of parents */
 .content {
-  display: flex;      /* force flex row */
+  display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between; /* left/right boxes at ends */
   align-items: center;
-  gap: 20px;
-  flex-wrap: nowrap;
-  padding: 20px;
-  width: max-content;            /* grows to fit children */
-  box-sizing: border-box;
+  width: 100%;
+  gap: 20px; /* spacing between elements */
 }
 
-/* Chat boxes */
 .game-chat {
+  flex-shrink: 0;              /* don’t shrink boxes */
   width: 300px;
   height: 450px;
-  flex-shrink: 0;                /* prevent shrinking */
   border: 2px solid black;
   border-radius: 8px;
   background-color: rgb(250,250,250);
@@ -45,10 +41,28 @@ body, html {
   justify-content: center;
   align-items: center;
   text-align: center;
+  transition: margin 0.3s;     /* smooth shift when map changes */
 }
+
+.map-wrapper {
+  flex-grow: 1;                /* takes remaining space */
+  display: flex;
+  justify-content: center;     /* centers map */
+  align-items: center;
+}
+
+
 
 .game-page .content {
   display: flex !important;
   flex-direction: row !important;
+}
+
+
+.europe-wrapper {
+  flex-shrink: 0;           /* don’t let it shrink */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
