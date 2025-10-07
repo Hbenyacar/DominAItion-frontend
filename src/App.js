@@ -10,6 +10,7 @@ import Landing from './scenes/Landing/Landing';
 import AvatarSelect from './scenes/Avatar/Avatar';
 import Europe from './widgets/Maps/USA/Europe';
 import ResetPassword from './scenes/Profile/ResetPassword';
+import World from './scenes/World/World';
 
 function App() {
   return (
@@ -23,7 +24,7 @@ function App() {
       <Route path='/avatar' element={<AvatarSelect/>} />
       <Route path='/europe' element={<Europe/>} />
       <Route path="/reset" element={<ResetPassword />} />
-
+      <Route path='/world' element={<World/>} />
     </Routes>
   );
 }

@@ -30,6 +30,21 @@ function Register() {
   // Button is disabled if any field has an error or is empty
   const hasErrors = Object.values(fields).some(f => f.error !== "" || f.value === "");
 
+  const register = async (email: string, password: string, username: string) => {
+    const response = await fetch("http://localhost:8080/api/users/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password, username })
+    });
+  
+    const data = await response.text(); // For now backend returns plain text
+    console.log(data);
+    if (data != null) {
+      navigate('/avatar');
+    }
+  };
 
   const toLogin = () => {
     navigate("/login");
@@ -72,7 +87,7 @@ function Register() {
         variant="outlined"
         startIcon={<PersonIcon />}
         disabled={hasErrors}
-        onClick={() => navigate("/avatar")}
+        onClick={() => register(fields.email.value, fields.password.value, fields.username.value)}
         sx={{
           color: hasErrors ? 'gray !important' : 'white',
           borderColor: hasErrors ? 'gray !important' : 'white',
