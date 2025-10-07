@@ -20,6 +20,8 @@ function Register() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const [exists, setExists] = useState(true);
+
   const [fields, setFields] = useState({
     username: { value: "", error: "" },
     email: { value: "", error: "" },
@@ -41,7 +43,10 @@ function Register() {
       },
       body: JSON.stringify({ email, password, username })
     });
-  
+    if (response.status == 409) {
+      setExists(false);
+      return;
+    }
     const data = await response.json(); // For now backend returns plain text
     console.log(data);
 
@@ -68,6 +73,20 @@ function Register() {
     {/* Form container */}
     <div className="form-container">
       <div className="title">Register</div>
+      {!exists && (
+    <small
+      style={{ 
+        color: '#b00020', 
+        fontSize: '0.8rem', 
+        marginTop: '4px', 
+        display: 'block' 
+      }}
+      role="alert"
+      aria-live="assertive"
+    >
+      Email Already Exists
+    </small>
+  )}
       <CustomTextField
         title="Username"
         placeholder="John Doe"
