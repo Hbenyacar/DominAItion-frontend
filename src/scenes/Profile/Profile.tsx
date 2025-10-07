@@ -11,7 +11,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Chip,
 } from "@mui/material";
+import { CheckCircle } from "@mui/icons-material";
 
 function Profile() {
   const [username, setUsername] = useState("");
@@ -22,11 +24,17 @@ function Profile() {
   const [losses, setLosses] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
 
+  const [emailVerified, setEmailVerified] = useState(false);
+
   const [openReset, setOpenReset] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const currentUserEmail = "jackrdar@gmail.com";
+  const [originalUsername, setOriginalUsername] = useState("");
+  const [originalBio, setOriginalBio] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+
+  const currentUserEmail = "dominaitionproject@gmail.com";
 
   useEffect(() => {
     fetch(`http://localhost:8080/api/users/email/${currentUserEmail}`)
@@ -36,15 +44,69 @@ function Profile() {
       })
       .then((data) => {
         setUsername(data.username);
+        setOriginalUsername(data.username);
         setEmail(data.email);
         setBio(data.bio || "");
+        setOriginalBio(data.bio || "");
         setPassword(data.password);
         setWins(data.wins || 0);
         setLosses(data.losses || 0);
         setGamesPlayed(data.gamesPlayed || 0);
+        setEmailVerified(data.emailVerified || false);
       })
       .catch((err) => console.error(err));
   }, []);
+
+  // detect if user made any changes
+  const hasChanges =
+    username.trim() !== originalUsername.trim() ||
+    bio.trim() !== originalBio.trim();
+
+  // Handle save
+  const handleSaveChanges = async () => {
+    if (!username.trim()) {
+      setUsernameError("Username cannot be empty");
+      return;
+    }
+
+    // Check for duplicate usernames
+    const res = await fetch("http://localhost:8080/api/users");
+    const users = await res.json();
+    const duplicate = users.some(
+      (u: any) =>
+        u.username.toLowerCase() === username.trim().toLowerCase() &&
+        u.email !== currentUserEmail
+    );
+    if (duplicate) {
+      setUsernameError("That username is already taken");
+      return;
+    }
+
+    setUsernameError("");
+    setLoading(true);
+
+    try {
+      const updateRes = await fetch(
+        `http://localhost:8080/api/users/updateProfile/${currentUserEmail}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, bio }),
+        }
+      );
+
+      if (!updateRes.ok) throw new Error("Failed to update profile");
+
+      setOriginalUsername(username);
+      setOriginalBio(bio);
+      alert("Profile updated successfully!");
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      alert("Error saving profile changes.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleResetPassword = async () => {
     if (!newPassword) return alert("Please enter a new password");
@@ -85,16 +147,55 @@ function Profile() {
           <TextField
             label="Username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setUsernameError("");
+            }}
+            error={!!usernameError}
+            helperText={usernameError}
             fullWidth
           />
-          <TextField
-            label="Email"
-            value={email}
-            type="email"
-            disabled
-            fullWidth
-          />
+          {/* Email with verification status */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <TextField
+              label="Email"
+              value={email}
+              type="email"
+              disabled
+              fullWidth
+            />
+
+            {emailVerified ? (
+              <Chip
+                label="Verified"
+                color="success"
+                icon={<CheckCircle />}
+                sx={{ minWidth: 120 }}
+              />
+            ) : (
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `http://localhost:8080/api/users/verify/${email}`,
+                      { method: "PUT" }
+                    );
+                    if (!res.ok) throw new Error("Failed to send email");
+                    alert("Verification email sent! Please check your inbox.");
+                  } catch (err) {
+                    console.error("Error sending verification email:", err);
+                    alert("Error sending verification email.");
+                  }
+                }}
+              >
+                Verify Email
+              </Button>
+            )}
+          </Box>
+
           <TextField
             label="Bio"
             value={bio}
@@ -103,20 +204,34 @@ function Profile() {
             multiline
             minRows={3}
           />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <TextField
-              label="Password"
-              value="********"
-              type="password"
-              disabled
-              fullWidth
-            />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={async () => {
+              try {
+                const res = await fetch(
+                  `http://localhost:8080/api/users/forgotPassword/${email}`,
+                  { method: "PUT" }
+                );
+                if (!res.ok) throw new Error("Failed to send email");
+                alert("A password reset link has been sent to your email!");
+              } catch (err) {
+                console.error("Error sending reset email:", err);
+                alert("Error sending password reset email.");
+              }
+            }}
+          >
+            Reset Password
+          </Button>
+
+          <Box>
             <Button
               variant="contained"
-              color="primary"
-              onClick={() => setOpenReset(true)}
+              disabled={!hasChanges || loading}
+              color={hasChanges ? "primary" : "inherit"}
+              onClick={handleSaveChanges}
             >
-              Reset Password
+              {loading ? "Saving..." : "Save Changes"}
             </Button>
           </Box>
 
@@ -137,37 +252,8 @@ function Profile() {
               <Typography>{gamesPlayed}</Typography>
             </Box>
           </Box>
-
-          <Box>
-            <Button variant="contained">Save Changes</Button>
-          </Box>
         </Stack>
       </Box>
-
-      {/* Reset Password Dialog */}
-      <Dialog open={openReset} onClose={() => setOpenReset(false)}>
-        <DialogTitle>Reset Password</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="New Password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            fullWidth
-            sx={{ mt: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenReset(false)}>Cancel</Button>
-          <Button
-            onClick={handleResetPassword}
-            variant="contained"
-            disabled={loading}
-          >
-            {loading ? "Updating..." : "Confirm"}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </div>
   );
 }
