@@ -41,7 +41,7 @@ export default function FriendsPage() {
   const [blockedUsers, setBlockedUsers] = useState<Friend[]>([]);
   const [blockedByUsers, setBlockedByUsers] = useState<Friend[]>([]);
 
-  const currentUserEmail = "test@gmail.com";
+  const currentUserEmail = "dominaitionproject@gmail.com";
 
   useEffect(() => {
     const fetchFriends = async () => {
