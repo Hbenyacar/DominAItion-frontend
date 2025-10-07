@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import './Avatar.css'
 import { Avatar, Button } from "@mui/material";
 import ButtonBase from '@mui/material/ButtonBase';
-import { useDispatch, UseDispatch, useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setAvatar } from "../../store/authSlice";
 import { useNavigate } from "react-router-dom";
 import { RootState } from "../../store/store";

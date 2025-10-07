@@ -22,7 +22,7 @@ import { logout } from "../../store/authSlice";
 const settings = ['Profile', 'Logout'];
 
 function Navbar() {
-  const avatarSrc = useSelector((state: RootState) => state.auth.user?.icon || "");
+  const avatarSrc = useSelector((state: RootState) => state.auth.icon);
   const navigate = useNavigate();
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
