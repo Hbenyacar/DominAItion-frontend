@@ -18,6 +18,8 @@ import Avatar from '@mui/material/Avatar';
 import { emit } from "process";
 import Navbar from "../navbar/NavBar";
 import { Email } from "@mui/icons-material";
+import { useDispatch } from "react-redux";
+import { setLogin } from "../../store/authSlice";
 
 function Login() {
 
@@ -26,6 +28,8 @@ function Login() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [invalidCredentials, setInvalidCredentials] = useState(false);
+
+  const dispatch = useDispatch();
 
   const [fields, setFields] = useState({
     email: { value: "", error: "" },
@@ -53,10 +57,12 @@ function Login() {
       body: JSON.stringify({ email, password })
     });
   
-    const data = await response.text(); // For now backend returns plain text
+    const data = await response.json(); // For now backend returns plain text
     console.log(data);
     if (data !== "Invalid credentials") {
       console.log(data);
+      console.log(data.id);
+      dispatch(setLogin({ user: data, token: "" }));
       navigate("/home");
     } else {
       setInvalidCredentials(true);

@@ -23,6 +23,8 @@ const settings = ['Profile', 'Logout'];
 
 function Navbar() {
   const avatarSrc = useSelector((state: RootState) => state.auth.avatarSrc);
+  const user = useSelector((state: RootState) => state.auth.user);
+  console.log("USER: " + user.id)
   const navigate = useNavigate();
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
