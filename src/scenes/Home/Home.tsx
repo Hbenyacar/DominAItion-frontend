@@ -35,6 +35,8 @@ import {
 
 import FriendsPage from "./Friends/Friends";
 import Messages from "./Messages/Messages";
+import { useDispatch, useSelector } from "react-redux";
+import { setMap } from "../../store/mapSlice";
 
 function valuetext(value: number) {
   return `${value} Points`;
@@ -78,40 +80,13 @@ function Home() {
   const [value1, setValue1] = useState(30);
   const [selectedImg, setSelectedImg] = React.useState<string | null>(null);
 
+  const dispatch = useDispatch();
+  const handleMap = (title: string, image: string) => {
+    setSelectedImg(image);
+    dispatch(setMap({ map: title }));
+  };
+
   const [openFind, setOpenFind] = useState(false);
-
-  const [friends, setFriends] = useState([
-    { id: 1, name: "Michael Corleone" },
-    { id: 2, name: "Ron Burgundy" },
-    { id: 3, name: "Daniel Plainview" },
-  ]);
-
-  const [others, setOthers] = useState([
-    { id: 4, name: "Tony Stark" },
-    { id: 5, name: "Bruce Wayne" },
-    { id: 6, name: "Atticus Finch" },
-  ]);
-
-  // Mock chat state
-  const [chats, setChats] = useState<
-    Record<number, { sender: string; text: string }[]>
-  >({
-    1: [
-      {
-        sender: "Michael Corleone",
-        text: "I’m gonna make him an offer he can’t refuse.",
-      },
-      { sender: "You", text: "Bing bow" },
-    ],
-    2: [
-      { sender: "Ron Burgundy", text: "Stay classy, San Diego!" },
-      { sender: "You", text: "Ron...." },
-    ],
-    3: [
-      { sender: "Daniel Plainview", text: "I drink your milkshake!" },
-      { sender: "You", text: "Yeah but didn't you abandon your child???" },
-    ],
-  });
 
   const [openChat, setOpenChat] = useState(false);
   const [selectedChatFriend, setSelectedChatFriend] = useState<Friend | null>(
@@ -122,11 +97,6 @@ function Home() {
   type Friend = {
     id: number;
     name: string;
-  };
-
-  const handleAddFriend = (user: Friend) => {
-    setFriends((prev) => [...prev, user]);
-    setOthers((prev) => prev.filter((o) => o.id !== user.id));
   };
 
   const handleClick = (item: (typeof itemData)[0]) => {
@@ -434,7 +404,7 @@ function Home() {
                               cursor: "pointer",
                               position: "relative",
                             }}
-                            onClick={() => setSelectedImg(item.img)}
+                            onClick={() => handleMap(item.title, item.img)}
                           >
                             <img
                               src={`${item.img}?w=${180 * (item.cols || 2)}&h=${
@@ -495,7 +465,7 @@ function Home() {
             </div>
           )}
           {selectedIndex === 2 && <FriendsPage />}
-          {selectedIndex === 5 && <Messages friends={friends} />}
+          {selectedIndex === 5 && <Messages />}
         </div>
       </div>
     </div>
@@ -505,6 +475,12 @@ const itemData = [
   {
     img: "Screenshot 2025-09-29 at 3.46.24 PM.png",
     title: "USA",
+    cols: 1,
+    rows: 1,
+  },
+  {
+    img: "europe.jpeg",
+    title: "Medieval Europe",
     cols: 1,
     rows: 1,
   },

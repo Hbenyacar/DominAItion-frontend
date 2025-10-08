@@ -8,14 +8,19 @@ import CustomTextField from '../../components/CustomTextField';
 import Button from '@mui/material/Button';
 import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate } from 'react-router-dom';
+import { setLogin } from "../../store/authSlice";
 
 
 
 import { emit } from "process";
+import { useDispatch } from "react-redux";
 
 function Register() {
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const [exists, setExists] = useState(true);
 
   const [fields, setFields] = useState({
     username: { value: "", error: "" },
@@ -30,6 +35,27 @@ function Register() {
   // Button is disabled if any field has an error or is empty
   const hasErrors = Object.values(fields).some(f => f.error !== "" || f.value === "");
 
+  const register = async (email: string, password: string, username: string) => {
+    const response = await fetch("http://localhost:8080/api/users/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password, username })
+    });
+    if (response.status == 409) {
+      setExists(false);
+      return;
+    }
+    const data = await response.json(); // For now backend returns plain text
+    console.log(data);
+
+    if (data != null) {
+      dispatch(setLogin({ user: data, token: "" }));
+      console.log(data.id);
+      navigate('/avatar');
+    }
+  };
 
   const toLogin = () => {
     navigate("/login");
@@ -47,6 +73,20 @@ function Register() {
     {/* Form container */}
     <div className="form-container">
       <div className="title">Register</div>
+      {!exists && (
+    <small
+      style={{ 
+        color: '#b00020', 
+        fontSize: '0.8rem', 
+        marginTop: '4px', 
+        display: 'block' 
+      }}
+      role="alert"
+      aria-live="assertive"
+    >
+      Email Already Exists
+    </small>
+  )}
       <CustomTextField
         title="Username"
         placeholder="John Doe"
@@ -72,7 +112,7 @@ function Register() {
         variant="outlined"
         startIcon={<PersonIcon />}
         disabled={hasErrors}
-        onClick={() => navigate("/avatar")}
+        onClick={() => register(fields.email.value, fields.password.value, fields.username.value)}
         sx={{
           color: hasErrors ? 'gray !important' : 'white',
           borderColor: hasErrors ? 'gray !important' : 'white',

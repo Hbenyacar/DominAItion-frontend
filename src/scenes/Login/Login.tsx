@@ -18,6 +18,8 @@ import Avatar from '@mui/material/Avatar';
 import { emit } from "process";
 import Navbar from "../navbar/NavBar";
 import { Email } from "@mui/icons-material";
+import { useDispatch } from "react-redux";
+import { setLogin } from "../../store/authSlice";
 
 function Login() {
 
@@ -25,6 +27,9 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [invalidCredentials, setInvalidCredentials] = useState(false);
+
+  const dispatch = useDispatch();
 
   const [fields, setFields] = useState({
     email: { value: "", error: "" },
@@ -44,7 +49,7 @@ function Login() {
   }
 
   const login = async (email: string, password: string) => {
-    const response = await fetch("http://localhost:8080/api/auth/login", {
+    const response = await fetch("http://localhost:8080/api/users/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -52,8 +57,16 @@ function Login() {
       body: JSON.stringify({ email, password })
     });
   
-    const data = await response.text(); // For now backend returns plain text
+    const data = await response.json(); // For now backend returns plain text
     console.log(data);
+    if (data !== "Invalid credentials") {
+      console.log(data);
+      console.log(data.id);
+      dispatch(setLogin({ user: data, token: "" }));
+      navigate("/home");
+    } else {
+      setInvalidCredentials(true);
+    }
   };
 
   return (
@@ -70,6 +83,20 @@ function Login() {
         {/* Form container */}
         <div className="form-container">
           <div className="title">Login</div>
+          {invalidCredentials && (
+    <small
+      style={{ 
+        color: '#b00020', 
+        fontSize: '0.8rem', 
+        marginTop: '4px', 
+        display: 'block' 
+      }}
+      role="alert"
+      aria-live="assertive"
+    >
+      Incorrect Username and/or Password
+    </small>
+  )}
 
           <CustomTextField
         title="Email"

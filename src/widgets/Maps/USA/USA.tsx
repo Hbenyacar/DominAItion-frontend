@@ -1042,7 +1042,7 @@ const InteractiveUSMap: React.FC = () => {
         </div>
       )}
 
-      <svg viewBox="0 0 1000 589" width="800" height="auto">
+      <svg viewBox="0 0 1000 589" width="700" height="auto">
         {states.map((state) => (
           <path
             key={state.id}
