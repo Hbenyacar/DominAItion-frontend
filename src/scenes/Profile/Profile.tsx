@@ -35,9 +35,7 @@ function Profile() {
   const [originalUsername, setOriginalUsername] = useState("");
   const [originalBio, setOriginalBio] = useState("");
   const [usernameError, setUsernameError] = useState("");
-
   
-
   const currentUserEmail = useSelector((state: RootState) => state.auth.user.email);
 
   useEffect(() => {
