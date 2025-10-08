@@ -20,6 +20,8 @@ import {
   HourglassEmpty,
   LockOpen,
 } from "@mui/icons-material";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../../../store/store";
 
 type Friend = {
   id: string;
@@ -41,7 +43,9 @@ export default function FriendsPage() {
   const [blockedUsers, setBlockedUsers] = useState<Friend[]>([]);
   const [blockedByUsers, setBlockedByUsers] = useState<Friend[]>([]);
 
-  const currentUserEmail = "jackrdar@gmail.com";
+  const currentUserEmail = useSelector(
+    (state: RootState) => state.auth.user.email
+  );
 
   useEffect(() => {
     const fetchFriends = async () => {

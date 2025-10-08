@@ -14,6 +14,9 @@ import {
   Badge,
 } from "@mui/material";
 
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../../../store/store";
+
 type ChatMessage = {
   chatId?: string;
   senderId: string;
@@ -35,7 +38,6 @@ type Friend = {
 };
 
 export default function Messages() {
-  const currentUserEmail = "dominaitionproject@gmail.com";
   const [currentUserId, setCurrentUserId] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
   const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({});
@@ -47,6 +49,10 @@ export default function Messages() {
   const [loading, setLoading] = useState(true);
   const [startingNewChat, setStartingNewChat] = useState(false);
   const [selectedNewFriend, setSelectedNewFriend] = useState("");
+
+  const currentUserEmail = useSelector(
+    (state: RootState) => state.auth.user.email
+  );
 
   const normalizeMessage = (m: any) => ({
     ...m,
