@@ -9,6 +9,7 @@ import Profile from './scenes/Profile/Profile';
 import Landing from './scenes/Landing/Landing';
 import AvatarSelect from './scenes/Avatar/Avatar';
 import Europe from './widgets/Maps/USA/Europe';
+import Sample from './scenes/Sample/Sample';
 import ResetPassword from './scenes/Profile/ResetPassword';
 import World from './scenes/World/World';
 
@@ -23,6 +24,7 @@ function App() {
       <Route path='/' element={<Landing/>} />
       <Route path='/avatar' element={<AvatarSelect/>} />
       <Route path='/europe' element={<Europe/>} />
+      <Route path='/sample' element={<Sample/>} />
       <Route path="/reset" element={<ResetPassword />} />
       <Route path='/world' element={<World/>} />
     </Routes>

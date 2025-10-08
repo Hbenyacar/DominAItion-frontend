@@ -105,6 +105,9 @@ function Home() {
   const toGame = () => {
     navigate("/game");
   };
+  const toSampleGame = () => {
+    navigate("/sample");
+  };
   const handleChange1 = (
     event: React.MouseEvent<HTMLElement>,
     newAlignment: string
@@ -440,7 +443,20 @@ function Home() {
                   </div>
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>
-                  Join Game Coming Soon!
+                  <div>
+                    Join Game Coming Soon!
+                  </div>
+                  <br />
+                  <div><Button
+                      onClick={() => {
+                        toSampleGame();
+                      }}
+                      variant="contained"
+                      color="primary"
+                    >
+                    Sample Game
+                    </Button>
+                  </div>
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={2}>
                   History Coming Soon!
