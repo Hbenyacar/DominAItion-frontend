@@ -34,7 +34,7 @@ function Profile() {
   const [originalBio, setOriginalBio] = useState("");
   const [usernameError, setUsernameError] = useState("");
 
-  const currentUserEmail = "dominaitionproject@gmail.com";
+  const currentUserEmail = "jackrdar@gmail.com";
 
   useEffect(() => {
     fetch(`http://localhost:8080/api/users/email/${currentUserEmail}`)
