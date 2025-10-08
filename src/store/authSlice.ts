@@ -9,7 +9,7 @@ interface AuthState {
   pantry: any[];
   restaurant: any | null;
   userMealSelection: string;
-  avatarSrc: string; // store avatar URL
+  icon: string; // store avatar URL
 }
 
 const initialState: AuthState = {
@@ -21,7 +21,7 @@ const initialState: AuthState = {
   pantry: [],
   restaurant: null,
   userMealSelection: "all",
-  avatarSrc: "", // default avatar
+  icon: "", // default avatar
 };
 
 const authSlice = createSlice({
@@ -36,7 +36,7 @@ const authSlice = createSlice({
 
     // Update avatar
     setAvatar: (state, action: PayloadAction<string>) => {
-      state.avatarSrc = action.payload;
+      state.icon = action.payload;
     },
 
     // Log out
@@ -44,7 +44,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.resetToken = null;
-      state.avatarSrc = "";
+      state.icon = "";
     },
 
     // Optional: toggle dark/light mode

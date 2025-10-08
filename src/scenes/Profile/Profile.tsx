@@ -14,6 +14,8 @@ import {
   Chip,
 } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
+import { RootState } from "../../store/store";
+import { useDispatch, useSelector } from "react-redux";
 
 function Profile() {
   const [username, setUsername] = useState("");
@@ -33,10 +35,11 @@ function Profile() {
   const [originalUsername, setOriginalUsername] = useState("");
   const [originalBio, setOriginalBio] = useState("");
   const [usernameError, setUsernameError] = useState("");
-
-  const currentUserEmail = "jackrdar@gmail.com";
+  
+  const currentUserEmail = useSelector((state: RootState) => state.auth.user.email);
 
   useEffect(() => {
+    console.log(currentUserEmail);
     fetch(`http://localhost:8080/api/users/email/${currentUserEmail}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch user");
@@ -179,10 +182,12 @@ function Profile() {
                 size="small"
                 onClick={async () => {
                   try {
+                    console.log("Email: " + email);
                     const res = await fetch(
                       `http://localhost:8080/api/users/verify/${email}`,
                       { method: "PUT" }
                     );
+
                     if (!res.ok) throw new Error("Failed to send email");
                     alert("Verification email sent! Please check your inbox.");
                   } catch (err) {

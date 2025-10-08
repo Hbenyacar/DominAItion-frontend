@@ -22,7 +22,7 @@ import { logout } from "../../store/authSlice";
 const settings = ['Profile', 'Logout'];
 
 function Navbar() {
-  const avatarSrc = useSelector((state: RootState) => state.auth.avatarSrc);
+  const avatarSrc = useSelector((state: RootState) => state.auth.icon);
   const navigate = useNavigate();
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
@@ -57,8 +57,8 @@ function Navbar() {
     } else if (setting === "Settings") {
       console.log("Settings");
     } else if (setting === "Logout") {
-      navigate("/login");
       dispatch(logout());
+      navigate("/login");
     } else {
       console.log("here");
     }
