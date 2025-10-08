@@ -1,3 +1,5 @@
+import {useState} from "react";
+import {useEffect} from "react";
 import { useSelector } from "react-redux";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
@@ -9,10 +11,32 @@ import Europe from "../../widgets/Maps/USA/Europe";
 
 function Game() {
   const map = useSelector((state: RootState) => state.map.map);
+    const [showModal, setShowModal] = useState(true);
 
-  return (
+    const handleCloseModal = () => setShowModal(false);
+
+    useEffect(() => {
+        const modalShown = sessionStorage.getItem("modalShown");
+        if (!modalShown) {
+            setShowModal(true);
+            sessionStorage.setItem("modalShown", "true");
+        }
+    }, []);
+
+
+    return (
     <div className="game-page">
       <Navbar />
+
+        {/*Tutorial Modal */}
+        {showModal && (
+            <div className="modal-overlay">
+                <div className="modal-content">
+                    <h2>Hello</h2>
+                    <button onClick={handleCloseModal}>Close</button>
+                </div>
+            </div>
+        )}
 
       {/* Outer wrapper: full viewport width */}
       <div className="content-wrapper">
