@@ -537,9 +537,10 @@ const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                             onClick={() => handleMap(item.title, item.img)}
                           >
                             <img
-                              //Resizing was removed to allow for custom image uploads to appear in the thumbnail
+                              //Resizing has been temporarily removed to allow for custom image uploads to appear in the thumbnail
                               src={`${item.imgContents.src}`}
-                              srcSet={`${item.imgContents.src}?w=${180 * (item.cols || 2)}&h=${180 * (item.rows || 1)}&fit=crop&auto=format&dpr=2 2x`}
+                              //srcSet={`${item.imgContents.src}?w=${180 * (item.cols || 2)}&h=${180 * (item.rows || 1)}&fit=crop&auto=format&dpr=2 2x`}
+                              srcSet={`${item.imgContents.src}`}
                               alt={item.title}
                               loading="lazy"
                               style={{
