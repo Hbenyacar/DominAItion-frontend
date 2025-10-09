@@ -51,7 +51,7 @@ export default function Messages() {
   const [selectedNewFriend, setSelectedNewFriend] = useState("");
 
   const currentUserEmail = useSelector(
-    (state: RootState) => state.auth.user.email
+    (state: RootState) => state.auth.user?.email || null
   );
 
   const normalizeMessage = (m: any) => ({

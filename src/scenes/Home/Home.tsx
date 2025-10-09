@@ -35,6 +35,7 @@ import {
 
 import FriendsPage from "./Friends/Friends";
 import Messages from "./Messages/Messages";
+import Settings from "./Settings/Settings";
 import { useDispatch, useSelector } from "react-redux";
 import { setMap } from "../../store/mapSlice";
 
@@ -449,6 +450,7 @@ function Home() {
             </div>
           )}
           {selectedIndex === 2 && <FriendsPage />}
+          {selectedIndex === 3 && <Settings />}
           {selectedIndex === 5 && <Messages />}
         </div>
       </div>
