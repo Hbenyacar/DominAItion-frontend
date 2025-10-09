@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../navbar/NavBar";
 import "./Home.css";
@@ -38,6 +38,29 @@ import Messages from "./Messages/Messages";
 import { useDispatch, useSelector } from "react-redux";
 import { setMap } from "../../store/mapSlice";
 
+function loadOpenCV(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if ((window as any).cv) {
+      // Already loaded
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://docs.opencv.org/4.x/opencv.js";
+    script.async = true;
+    script.onload = () => {
+      // Wait for OpenCV to initialize
+      (window as any).cv['onRuntimeInitialized'] = () => resolve();
+    };
+    script.onerror = () => reject(new Error("Failed to load OpenCV.js"));
+    document.body.appendChild(script);
+  });
+}
+
+declare const cv: any; // OpenCV global
+
+
 function valuetext(value: number) {
   return `${value} Points`;
 }
@@ -71,7 +94,78 @@ interface Item {
   title: string;
   author: string;
 }
+
+function processImage(img: HTMLImageElement) {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0);
+  
+  let src = cv.imread(canvas);
+  let dst = new cv.Mat();
+  cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
+  cv.Canny(src, dst, 50, 150);
+  
+  // dst now has edges in black/white
+  // Next step: find contours
+  let contours = new cv.MatVector();
+  let hierarchy = new cv.Mat();
+  cv.findContours(dst, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+  // convert contours to SVG paths
+  const paths = [];
+  for (let i = 0; i < contours.size(); i++) {
+    const contour = contours.get(i);
+    let d = "M";
+    for (let j = 0; j < contour.rows; j++) {
+      d += `${contour.intPtr(j, 0)[0]},${contour.intPtr(j, 0)[1]} `;
+    }
+    d += "Z";
+    paths.push(d);
+    contour.delete();
+  }
+
+  src.delete(); dst.delete(); contours.delete(); hierarchy.delete();
+}
+
+interface ItemData {
+  img: string;                 // filename or identifier
+  title: string;               // title
+  cols: number;
+  rows: number;
+  imgContents: HTMLImageElement; // the loaded image instance
+}
+
 function Home() {
+
+const [itemData, setItemData] = useState<ItemData[]>([
+  {
+    img: "Screenshot 2025-09-29 at 3.46.24 PM.png",
+    title: "USA",
+    cols: 1,
+    rows: 1,
+    imgContents: (() => {
+      const img = new Image();
+      img.src = process.env.PUBLIC_URL + "/Screenshot 2025-09-29 at 3.46.24 PM.png";
+      return img;
+    })(),
+  },
+  {
+    img: "europe.jpeg",
+    title: "Medieval Europe",
+    cols: 1,
+    rows: 1,
+    imgContents: (() => {
+      const img = new Image();
+      img.src = process.env.PUBLIC_URL + "/europe.jpeg";
+      return img;
+    })(),
+  },
+]);
+
+const [preview, setPreview] = useState<string | null>(null);
+
   const [selectedIndex, setSelectedIndex] = React.useState(1);
   const [selectedMode, setSelectedMode] = React.useState(0);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -127,6 +221,39 @@ function Home() {
   ) => {
     setSelectedIndex(index);
   };
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleUploadButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click(); // ✅ Now TypeScript knows `.click()` exists
+    }
+  };
+
+const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  await loadOpenCV(); // dynamically load OpenCV if not loaded
+
+  const img = new Image();
+  img.src = URL.createObjectURL(file);
+  img.onload = () => {
+    const paths = processImage(img);
+  };
+  
+  setItemData(prev => [...prev, {
+    img: file.name,
+    title: file.name.split(".")[0],
+    cols: 1,
+    rows: 1,
+    imgContents: img
+  }])
+
+  const objectUrl = URL.createObjectURL(file)
+  setPreview(objectUrl)
+};
+
   return (
     <div>
       <Navbar />
@@ -332,6 +459,8 @@ function Home() {
                     <Box
                       sx={{
                         display: "flex",
+                        bottom: 20,
+                        left: 20,
                         alignItems: "center",
                         gap: 6,
                         paddingTop: 2,
@@ -407,14 +536,9 @@ function Home() {
                             onClick={() => handleMap(item.title, item.img)}
                           >
                             <img
-                              src={`${item.img}?w=${180 * (item.cols || 2)}&h=${
-                                180 * (item.rows || 1)
-                              }&fit=crop&auto=format`}
-                              srcSet={`${item.img}?w=${
-                                180 * (item.cols || 2)
-                              }&h=${
-                                180 * (item.rows || 1)
-                              }&fit=crop&auto=format&dpr=2 2x`}
+                              //Resizing was removed to allow for custom image uploads to appear in the thumbnail
+                              src={`${item.imgContents.src}`}
+                              srcSet={`${item.imgContents.src}?w=${180 * (item.cols || 2)}&h=${180 * (item.rows || 1)}&fit=crop&auto=format&dpr=2 2x`}
                               alt={item.title}
                               loading="lazy"
                               style={{
@@ -441,6 +565,15 @@ function Home() {
                       </ImageList>
                     </div>
                   </div>
+                  <button onClick={handleUploadButtonClick}>Upload Image</button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      style={{ display: "none" }}
+                    />
+                    
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>
                   <div>
@@ -471,18 +604,5 @@ function Home() {
     </div>
   );
 }
-const itemData = [
-  {
-    img: "Screenshot 2025-09-29 at 3.46.24 PM.png",
-    title: "USA",
-    cols: 1,
-    rows: 1,
-  },
-  {
-    img: "europe.jpeg",
-    title: "Medieval Europe",
-    cols: 1,
-    rows: 1,
-  },
-];
+
 export default Home;
