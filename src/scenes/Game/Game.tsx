@@ -12,8 +12,43 @@ import Europe from "../../widgets/Maps/USA/Europe";
 function Game() {
   const map = useSelector((state: RootState) => state.map.map);
     const [showModal, setShowModal] = useState(true);
+    const [currentSlide, setCurrentSlide] = useState(0);
 
     const handleCloseModal = () => setShowModal(false);
+
+    const tutorialSlides = [
+        {
+            title: "Welcome to DominAItion!",
+            content: "Here is a short tutorial to get you started..."
+        },
+        {
+            title: "Your Mission (Should you choose to accept it)",
+            content: "Take over the world! You and the other players have a map divided out into regions." +
+                "You will think of unique actions you can take to gain more territory. " +
+                "With each territory you take over, you gain more points." +
+                "The first one to get to the set number of points wins the game!"
+        },
+        {
+            title: "All About The Map",
+            content: "The map is divided into several regions you can take over. The resources and terrain in each region is determined based on the world description created on game creation"
+        },
+        {
+            title: "Who ARE you?",
+            content: "The character you defined at the beginning of the game will have different traits that can make the actions you want to take more or less feasible. Plan your domination strategies wisely!"
+        },
+        {
+            title: "Good luck, and have fun!",
+        }
+    ];
+
+    const handlePrevSlide = () => {
+        setCurrentSlide((prev) => Math.max(prev - 1, 0));
+    };
+
+    const handleNextSlide = () => {
+        setCurrentSlide((prev) => Math.min(prev + 1, tutorialSlides.length - 1));
+    };
+
 
     useEffect(() => {
         const modalShown = sessionStorage.getItem("modalShown");
@@ -23,17 +58,32 @@ function Game() {
         }
     }, []);
 
-
     return (
     <div className="game-page">
       <Navbar />
 
         {/*Tutorial Modal */}
+        {/* Tutorial Modal */}
         {showModal && (
             <div className="modal-overlay">
                 <div className="modal-content">
-                    <h2>Hello</h2>
-                    <button onClick={handleCloseModal}>Close</button>
+                    <h2>{tutorialSlides[currentSlide].title}</h2>
+                    <h3>{tutorialSlides[currentSlide].content}</h3>
+
+                    <div className="modal-navigation">
+                        <button onClick={handlePrevSlide} disabled={currentSlide === 0}>
+                            ←
+                        </button>
+                        <button onClick={handleNextSlide} disabled={currentSlide === tutorialSlides.length - 1}>
+                            →
+                        </button>
+                    </div>
+
+
+                    <button className="close-button" onClick={handleCloseModal}>
+                        {currentSlide == tutorialSlides.length - 1? "Close" : "Skip Tutorial"}
+                    </button>
+
                 </div>
             </div>
         )}
