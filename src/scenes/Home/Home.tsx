@@ -39,6 +39,7 @@ import Settings from "./Settings/Settings";
 import { useDispatch, useSelector } from "react-redux";
 import { setMap } from "../../store/mapSlice";
 import WorldGenPanels from "../../widgets/WorldGen/WorldGen";
+import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
 
 function loadOpenCV(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -569,6 +570,9 @@ const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     </div>
                     <div>
                       <WorldGenPanels />
+                    </div>
+                    <div>
+                      <CharacterGen />
                     </div>
                   </div>
                   <button onClick={handleUploadButtonClick}>Upload Image</button>

@@ -3,25 +3,55 @@ import React, { useState } from 'react';
 const WorldGenPanels = () => {
     const [selectedPanel, setSelectedPanel] = useState('');
     const [inputText, setInputText] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleSelectionChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
         setSelectedPanel(event.target.value);
-        setInputText(''); // Reset input when selection changes
+        setInputText('');
+        setSuccessMessage('');
+        setError(null);
     };
 
     const handleInputChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
         setInputText(event.target.value);
     };
 
-    const handleSubmit = () => {
-        alert(`Submitted text for ${selectedPanel}: ${inputText}`);
+    const handleSubmit = async () => {
+        if (!selectedPanel) return;
+
+        setIsSubmitting(true);
+        setError(null);
+        setSuccessMessage('');
+
+        try {
+            const response = await fetch('/api/ai/world', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ mode: selectedPanel }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to send mode to the server.');
+            }
+
+            setSuccessMessage(`Successfully submitted "${selectedPanel}" to /mode.`);
+        } catch (err) {
+            // @ts-ignore
+            setError(err.message || 'Something went wrong.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    const panels = ['Predetermined World', 'Randomly Generated World', 'Custom World'];
+    const panels = ['Panel 1', 'Panel 2', 'Panel 3'];
 
     return (
         <div>
-            <h2>Select World Generation Method</h2>
+            <h2>Select a World generation Type</h2>
             {panels.map((panel) => (
                 <div key={panel} style={{ marginBottom: '1rem' }}>
                     <label>
@@ -39,17 +69,24 @@ const WorldGenPanels = () => {
                         <div style={{ marginTop: '0.5rem' }}>
                             <input
                                 type="text"
-                                placeholder={`Enter description for ${panel}`}
+                                placeholder={`Enter text for ${panel}`}
                                 value={inputText}
                                 onChange={handleInputChange}
                             />
-                            <button onClick={handleSubmit} style={{ marginLeft: '0.5rem' }}>
-                                Submit
+                            <button
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}
+                                style={{ marginLeft: '0.5rem' }}
+                            >
+                                {isSubmitting ? 'Submitting...' : 'Submit'}
                             </button>
                         </div>
                     )}
                 </div>
             ))}
+
+            {error && <div style={{ color: 'red' }}>{error}</div>}
+            {successMessage && <div style={{ color: 'green' }}>{successMessage}</div>}
         </div>
     );
 };
