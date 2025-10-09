@@ -13,6 +13,7 @@ function Game() {
   const map = useSelector((state: RootState) => state.map.map);
     const [showModal, setShowModal] = useState(true);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [storyResponse, setStoryResponse] = useState("");
 
     const handleCloseModal = () => setShowModal(false);
 
@@ -117,7 +118,11 @@ function Game() {
         marginRight: map === "Medieval Europe" ? "70px" : map === "USA" ? "50px" : "10px",
       }}
     >
-      Story Board
+
+        <strong>Story Board</strong>
+        <div style={{ marginTop: "10px" }}>
+            {storyResponse || "Awaiting your first move..."}
+        </div>
     </div>
   </div>
 
@@ -125,7 +130,7 @@ function Game() {
       <div  style={{
       marginTop: "20px",
     }}>
-      <PlayerActionInput/>
+          <PlayerActionInput onSubmitResponse={setStoryResponse} />
       </div>
     </div>
   );
