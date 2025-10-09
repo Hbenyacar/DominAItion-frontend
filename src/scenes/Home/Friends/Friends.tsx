@@ -44,7 +44,7 @@ export default function FriendsPage() {
   const [blockedByUsers, setBlockedByUsers] = useState<Friend[]>([]);
 
   const currentUserEmail = useSelector(
-    (state: RootState) => state.auth.user.email
+    (state: RootState) => state.auth.user?.email || null
   );
 
   useEffect(() => {
