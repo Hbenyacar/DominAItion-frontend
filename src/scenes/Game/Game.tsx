@@ -62,7 +62,6 @@ function Game() {
     <div className="game-page">
       <Navbar />
 
-        {/*Tutorial Modal */}
         {/* Tutorial Modal */}
         {showModal && (
             <div className="modal-overlay">
