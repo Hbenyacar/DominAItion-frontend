@@ -43,10 +43,13 @@ function Register() {
       },
       body: JSON.stringify({ email, password, username })
     });
-    if (response.status == 409) {
+    console.log(response);
+    if (!response.ok) {
+      console.log("FALSE");
       setExists(false);
       return;
     }
+    console.log("TRUE");
     const data = await response.json(); // For now backend returns plain text
     console.log(data);
 
