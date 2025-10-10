@@ -12,10 +12,13 @@ import {
   DialogContent,
   DialogTitle,
   Chip,
+  Snackbar,
 } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Profile() {
   const [username, setUsername] = useState("");
@@ -35,8 +38,10 @@ function Profile() {
   const [originalUsername, setOriginalUsername] = useState("");
   const [originalBio, setOriginalBio] = useState("");
   const [usernameError, setUsernameError] = useState("");
-  
-  const currentUserEmail = useSelector((state: RootState) => state.auth.user.email);
+
+  const currentUserEmail = useSelector(
+    (state: RootState) => state.auth.user.email
+  );
 
   useEffect(() => {
     console.log(currentUserEmail);
@@ -102,47 +107,35 @@ function Profile() {
 
       setOriginalUsername(username);
       setOriginalBio(bio);
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
     } catch (err) {
       console.error("Error updating profile:", err);
-      alert("Error saving profile changes.");
+      toast.error("Error saving profile changes.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle password reset
   const handleResetPassword = async () => {
-    if (!newPassword) return alert("Please enter a new password");
-    setLoading(true);
-
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/updatePassword/${email}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newPassword),
-        }
+        `http://localhost:8080/api/users/forgotPassword/${email}`,
+        { method: "PUT" }
       );
-      if (!res.ok) throw new Error("Failed to update password");
-
-      setPassword(newPassword);
-      setOpenReset(false);
-      setNewPassword("");
-      alert("Password updated successfully!");
+      if (!res.ok) throw new Error("Failed to send email");
+      toast.info("A password reset link has been sent to your email!");
     } catch (err) {
-      console.error("Error updating password:", err);
-      alert("Error updating password.");
-    } finally {
-      setLoading(false);
+      console.error("Error sending reset email:", err);
+      toast.error("Error sending password reset email.");
     }
   };
 
   return (
-    <div>
+    <Box>
       <Navbar />
-      <Box sx={{ marginTop: "100px", padding: 4, maxWidth: 700, mx: "auto" }}>
-        <Typography variant="h4" gutterBottom>
+      <Box sx={{ marginTop: "70px", padding: 4, maxWidth: 700, mx: "auto" }}>
+        <Typography variant="h4" marginBottom="30px" fontWeight="bold">
           Profile
         </Typography>
 
@@ -158,7 +151,8 @@ function Profile() {
             helperText={usernameError}
             fullWidth
           />
-          {/* Email with verification status */}
+
+          {/* Email Section */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <TextField
               label="Email"
@@ -168,6 +162,7 @@ function Profile() {
               fullWidth
             />
 
+            {/* Email Verification Chip/Button */}
             {emailVerified ? (
               <Chip
                 label="Verified"
@@ -189,10 +184,12 @@ function Profile() {
                     );
 
                     if (!res.ok) throw new Error("Failed to send email");
-                    alert("Verification email sent! Please check your inbox.");
+                    toast.info(
+                      "Verification email sent! Please check your inbox."
+                    );
                   } catch (err) {
                     console.error("Error sending verification email:", err);
-                    alert("Error sending verification email.");
+                    toast.error("Error sending verification email.");
                   }
                 }}
               >
@@ -209,32 +206,20 @@ function Profile() {
             multiline
             minRows={3}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={async () => {
-              try {
-                const res = await fetch(
-                  `http://localhost:8080/api/users/forgotPassword/${email}`,
-                  { method: "PUT" }
-                );
-                if (!res.ok) throw new Error("Failed to send email");
-                alert("A password reset link has been sent to your email!");
-              } catch (err) {
-                console.error("Error sending reset email:", err);
-                alert("Error sending password reset email.");
-              }
-            }}
-          >
-            Reset Password
-          </Button>
 
+          {/* Save Changes Button */}
           <Box>
             <Button
               variant="contained"
               disabled={!hasChanges || loading}
-              color={hasChanges ? "primary" : "inherit"}
               onClick={handleSaveChanges}
+              fullWidth
+              sx={{
+                backgroundColor: hasChanges ? "darkorange" : "gray",
+                "&:hover": {
+                  backgroundColor: hasChanges ? "#e67300" : "gray",
+                },
+              }}
             >
               {loading ? "Saving..." : "Save Changes"}
             </Button>
@@ -242,6 +227,24 @@ function Profile() {
 
           <Divider />
 
+          {/* Reset Password Button */}
+          <Button
+            variant="contained"
+            onClick={handleResetPassword}
+            fullWidth
+            sx={{
+              backgroundColor: "darkorange",
+              "&:hover": {
+                backgroundColor: "#e67300", // darker orange on hover
+              },
+            }}
+          >
+            Reset Password
+          </Button>
+
+          {/* Game Stats, Implementing Later
+          <Divider />
+          
           <Typography variant="h5">Game Stats</Typography>
           <Box sx={{ display: "flex", gap: 4 }}>
             <Box>
@@ -256,10 +259,20 @@ function Profile() {
               <Typography variant="h6">Games Played</Typography>
               <Typography>{gamesPlayed}</Typography>
             </Box>
-          </Box>
+          </Box>*/}
         </Stack>
       </Box>
-    </div>
+      <ToastContainer
+        position="bottom-center"
+        autoClose={3000}
+        hideProgressBar={true}
+        newestOnTop={false}
+        closeOnClick
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+    </Box>
   );
 }
 
