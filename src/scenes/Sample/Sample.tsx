@@ -5,10 +5,10 @@ import "./Sample.css";
 
 function Sample() {
   const players = [
-  { id: "player1", name: "Alice", color: "#ff0000", score: 68, icon: "Default Profile Icons/girl.png", myTurn: false },
-  { id: "player2", name: "Bob", color: "#00ff00", score: 6, icon: "Default Profile Icons/boy.png", myTurn: false },
-  { id: "player3", name: "Charlie", color: "#0000ff", score: 30, icon: "Default Profile Icons/man.png", myTurn: true },
-  { id: "player4", name: "Diana", color: "#ffff00", score: 63, icon: "Default Profile Icons/woman.png", myTurn: false },
+  { id: "player1", name: "Alice", color: "#ff0000", score: 68, icon: "/girl.png", myTurn: false },
+  { id: "player2", name: "Bob", color: "#00ff00", score: 6, icon: "/boy.png", myTurn: false },
+  { id: "player3", name: "Charlie", color: "#0000ff", score: 30, icon: "/man.png", myTurn: true },
+  { id: "player4", name: "Diana", color: "#ffff00", score: 63, icon: "/woman.png", myTurn: false },
 ];
   return (
     <div className="game-page">
