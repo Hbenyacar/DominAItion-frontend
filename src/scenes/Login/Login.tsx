@@ -56,10 +56,11 @@ function Login() {
       },
       body: JSON.stringify({ email, password })
     });
+    console.log(response);
   
-    const data = await response.json(); // For now backend returns plain text
+    if (response.ok) {
+      const data = await response.json(); // For now backend returns plain text
     console.log(data);
-    if (data !== "Invalid credentials") {
       console.log(data);
       console.log(data.id);
       dispatch(setLogin({ user: data, token: "" }));
