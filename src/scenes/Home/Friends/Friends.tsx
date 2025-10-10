@@ -7,6 +7,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   IconButton,
   Stack,
   Tooltip,
@@ -22,6 +23,9 @@ import {
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
+
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type Friend = {
   id: string;
@@ -124,11 +128,13 @@ export default function FriendsPage() {
       );
       if (!res.ok) throw new Error("Failed to send friend request");
 
-      alert(`Friend request sent to ${user.username}`);
       setSentRequests((prev) => [...prev, user]);
       setOthers((prev) => prev.filter((o) => o.id !== user.id));
+
+      toast.info(`Friend request sent to ${user.username}`);
     } catch (err) {
       console.error("Error sending friend request:", err);
+      toast.error("Error sending friend request.");
     }
   };
 
@@ -141,27 +147,53 @@ export default function FriendsPage() {
       if (!res.ok) throw new Error("Failed to cancel request");
       setSentRequests((prev) => prev.filter((r) => r.id !== user.id));
       setOthers((prev) => [...prev, user]);
-      alert(`Friend request to ${user.username} canceled.`);
+
+      toast.info(`Cancelled friend request to ${user.username}.`);
     } catch (err) {
       console.error("Error canceling friend request:", err);
+      toast.error("Error canceling friend request.");
     }
   };
 
   const handleApproveRequest = async (user: Friend) => {
-    await fetch(
-      `http://localhost:8080/api/users/approveFriendRequest/${currentUserEmail}/${user.id}`,
-      { method: "PUT" }
-    );
-    setIncomingRequests((prev) => prev.filter((r) => r.id !== user.id));
-    setFriends((prev) => [...prev, user]);
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/users/approveFriendRequest/${currentUserEmail}/${user.id}`,
+        { method: "PUT" }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to approve friend request");
+      }
+
+      setIncomingRequests((prev) => prev.filter((r) => r.id !== user.id));
+      setFriends((prev) => [...prev, user]);
+
+      toast.success(`You are now friends with ${user.username}`);
+    } catch (err) {
+      console.error("Error approving friend request:", err);
+      toast.error("Error approving friend request.");
+    }
   };
 
   const handleRejectRequest = async (user: Friend) => {
-    await fetch(
-      `http://localhost:8080/api/users/rejectFriendRequest/${currentUserEmail}/${user.id}`,
-      { method: "PUT" }
-    );
-    setIncomingRequests((prev) => prev.filter((r) => r.id !== user.id));
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/users/rejectFriendRequest/${currentUserEmail}/${user.id}`,
+        { method: "PUT" }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to reject friend request");
+      }
+
+      setIncomingRequests((prev) => prev.filter((r) => r.id !== user.id));
+
+      toast.info(`Rejected friend request from ${user.username}`);
+    } catch (err) {
+      console.error("Error rejecting friend request:", err);
+      toast.error("Error rejecting friend request.");
+    }
   };
 
   const handleRemoveFriend = async (friend: Friend) => {
@@ -173,16 +205,15 @@ export default function FriendsPage() {
       if (!res.ok) throw new Error("Failed to remove friend");
       setFriends((prev) => prev.filter((f) => f.id !== friend.id));
       setOthers((prev) => [...prev, friend]);
-      alert(`You and ${friend.username} are no longer friends.`);
+
+      toast.info(`You and ${friend.username} are no longer friends.`);
     } catch (err) {
       console.error("Error removing friend:", err);
+      toast.error("Error removing friend.");
     }
   };
 
   const handleBlockFriend = async (friend: Friend) => {
-    if (!window.confirm(`Are you sure you want to block ${friend.username}?`))
-      return;
-
     try {
       const res = await fetch(
         `http://localhost:8080/api/users/blockUser/${currentUserEmail}/${friend.id}`,
@@ -191,20 +222,19 @@ export default function FriendsPage() {
 
       if (!res.ok) throw new Error("Failed to block user");
 
-      alert(`${friend.username} has been blocked.`);
-
       // Remove and update state
       setFriends((prev) => prev.filter((f) => f.id !== friend.id));
       setOthers((prev) => prev.filter((o) => o.id !== friend.id));
       setBlockedUsers((prev) => [...prev, friend]); // 👈 update immediately
+
+      toast.info(`${friend.username} has been blocked.`);
     } catch (err) {
       console.error("Error blocking user:", err);
+      toast.error("Error blocking user.");
     }
   };
 
   const handleUnblockUser = async (user: Friend) => {
-    if (!window.confirm(`Do you want to unblock ${user.username}?`)) return;
-
     try {
       const res = await fetch(
         `http://localhost:8080/api/users/unblockUser/${currentUserEmail}/${user.id}`,
@@ -213,68 +243,74 @@ export default function FriendsPage() {
 
       if (!res.ok) throw new Error("Failed to unblock user");
 
-      alert(`${user.username} has been unblocked.`);
+      toast.info(`${user.username} has been unblocked.`);
 
       // Update local state
       setBlockedUsers((prev) => prev.filter((u) => u.id !== user.id));
       setOthers((prev) => [...prev, user]); // 👈 add back to "Add Friends"
     } catch (err) {
       console.error("Error unblocking user:", err);
+      toast.error("Error unblocking user.");
     }
   };
 
   return (
     <div className="friends" style={{ flexGrow: 1 }}>
-      <Typography variant="h4" sx={{ mt: 2 }}>
+      <Typography variant="h4" marginBottom="30px" fontWeight="bold">
         Friends
       </Typography>
 
       {/* ---- FRIENDS LIST ---- */}
-      <Stack spacing={2} sx={{ mt: 2 }}>
+      <Stack spacing={2}>
         {friends.length === 0 ? (
           <Typography color="text.secondary">No friends yet</Typography>
         ) : (
-          friends.map((friend) => (
-            <Box
-              key={friend.id}
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: 1,
-                borderBottom: "1px solid #eee",
-              }}
-            >
-              <Typography variant="body1">{friend.username}</Typography>
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Tooltip title="Message">
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => alert(`Messaging ${friend.username}`)}
-                  >
-                    <Chat />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Remove">
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleRemoveFriend(friend)}
-                  >
-                    <PersonRemove />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Block">
-                  <IconButton
-                    size="small"
-                    color="warning"
-                    onClick={() => handleBlockFriend(friend)}
-                  >
-                    <Block />
-                  </IconButton>
-                </Tooltip>
+          friends.map((friend, index) => (
+            <Box>
+              <Box key={friend.id}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: 1.5,
+                    borderRadius: 2,
+                    backgroundColor: "rgba(255, 195, 149, 0.8)", // 🔸 your color
+                  }}
+                >
+                  <Typography variant="body1">{friend.username}</Typography>
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    {/* <Tooltip title="Message">
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => alert(`Messaging ${friend.username}`)}
+                    >
+                      <Chat />
+                    </IconButton>
+              </Tooltip> */}
+                    <Tooltip title="Remove">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleRemoveFriend(friend)}
+                      >
+                        <PersonRemove />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Block">
+                      <IconButton
+                        size="small"
+                        color="warning"
+                        onClick={() => handleBlockFriend(friend)}
+                      >
+                        <Block />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
               </Box>
+              {index < friends.length - 1 && <Divider />}
             </Box>
           ))
         )}
@@ -564,6 +600,16 @@ export default function FriendsPage() {
           <Button onClick={() => setOpenBlocked(false)}>Close</Button>
         </DialogActions>
       </Dialog>
+      <ToastContainer
+        position="bottom-center"
+        autoClose={3000}
+        hideProgressBar={true}
+        newestOnTop={false}
+        closeOnClick
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 }
