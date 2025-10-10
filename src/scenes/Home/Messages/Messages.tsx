@@ -271,19 +271,13 @@ export default function Messages() {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      padding: 1.2,
-                      borderRadius: 1,
-                      border: "1px solid #eee",
-                      backgroundColor: "#fff",
-                      transition: "0.2s",
-                      cursor: "pointer",
-                      "&:hover": {
-                        backgroundColor: "rgba(0,0,0,0.04)",
-                      },
+                      padding: 1.5,
+                      borderRadius: 2,
+                      backgroundColor: "rgba(255, 195, 149, 0.8)", // 🔸 your color
                     }}
                     onClick={() => openChatWindow(chat)}
                   >
-                    <Typography variant="body1" fontWeight="bold">
+                    <Typography variant="body1">
                       {friend?.username || "Unknown User"}
                     </Typography>
 

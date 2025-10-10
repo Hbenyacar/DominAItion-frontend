@@ -54,7 +54,7 @@ function loadOpenCV(): Promise<void> {
     script.async = true;
     script.onload = () => {
       // Wait for OpenCV to initialize
-      (window as any).cv['onRuntimeInitialized'] = () => resolve();
+      (window as any).cv["onRuntimeInitialized"] = () => resolve();
     };
     script.onerror = () => reject(new Error("Failed to load OpenCV.js"));
     document.body.appendChild(script);
@@ -62,7 +62,6 @@ function loadOpenCV(): Promise<void> {
 }
 
 declare const cv: any; // OpenCV global
-
 
 function valuetext(value: number) {
   return `${value} Points`;
@@ -104,17 +103,23 @@ function processImage(img: HTMLImageElement) {
   canvas.height = img.height;
   const ctx = canvas.getContext("2d")!;
   ctx.drawImage(img, 0, 0);
-  
+
   let src = cv.imread(canvas);
   let dst = new cv.Mat();
   cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
   cv.Canny(src, dst, 50, 150);
-  
+
   // dst now has edges in black/white
   // Next step: find contours
   let contours = new cv.MatVector();
   let hierarchy = new cv.Mat();
-  cv.findContours(dst, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+  cv.findContours(
+    dst,
+    contours,
+    hierarchy,
+    cv.RETR_EXTERNAL,
+    cv.CHAIN_APPROX_SIMPLE
+  );
 
   // convert contours to SVG paths
   const paths = [];
@@ -129,45 +134,47 @@ function processImage(img: HTMLImageElement) {
     contour.delete();
   }
 
-  src.delete(); dst.delete(); contours.delete(); hierarchy.delete();
+  src.delete();
+  dst.delete();
+  contours.delete();
+  hierarchy.delete();
 }
 
 interface ItemData {
-  img: string;                 // filename or identifier
-  title: string;               // title
+  img: string; // filename or identifier
+  title: string; // title
   cols: number;
   rows: number;
   imgContents: HTMLImageElement; // the loaded image instance
 }
 
 function Home() {
+  const [itemData, setItemData] = useState<ItemData[]>([
+    {
+      img: "homepageUSmap.png",
+      title: "USA",
+      cols: 1,
+      rows: 1,
+      imgContents: (() => {
+        const img = new Image();
+        img.src = process.env.PUBLIC_URL + "/homepageUSmap.png";
+        return img;
+      })(),
+    },
+    {
+      img: "europe.jpeg",
+      title: "Medieval Europe",
+      cols: 1,
+      rows: 1,
+      imgContents: (() => {
+        const img = new Image();
+        img.src = process.env.PUBLIC_URL + "/europe.jpeg";
+        return img;
+      })(),
+    },
+  ]);
 
-const [itemData, setItemData] = useState<ItemData[]>([
-  {
-    img: "Screenshot 2025-09-29 at 3.46.24 PM.png",
-    title: "USA",
-    cols: 1,
-    rows: 1,
-    imgContents: (() => {
-      const img = new Image();
-      img.src = process.env.PUBLIC_URL + "/Screenshot 2025-09-29 at 3.46.24 PM.png";
-      return img;
-    })(),
-  },
-  {
-    img: "europe.jpeg",
-    title: "Medieval Europe",
-    cols: 1,
-    rows: 1,
-    imgContents: (() => {
-      const img = new Image();
-      img.src = process.env.PUBLIC_URL + "/europe.jpeg";
-      return img;
-    })(),
-  },
-]);
-
-const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
   const [selectedIndex, setSelectedIndex] = React.useState(1);
   const [selectedMode, setSelectedMode] = React.useState(0);
@@ -233,29 +240,32 @@ const [preview, setPreview] = useState<string | null>(null);
     }
   };
 
-const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  await loadOpenCV(); // dynamically load OpenCV if not loaded
+    await loadOpenCV(); // dynamically load OpenCV if not loaded
 
-  const img = new Image();
-  img.src = URL.createObjectURL(file);
-  img.onload = () => {
-    const paths = processImage(img);
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      const paths = processImage(img);
+    };
+
+    setItemData((prev) => [
+      ...prev,
+      {
+        img: file.name,
+        title: file.name.split(".")[0],
+        cols: 1,
+        rows: 1,
+        imgContents: img,
+      },
+    ]);
+
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
   };
-  
-  setItemData(prev => [...prev, {
-    img: file.name,
-    title: file.name.split(".")[0],
-    cols: 1,
-    rows: 1,
-    imgContents: img
-  }])
-
-  const objectUrl = URL.createObjectURL(file)
-  setPreview(objectUrl)
-};
 
   return (
     <div>
@@ -575,29 +585,29 @@ const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
                       <CharacterGen />
                     </div>
                   </div>
-                  <button onClick={handleUploadButtonClick}>Upload Image</button>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      style={{ display: "none" }}
-                    />
-                    
+                  <button onClick={handleUploadButtonClick}>
+                    Upload Image
+                  </button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    style={{ display: "none" }}
+                  />
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={1}>
-                  <div>
-                    Join Game Coming Soon!
-                  </div>
+                  <div>Join Game Coming Soon!</div>
                   <br />
-                  <div><Button
+                  <div>
+                    <Button
                       onClick={() => {
                         toSampleGame();
                       }}
                       variant="contained"
                       color="primary"
                     >
-                    Sample Game
+                      Sample Game
                     </Button>
                   </div>
                 </CustomTabPanel>

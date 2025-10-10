@@ -40,7 +40,7 @@ function Profile() {
   const [usernameError, setUsernameError] = useState("");
 
   const currentUserEmail = useSelector(
-    (state: RootState) => state.auth.user.email
+    (state: RootState) => state.auth.user?.email || null
   );
 
   useEffect(() => {
