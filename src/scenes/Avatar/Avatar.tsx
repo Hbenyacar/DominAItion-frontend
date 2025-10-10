@@ -7,12 +7,14 @@ import { setAvatar } from "../../store/authSlice";
 import { useNavigate } from "react-router-dom";
 import { RootState } from "../../store/store";
 
+
+
 function AvatarSelect() {
     const avatarImages = [
-        "Default Profile Icons/boy.png",
-        "Default Profile Icons/girl.png",
-        "Default Profile Icons/woman.png",
-        "Default Profile Icons/man.png",
+        "/boy.png",
+        "/girl.png",
+        "/woman.png",
+        "/man.png",
     ];
 
     const [avatarSrc, setAvatarSrc] = useState("");
