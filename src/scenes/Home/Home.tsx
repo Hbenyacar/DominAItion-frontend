@@ -451,24 +451,6 @@ function Home() {
                 </Box>
                 <CustomTabPanel value={value} index={0}>
                   <div className="white-box">
-                    <Button
-                      onClick={() => {
-                        toGame();
-                      }}
-                      disabled={alignment == "" || selectedImg == null}
-                      variant="contained"
-                      color="primary"
-                      sx={{
-                        position: "absolute", // was "fixed"
-                        bottom: 20,
-                        right: 20,
-                        borderRadius: "8px",
-                        paddingX: 3,
-                        paddingY: 1.5,
-                      }}
-                    >
-                      Start Game
-                    </Button>
                     <Box
                       sx={{
                         display: "flex",
@@ -578,16 +560,44 @@ function Home() {
                         ))}
                       </ImageList>
                     </div>
-                    <div>
+                    <Button
+                      onClick={handleUploadButtonClick}
+                      sx={{
+                        marginTop: "20px",
+                        color: "white",
+                        backgroundColor: "rgb(207, 78, 10)",
+                      }}
+                    >
+                      Upload Image
+                    </Button>
+                    <Box mt={3}>
                       <WorldGenPanels />
-                    </div>
-                    <div>
+                    </Box>
+
+                    <Box>
                       <CharacterGen />
-                    </div>
+                    </Box>
+                    <Button
+                      onClick={() => {
+                        toGame();
+                      }}
+                      disabled={alignment == "" || selectedImg == null}
+                      variant="contained"
+                      color="primary"
+                      sx={{
+                        borderRadius: "8px",
+                        paddingX: 3,
+                        paddingY: 1.5,
+                        backgroundColor: "rgb(207, 78, 10)", // your color
+                        "&:hover": { backgroundColor: "darkorange" },
+                        color: "white",
+                        marginTop: 4,
+                      }}
+                    >
+                      Start Game
+                    </Button>
                   </div>
-                  <button onClick={handleUploadButtonClick}>
-                    Upload Image
-                  </button>
+
                   <input
                     type="file"
                     accept="image/*"

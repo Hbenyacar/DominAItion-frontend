@@ -12,7 +12,7 @@ body, html, #root {
     align-items: center; /* center horizontally */
     gap: 1rem;           /* spacing between boxes */
     padding: 10px;
-    min-height: 600px;
+    height: 100vh;
     margin-left: -10px;
     margin-top: 0px;
 }
@@ -25,7 +25,7 @@ body, html, #root {
   }
 
   .games {
-    margin-top: 100px;
+    margin-top: 70px;
   }
 
 .points-req {
@@ -33,11 +33,11 @@ body, html, #root {
 }
 
 .white-box {
-    background-color: white;       /* keep it white */
+    background-color: rgba(0, 0, 0, 0.1);       /* keep it white */
     border: 1px solid black;       /* black border */
     border-radius: 12px;           /* rounded corners */
     padding: 16px;                 /* spacing inside */
-    max-height: 450px;             /* optional: limit height */
+    max-height: 800px;             /* optional: limit height */
     min-height: 450px;
     min-width: 600px;
     max-width: 1100px;
