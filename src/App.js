@@ -12,6 +12,7 @@ import Europe from './widgets/Maps/USA/Europe';
 import Sample from './scenes/Sample/Sample';
 import ResetPassword from './scenes/Profile/ResetPassword';
 import World from './scenes/World/World';
+import Lobby from './scenes/Lobby/Lobby';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
       <Route path='/sample' element={<Sample/>} />
       <Route path="/reset" element={<ResetPassword />} />
       <Route path='/world' element={<World/>} />
+      <Route path='/lobby/:lobbyId' element={<Lobby/>} />
     </Routes>
   );
 }

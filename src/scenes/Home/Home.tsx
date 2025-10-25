@@ -174,6 +174,12 @@ function Home() {
     },
   ]);
 
+  interface Lobby {
+    id?: string;
+    map: string;
+    users?: string[];
+  }
+
   const [preview, setPreview] = useState<string | null>(null);
 
   const [selectedIndex, setSelectedIndex] = React.useState(1);
@@ -190,6 +196,8 @@ function Home() {
     dispatch(setMap({ map: title }));
   };
 
+
+
   const [openFind, setOpenFind] = useState(false);
 
   const [openChat, setOpenChat] = useState(false);
@@ -202,6 +210,38 @@ function Home() {
     id: number;
     name: string;
   };
+
+  const handleCreateLobby = async () => {
+    const newLobby = await createLobby("desert"); // or any map
+    if (newLobby) {
+      console.log("Lobby created:", newLobby);
+      navigate(`/lobby/${newLobby.id}`);
+    }
+  };
+
+  const createLobby = async (map: string = "desert"): Promise<Lobby | null> => {
+    try {
+      const response = await fetch("http://localhost:8080/api/lobby", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ map }), // start empty
+      });
+  
+      if (!response.ok) {
+        console.error("Failed to create lobby", response.statusText);
+        return null;
+      }
+  
+      const lobby: Lobby = await response.json();
+      return lobby;
+    } catch (error) {
+      console.error("Error creating lobby:", error);
+      return null;
+    }
+  };
+
 
   const handleClick = (item: (typeof itemData)[0]) => {
     setSelectedImg(item.img);
