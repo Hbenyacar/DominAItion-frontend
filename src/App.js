@@ -28,7 +28,7 @@ function App() {
       <Route path='/sample' element={<Sample/>} />
       <Route path="/reset" element={<ResetPassword />} />
       <Route path='/world' element={<World/>} />
-      <Route path='/lobby' element={<Lobby/>} />
+      <Route path='/lobby/:lobbyId' element={<Lobby/>} />
     </Routes>
   );
 }

@@ -1,58 +1,82 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import "./Lobby.css";
+
+interface User {
+  id: string;
+  username: string;
+  icon?: string;
+}
 
 function Lobby() {
-  const [joinedUsers, setJoinedUsers] = useState<string[]>([]);
-  const [userId] = useState<string>(() => generateRandomId());
+  const params = useParams<{ lobbyId: string }>();
+  const lobbyId = params.lobbyId;
+  const [joinedUsers, setJoinedUsers] = useState<User[]>([]);
+
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+  const userId = currentUser?.id;
 
   useEffect(() => {
-    // Create STOMP client
+    if (!lobbyId || !userId) return;
+
     const stompClient = new Client({
-      // brokerURL is undefined because we use SockJS
       brokerURL: undefined,
-      connectHeaders: {},
-      debug: (str) => console.log(str),
-      reconnectDelay: 5000,
       webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      reconnectDelay: 5000,
+      debug: (str) => console.log(str),
     });
 
-    // Called when connected
     stompClient.onConnect = () => {
       console.log("Connected to WebSocket");
 
-      // Subscribe to lobby updates
-      stompClient.subscribe("/topic/lobby", (message) => {
-        setJoinedUsers((prev) => [...prev, message.body]);
+      stompClient.subscribe(`/topic/lobby/${lobbyId}`, (message) => {
+        const users: User[] = JSON.parse(message.body);
+        console.log("Users received:", users);
+        setJoinedUsers(Array.isArray(users) ? users : []);
       });
 
-      // Auto-join lobby
-      stompClient.publish({ destination: "/app/lobby/join", body: userId });
+      // Notify server user has joined
+      stompClient.publish({
+        destination: "/app/lobby/join",
+        body: JSON.stringify({ lobbyId, userId }),
+      });
     };
 
-    // Activate the client
     stompClient.activate();
 
-    // Cleanup on unmount
+    // ✅ Proper synchronous cleanup
     return () => {
-      stompClient.deactivate();
+      void stompClient.deactivate(); // ignore returned Promise safely
     };
-  }, [userId]);
+  }, [lobbyId, userId]);
 
-  // Generate a random string for user ID
-  function generateRandomId(length = 8) {
-    return Math.random().toString(36).substr(2, length).toUpperCase();
-  }
+  if (!lobbyId) return <div>No lobby selected.</div>;
+  if (!userId) return <div>Loading user...</div>;
 
   return (
-    <div>
-      <h1>Lobby</h1>
+    <div className="lobby-container">
+      <h1>Lobby: {lobbyId}</h1>
       <p>Your ID: {userId}</p>
-      <ul>
-        {joinedUsers.map((id, i) => (
-          <li key={i}>{id}</li>
+
+      <h2>Joined Users:</h2>
+      <div className="user-list">
+        {joinedUsers.map((user) => (
+          <div key={user.id} className="user-item">
+            {user.icon && (
+              <img
+                src={user.icon}
+                alt={user.username}
+                className="user-avatar"
+              />
+            )}
+            <p className="username">{user.username}</p>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

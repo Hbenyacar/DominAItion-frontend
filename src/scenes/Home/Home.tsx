@@ -215,6 +215,7 @@ function Home() {
     const newLobby = await createLobby("desert"); // or any map
     if (newLobby) {
       console.log("Lobby created:", newLobby);
+      navigate(`/lobby/${newLobby.id}`);
     }
   };
 
