@@ -40,6 +40,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setMap } from "../../store/mapSlice";
 import WorldGenPanels from "../../widgets/WorldGen/WorldGen";
 import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
+import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
 
 function loadOpenCV(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -616,6 +617,9 @@ function Home() {
 
                     <Box>
                       <CharacterGen />
+                    </Box>
+                    <Box>
+                      {alignment === "single" && <AIPlayerSettings/>}
                     </Box>
                     <Button
                       onClick={() => {
