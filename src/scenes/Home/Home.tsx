@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../navbar/NavBar";
 import "./Home.css";
+import BackgroundMusic from "../../components/BackgroundMusic";
 
 // MUI components
 import {
@@ -579,6 +580,10 @@ function Home() {
                     </Box>
                     <Button
                       onClick={() => {
+                        const audio = new Audio(
+                          "/assets/sound_effects/game_start.mp3"
+                        );
+                        audio.play();
                         toGame();
                       }}
                       disabled={alignment == "" || selectedImg == null}
@@ -631,6 +636,7 @@ function Home() {
           {selectedIndex === 3 && <Settings />}
           {selectedIndex === 5 && <Messages />}
         </div>
+        <Box>{/**<BackgroundMusic /> **/}</Box>
       </div>
     </div>
   );
