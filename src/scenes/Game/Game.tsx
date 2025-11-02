@@ -5,8 +5,9 @@ import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput
 import Navbar from "../navbar/NavBar";
 import { RootState } from "../../store/store";
 import "./Game.css";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import Europe from "../../widgets/Maps/USA/Europe";
+import { Pause, PlayArrow, PlayCircle, SkipNext } from "@mui/icons-material";
 
 function Game() {
   const map = useSelector((state: RootState) => state.map.map);
@@ -14,6 +15,25 @@ function Game() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [storyResponse, setStoryResponse] = useState("");
   const [score, setScore] = useState(0); // 🟢 new state for score
+  const [messages, setMessages] = useState<{ sender: string; text: string }[]>(
+    []
+  );
+  const [isNarrating, setIsNarrating] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const [chatInput, setChatInput] = useState("");
+
+  const handleSendMessage = () => {
+    if (!chatInput.trim()) return;
+
+    // For now, hardcode the sender (later this will be the logged-in user)
+    const newMessage = { sender: "You", text: chatInput.trim() };
+    setMessages((prev) => [...prev, newMessage]);
+    setChatInput("");
+
+    // (Later) send to backend:
+    // fetch(`/api/games/${gameId}/chat`, { method: "POST", body: JSON.stringify(newMessage) })
+  };
 
   const handleCloseModal = () => setShowModal(false);
 
@@ -60,10 +80,58 @@ function Game() {
   // randomly add between 5 and 30 points
   useEffect(() => {
     if (storyResponse && storyResponse !== "Awaiting your first move...") {
+      const utterance = new SpeechSynthesisUtterance(storyResponse);
+      utterance.rate = 1.1; // 🔹 Speed (1.0 = normal)
+      utterance.pitch = 1.0; // 🔹 Voice pitch
+      utterance.volume = 1.0; // 🔹 Volume 0–1
+      utterance.lang = "en-US"; // 🔹 Voice language
+
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice = voices.find((v) =>
+        v.name.toLowerCase().includes("female")
+      );
+      if (preferredVoice) utterance.voice = preferredVoice;
+
+      // Stop any ongoing speech before starting new one
+      window.speechSynthesis.cancel();
+      setIsNarrating(true);
+      setIsPaused(false);
+      window.speechSynthesis.speak(utterance);
+
+      utterance.onend = () => {
+        setIsNarrating(false);
+        setIsPaused(false);
+      };
+
       const pointsEarned = Math.floor(Math.random() * 26) + 5; // 5–30
       setScore((prev) => prev + pointsEarned);
+
+      const audio = new Audio("/assets/sound_effects/point_won.mp3");
+      audio.play();
     }
   }, [storyResponse]);
+
+  const handlePauseNarration = () => {
+    if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+      window.speechSynthesis.pause();
+      setIsPaused(true);
+    }
+  };
+
+  const handleResumeNarration = () => {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+      setIsPaused(false);
+    }
+  };
+
+  const handleSkipNarration = () => {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      setIsNarrating(false);
+      setIsPaused(false);
+    }
+  };
 
   return (
     <div className="game-page">
@@ -95,31 +163,10 @@ function Game() {
         </div>
       )}
 
-      {/* 🟢 Scoreboard */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-          borderRadius: "10px",
-          width: "250px",
-          height: "60px",
-          margin: "20px auto -90px auto",
-          color: "white",
-          fontWeight: "bold",
-          fontSize: "1.3rem",
-          boxShadow: "0px 0px 10px rgba(0,0,0,0.5)",
-          marginTop: "100px",
-        }}
-      >
-        Score: {score}
-      </Box>
-
       {/* Outer wrapper: full viewport width */}
       <div className="content-wrapper">
         <div className="content">
-          {/* Left box */}
+          {/* Left game chat box */}
           <div
             className="game-chat"
             style={{
@@ -128,29 +175,108 @@ function Game() {
                   ? "70px"
                   : map === "USA"
                   ? "50px"
-                  : "10px",
-              width: "300px",
-              height: "500px",
+                  : "0px",
+              width: "220px",
+              height: "400px",
               backgroundColor: "rgba(0,0,0,0.3)",
               padding: "15px",
-              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            Game Chat
+            {/* Title pinned at top */}
+            <strong
+              style={{
+                fontSize: "1.1rem",
+                marginBottom: "10px",
+              }}
+            >
+              Game Chat
+            </strong>
+
+            {/* Scrollable message area */}
+            <div
+              id="chat-messages"
+              style={{
+                flexGrow: 1,
+                overflowY: "auto",
+                fontSize: "0.9rem",
+                lineHeight: "1.3",
+                textAlign: "left",
+
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                marginBottom: "8px",
+              }}
+            >
+              {messages.length === 0 ? (
+                <p style={{ opacity: 0.6 }}>No messages yet...</p>
+              ) : (
+                messages.map((msg, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      backgroundColor: "rgba(255, 255, 255, 0.1)",
+                      borderRadius: "6px",
+                      padding: "4px 6px",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    <strong style={{ color: "rgb(207,78,10)" }}>
+                      {msg.sender}:
+                    </strong>{" "}
+                    {msg.text}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Input row */}
+            <div style={{ display: "flex", gap: "5px" }}>
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                style={{
+                  flexGrow: 1,
+                  borderRadius: "6px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  backgroundColor: "rgba(0,0,0,0.1)",
+                  padding: "6px",
+                  fontSize: "0.85rem",
+                }}
+              />
+              <button
+                onClick={handleSendMessage}
+                style={{
+                  border: "none",
+                  borderRadius: "6px",
+                  backgroundColor: "rgb(207,78,10)", // 🔸 your orange
+                  color: "white",
+                  padding: "6px 10px",
+                  cursor: "pointer",
+                }}
+              >
+                Send
+              </button>
+            </div>
           </div>
 
           {/* Center map */}
           <div
             className="map-wrapper"
             style={{
-              marginLeft: map === "Medieval Europe" ? "-100px" : "0px",
+              marginLeft: map === "Medieval Europe" ? "-100px" : "-20px",
             }}
           >
             {map === "USA" && <InteractiveUSMap />}
             {map === "Medieval Europe" && <Europe />}
           </div>
 
-          {/* Right box */}
+          {/* Right story box */}
           <div
             className="game-chat"
             style={{
@@ -160,19 +286,103 @@ function Game() {
                   : map === "USA"
                   ? "50px"
                   : "10px",
-              width: "400px",
-              height: "500px",
+              width: "300px",
+              height: "400px",
               backgroundColor: "rgba(0,0,0,0.3)",
-
               padding: "15px",
-              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            <Box>
-              <strong>Story Board</strong>
-              <div style={{ marginTop: "10px" }}>
-                {storyResponse || "Awaiting your first move..."}
-              </div>
+            {/* Title pinned at top */}
+            <strong style={{ fontSize: "1.1rem", marginBottom: "10px" }}>
+              Story Board
+            </strong>
+
+            {/* Scrollable story content */}
+            <div
+              style={{
+                flexGrow: 1,
+                overflowY: "auto",
+                fontSize: "0.8rem",
+                lineHeight: "1.3",
+                textAlign: "justify",
+                whiteSpace: "pre-wrap",
+                wordWrap: "break-word",
+                overflowWrap: "break-word",
+              }}
+            >
+              {storyResponse || "Awaiting your first move..."}
+            </div>
+            <div
+              style={{
+                marginTop: "10px",
+                backgroundColor: "rgba(0, 0, 0, 0.4)",
+                borderRadius: "8px",
+                padding: "8px",
+                textAlign: "center",
+                color: "white",
+                fontWeight: "bold",
+                fontSize: "1rem",
+                boxShadow: "0px 0px 6px rgba(0,0,0,0.3)",
+              }}
+            >
+              Score: {score}
+            </div>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "10px",
+                marginTop: "10px",
+              }}
+            >
+              {isNarrating && !isPaused && (
+                <Tooltip title="Pause Narration">
+                  <IconButton
+                    onClick={handlePauseNarration}
+                    sx={{
+                      backgroundColor: "rgb(207, 78, 10)",
+                      color: "white",
+                      "&:hover": { backgroundColor: "darkorange" },
+                    }}
+                  >
+                    <Pause />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              {isNarrating && isPaused && (
+                <Tooltip title="Resume Narration">
+                  <IconButton
+                    onClick={handleResumeNarration}
+                    sx={{
+                      backgroundColor: "rgb(207, 78, 10)",
+                      color: "white",
+                      "&:hover": { backgroundColor: "darkorange" },
+                    }}
+                  >
+                    <PlayArrow />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              {isNarrating && (
+                <Tooltip title="Skip Narration">
+                  <IconButton
+                    onClick={handleSkipNarration}
+                    disabled={!isNarrating}
+                    sx={{
+                      backgroundColor: "rgb(207, 78, 10)",
+                      color: "white",
+                      "&:hover": { backgroundColor: "darkorange" },
+                      opacity: !isNarrating ? 0.5 : 1,
+                    }}
+                  >
+                    <SkipNext />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
           </div>
         </div>
