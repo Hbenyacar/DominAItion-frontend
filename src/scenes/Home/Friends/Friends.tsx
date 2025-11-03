@@ -27,6 +27,8 @@ import { RootState } from "../../../store/store";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 type Friend = {
   id: string;
   username: string;
@@ -56,12 +58,12 @@ export default function FriendsPage() {
       try {
         // get current user
         const userRes = await fetch(
-          `http://localhost:8080/api/users/email/${currentUserEmail}`
+          `${API_BASE_URL}/api/users/email/${currentUserEmail}`
         );
         const userData = await userRes.json();
 
         // get all users
-        const allRes = await fetch("http://localhost:8080/api/users");
+        const allRes = await fetch(`${API_BASE_URL}/api/users`);
         const allUsers = await allRes.json();
 
         const friendIds = userData.friendIds || [];
@@ -123,7 +125,7 @@ export default function FriendsPage() {
   const handleAddFriend = async (user: Friend) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/sendFriendRequest/${currentUserEmail}/${user.email}`,
+        `${API_BASE_URL}/api/users/sendFriendRequest/${currentUserEmail}/${user.email}`,
         { method: "PUT" }
       );
       if (!res.ok) throw new Error("Failed to send friend request");
@@ -141,7 +143,7 @@ export default function FriendsPage() {
   const handleCancelRequest = async (user: Friend) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/cancelFriendRequest/${currentUserEmail}/${user.email}`,
+        `${API_BASE_URL}/api/users/cancelFriendRequest/${currentUserEmail}/${user.email}`,
         { method: "PUT" }
       );
       if (!res.ok) throw new Error("Failed to cancel request");
@@ -158,7 +160,7 @@ export default function FriendsPage() {
   const handleApproveRequest = async (user: Friend) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/approveFriendRequest/${currentUserEmail}/${user.id}`,
+        `${API_BASE_URL}/api/users/approveFriendRequest/${currentUserEmail}/${user.id}`,
         { method: "PUT" }
       );
 
@@ -179,7 +181,7 @@ export default function FriendsPage() {
   const handleRejectRequest = async (user: Friend) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/rejectFriendRequest/${currentUserEmail}/${user.id}`,
+        `${API_BASE_URL}/api/users/rejectFriendRequest/${currentUserEmail}/${user.id}`,
         { method: "PUT" }
       );
 
@@ -199,7 +201,7 @@ export default function FriendsPage() {
   const handleRemoveFriend = async (friend: Friend) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/removeFriend/${currentUserEmail}/${friend.id}`,
+        `${API_BASE_URL}/api/users/removeFriend/${currentUserEmail}/${friend.id}`,
         { method: "PUT" }
       );
       if (!res.ok) throw new Error("Failed to remove friend");
@@ -216,7 +218,7 @@ export default function FriendsPage() {
   const handleBlockFriend = async (friend: Friend) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/blockUser/${currentUserEmail}/${friend.id}`,
+        `${API_BASE_URL}/api/users/blockUser/${currentUserEmail}/${friend.id}`,
         { method: "PUT" }
       );
 
@@ -237,7 +239,7 @@ export default function FriendsPage() {
   const handleUnblockUser = async (user: Friend) => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/unblockUser/${currentUserEmail}/${user.id}`,
+        `${API_BASE_URL}/api/users/unblockUser/${currentUserEmail}/${user.id}`,
         { method: "PUT" }
       );
 

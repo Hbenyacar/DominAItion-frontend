@@ -19,6 +19,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 export default function Settings() {
   // 👤 Replace with your actual current user's email (can later fetch dynamically)
   const currentUserEmail = "jackrdar@gmail.com";
@@ -111,7 +113,7 @@ export default function Settings() {
       form.append("reporterEmail", currentUserEmail); // ✅ Include reporter’s email
       if (screenshot) form.append("screenshot", screenshot);
 
-      const res = await fetch("http://localhost:8080/api/bugs/report", {
+      const res = await fetch(`${API_BASE_URL}/api/bugs/report`, {
         method: "POST",
         body: form, // no headers! FormData auto-sets them
       });

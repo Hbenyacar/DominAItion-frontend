@@ -6,6 +6,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import "./Lobby.css";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 interface User {
   id: string;
   username: string;
@@ -25,7 +27,7 @@ function Lobby() {
 
     const stompClient = new Client({
       brokerURL: undefined,
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
       reconnectDelay: 5000,
       debug: (str) => console.log(str),
     });

@@ -17,6 +17,8 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 type ChatMessage = {
   chatId?: string;
   senderId: string;
@@ -68,15 +70,15 @@ export default function Messages() {
       try {
         // 1️⃣ Get current user
         const userRes = await fetch(
-          `http://localhost:8080/api/users/email/${currentUserEmail}`
+          `${API_BASE_URL}/api/users/email/${currentUserEmail}`
         );
         const user = await userRes.json();
         setCurrentUserId(user.id);
 
         // 2️⃣ Fetch chats and friends in parallel
         const [chatRes, friendRes] = await Promise.all([
-          fetch(`http://localhost:8080/api/chats/${user.id}`),
-          fetch(`http://localhost:8080/api/users/friends/${currentUserEmail}`),
+          fetch(`${API_BASE_URL}/api/chats/${user.id}`),
+          fetch(`${API_BASE_URL}/api/users/friends/${currentUserEmail}`),
         ]);
 
         const chatData = await chatRes.json();
@@ -95,7 +97,7 @@ export default function Messages() {
         // 3️⃣ Fetch messages for all chats (to display unread counts)
         for (const chat of chatData) {
           const msgRes = await fetch(
-            `http://localhost:8080/api/chats/${chat.id}/messages`
+            `${API_BASE_URL}/api/chats/${chat.id}/messages`
           );
           const msgRaw = await msgRes.json();
           const msgData = normalizeMessages(msgRaw); // ✅ normalize
@@ -127,13 +129,13 @@ export default function Messages() {
     try {
       // 1️⃣ Mark all unread messages as read in backend
       await fetch(
-        `http://localhost:8080/api/chats/${chat.id}/mark-read/${currentUserId}`,
+        `${API_BASE_URL}/api/chats/${chat.id}/mark-read/${currentUserId}`,
         { method: "PUT" }
       );
 
       // 2️⃣ Re-fetch updated messages from backend (fresh data)
       const res = await fetch(
-        `http://localhost:8080/api/chats/${chat.id}/messages`
+        `${API_BASE_URL}/api/chats/${chat.id}/messages`
       );
       const msgsRaw = await res.json();
       const msgs = normalizeMessages(msgsRaw); // ✅ normalize
@@ -149,7 +151,7 @@ export default function Messages() {
   const handleStartChat = async () => {
     if (!selectedNewFriend || !currentUserId) return;
     try {
-      const res = await fetch("http://localhost:8080/api/chats/start", {
+      const res = await fetch(`${API_BASE_URL}/api/chats/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -182,7 +184,7 @@ export default function Messages() {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/api/chats/${selectedChat.id}/message`,
+        `${API_BASE_URL}/api/chats/${selectedChat.id}/message`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
