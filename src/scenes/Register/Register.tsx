@@ -15,6 +15,8 @@ import { setLogin } from "../../store/authSlice";
 import { emit } from "process";
 import { useDispatch } from "react-redux";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 function Register() {
 
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ function Register() {
   const hasErrors = Object.values(fields).some(f => f.error !== "" || f.value === "");
 
   const register = async (email: string, password: string, username: string) => {
-    const response = await fetch("http://localhost:8080/api/users/register", {
+    const response = await fetch(`${API_BASE_URL}/api/users/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

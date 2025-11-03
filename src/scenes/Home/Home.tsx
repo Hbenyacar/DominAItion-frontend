@@ -43,6 +43,8 @@ import WorldGenPanels from "../../widgets/WorldGen/WorldGen";
 import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
 import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 function loadOpenCV(): Promise<void> {
   return new Promise((resolve, reject) => {
     if ((window as any).cv) {
@@ -223,7 +225,7 @@ function Home() {
 
   const createLobby = async (map: string = "desert"): Promise<Lobby | null> => {
     try {
-      const response = await fetch("http://localhost:8080/api/lobby", {
+      const response = await fetch(`${API_BASE_URL}/api/lobby`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
