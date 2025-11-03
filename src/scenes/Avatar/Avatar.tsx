@@ -6,6 +6,8 @@ import { setAvatar } from "../../store/authSlice";
 import { useNavigate } from "react-router-dom";
 import { RootState } from "../../store/store";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 // Helper: Convert an image URL to a base64 string
 const imageToBase64 = async (url: string): Promise<string> => {
   const response = await fetch(url);
@@ -70,7 +72,7 @@ function AvatarSelect() {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/users/${user.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

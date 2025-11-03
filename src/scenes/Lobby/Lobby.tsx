@@ -6,6 +6,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import "./Lobby.css";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 interface User {
   id: string;
   username: string;

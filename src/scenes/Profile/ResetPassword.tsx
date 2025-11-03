@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Box, Typography, TextField, Button, Stack } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 export default function ResetPassword() {
   const [params] = useSearchParams();
   const token = params.get("token");
@@ -17,7 +19,7 @@ export default function ResetPassword() {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/resetPassword?token=${token}`,
+        `${API_BASE_URL}/api/users/resetPassword?token=${token}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

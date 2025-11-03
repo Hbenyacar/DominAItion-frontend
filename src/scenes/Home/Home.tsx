@@ -5,6 +5,8 @@ import "./Home.css";
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import BackgroundMusic from "../../components/BackgroundMusic";
+
 
 // MUI components
 import {
@@ -44,6 +46,9 @@ import { setMap } from "../../store/mapSlice";
 import WorldGenPanels from "../../widgets/WorldGen/WorldGen";
 import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
 import LobbyList from "../../components/LobbyList";
+import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 export interface User {
   id: string;
@@ -57,6 +62,7 @@ export interface Lobby {
   map: string;
   users: User[];
 }
+
 
 function loadOpenCV(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -673,9 +679,18 @@ function Home() {
                     <Box>
                       <CharacterGen />
                     </Box>
+                    <Box>
+                      {alignment === "single" && <AIPlayerSettings/>}
+                    </Box>
                     <Button
                       onClick={() => {
                         handleCreateLobby();
+                        const audio = new Audio(
+                          "/assets/sound_effects/game_start.mp3"
+                        );
+                        audio.play();
+                        toGame();
+
                       }}
                       disabled={alignment == "" || selectedImg == null}
                       variant="contained"
@@ -728,6 +743,7 @@ function Home() {
           {selectedIndex === 3 && <Settings />}
           {selectedIndex === 5 && <Messages />}
         </div>
+        <Box>{/**<BackgroundMusic /> **/}</Box>
       </div>
     </div>
   );
