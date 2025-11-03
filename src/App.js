@@ -13,9 +13,12 @@ import Sample from './scenes/Sample/Sample';
 import ResetPassword from './scenes/Profile/ResetPassword';
 import World from './scenes/World/World';
 import Lobby from './scenes/Lobby/Lobby';
+import InviteListener from "./components/InviteListener";
 
 function App() {
   return (
+    <>
+    <InviteListener />
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -30,6 +33,7 @@ function App() {
       <Route path='/world' element={<World/>} />
       <Route path='/lobby/:lobbyId' element={<Lobby/>} />
     </Routes>
+    </>
   );
 }
 
