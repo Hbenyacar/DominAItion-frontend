@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../navbar/NavBar";
 import "./Home.css";
@@ -198,8 +198,6 @@ function Home() {
     dispatch(setMap({ map: title }));
   };
 
-
-
   const [openFind, setOpenFind] = useState(false);
 
   const [openChat, setOpenChat] = useState(false);
@@ -207,6 +205,23 @@ function Home() {
     null
   );
   const [newMessage, setNewMessage] = useState("");
+
+  useEffect(() => {
+    // Stop any global background music playing from the Game page
+    const globalAudio = (window as any).globalGameAudio;
+    if (globalAudio && !globalAudio.paused) {
+      globalAudio.pause();
+      globalAudio.currentTime = 0;
+      (window as any).globalGameAudio = null;
+    }
+
+    // Also handle any leftover <audio> elements in DOM (fallback)
+    const audios = document.getElementsByTagName("audio");
+    for (const audio of audios) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  }, []);
 
   type Friend = {
     id: number;
@@ -230,12 +245,12 @@ function Home() {
         },
         body: JSON.stringify({ map }), // start empty
       });
-  
+
       if (!response.ok) {
         console.error("Failed to create lobby", response.statusText);
         return null;
       }
-  
+
       const lobby: Lobby = await response.json();
       return lobby;
     } catch (error) {
@@ -243,7 +258,6 @@ function Home() {
       return null;
     }
   };
-
 
   const handleClick = (item: (typeof itemData)[0]) => {
     setSelectedImg(item.img);
@@ -456,6 +470,7 @@ function Home() {
             </List>
           </Box>
         </div>
+
         <div className="main" style={{ display: "flex" }}>
           {selectedIndex === 1 && (
             <div className="games">
@@ -619,9 +634,7 @@ function Home() {
                     <Box>
                       <CharacterGen />
                     </Box>
-                    <Box>
-                      {alignment === "single" && <AIPlayerSettings/>}
-                    </Box>
+                    <Box>{alignment === "single" && <AIPlayerSettings />}</Box>
                     <Button
                       onClick={() => {
                         const audio = new Audio(
@@ -680,7 +693,6 @@ function Home() {
           {selectedIndex === 3 && <Settings />}
           {selectedIndex === 5 && <Messages />}
         </div>
-        <Box>{/**<BackgroundMusic /> **/}</Box>
       </div>
     </div>
   );

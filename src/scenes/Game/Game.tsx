@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
 import Navbar from "../navbar/NavBar";
@@ -11,6 +12,11 @@ import { Pause, PlayArrow, PlayCircle, SkipNext } from "@mui/icons-material";
 
 function Game() {
   const map = useSelector((state: RootState) => state.map.map);
+  const currentUserEmail = useSelector(
+    (state: RootState) => state.auth.user?.email || null
+  );
+
+  /* ---------------------- START STATES ---------------------------- */
   const [showModal, setShowModal] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [storyResponse, setStoryResponse] = useState("");
@@ -20,8 +26,118 @@ function Game() {
   );
   const [isNarrating, setIsNarrating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-
   const [chatInput, setChatInput] = useState("");
+
+  /* ---------------------- START BACKGROUND MUSIC ---------------------------- */
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(
+    Number(localStorage.getItem("currentTrackIndex")) || 0
+  );
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+
+  const [musicEnabled, setMusicEnabled] = useState<boolean | null>(null);
+
+  const [currentTime, setCurrentTime] = useState<number>(
+    Number(localStorage.getItem("currentTime")) || 0
+  );
+
+  useEffect(() => {
+    const fetchMusicPreference = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/users/email/${currentUserEmail}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch user");
+        const user = await res.json();
+        setMusicEnabled(user.musicEnabled ?? true); // default to true if missing
+      } catch (err) {
+        console.error("Error fetching user:", err);
+        setMusicEnabled(true); // fallback to true if fetch fails
+      }
+    };
+
+    fetchMusicPreference();
+  }, [currentUserEmail]);
+
+  useEffect(() => {
+    if (musicEnabled === false) return; // Skip all if disabled
+    if (musicEnabled === null) return; // Wait until loaded
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio(
+        `/assets/audio/Track${currentTrackIndex + 1}.mp3`
+      );
+      audioRef.current.volume = 0.4;
+      audioRef.current.currentTime = currentTime;
+
+      (window as any).globalGameAudio = audioRef.current;
+    }
+
+    const audio = audioRef.current;
+    audio.loop = false;
+
+    const handleEnded = () => {
+      const next = (currentTrackIndex + 1) % 10;
+      setCurrentTrackIndex(next);
+      localStorage.setItem("currentTrackIndex", String(next));
+      audio.src = `/assets/audio/Track${next + 1}.mp3`;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    };
+
+    audio.addEventListener("ended", handleEnded);
+
+    if (isPlaying) {
+      const startTimeout = setTimeout(() => {
+        audio
+          .play()
+          .catch(() => console.log("Autoplay blocked until user interaction"));
+      }, 3000);
+      return () => clearTimeout(startTimeout);
+    }
+
+    const interval = setInterval(() => {
+      if (!audio.paused) {
+        localStorage.setItem("currentTrackIndex", String(currentTrackIndex));
+        localStorage.setItem("currentTime", String(audio.currentTime));
+      }
+    }, 15000);
+
+    return () => {
+      clearInterval(interval);
+      audio.removeEventListener("ended", handleEnded);
+
+      audio.pause();
+      audio.currentTime = 0;
+
+      localStorage.setItem("currentTrackIndex", String(currentTrackIndex));
+      localStorage.setItem("currentTime", "0");
+
+      audioRef.current = null;
+    };
+  }, [currentTrackIndex, isPlaying, musicEnabled]);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.pathname !== "/game" && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+  /* ---------------------- END BACKGROUND MUSIC ---------------------------- */
 
   const handleSendMessage = () => {
     if (!chatInput.trim()) return;
@@ -34,9 +150,7 @@ function Game() {
     // (Later) send to backend:
     // fetch(`/api/games/${gameId}/chat`, { method: "POST", body: JSON.stringify(newMessage) })
   };
-
   const handleCloseModal = () => setShowModal(false);
-
   const tutorialSlides = [
     {
       title: "Welcome to DominAItion!",
@@ -62,12 +176,10 @@ function Game() {
     },
     { title: "Good luck, and have fun!" },
   ];
-
   const handlePrevSlide = () =>
     setCurrentSlide((prev) => Math.max(prev - 1, 0));
   const handleNextSlide = () =>
     setCurrentSlide((prev) => Math.min(prev + 1, tutorialSlides.length - 1));
-
   useEffect(() => {
     const modalShown = sessionStorage.getItem("modalShown");
     if (!modalShown) {
@@ -76,7 +188,7 @@ function Game() {
     }
   }, []);
 
-  // 🟢 When storyResponse changes (i.e., new action result),
+  // when storyResponse changes (i.e., new action result),
   // randomly add between 5 and 30 points
   useEffect(() => {
     if (storyResponse && storyResponse !== "Awaiting your first move...") {
@@ -110,21 +222,18 @@ function Game() {
       audio.play();
     }
   }, [storyResponse]);
-
   const handlePauseNarration = () => {
     if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
       window.speechSynthesis.pause();
       setIsPaused(true);
     }
   };
-
   const handleResumeNarration = () => {
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
       setIsPaused(false);
     }
   };
-
   const handleSkipNarration = () => {
     if (window.speechSynthesis.speaking) {
       window.speechSynthesis.cancel();
@@ -135,32 +244,70 @@ function Game() {
 
   return (
     <div className="game-page">
+      {/* nav bar at top of screen */}
       <Navbar />
 
-      {/* Tutorial Modal */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>{tutorialSlides[currentSlide].title}</h2>
-            <h3>{tutorialSlides[currentSlide].content}</h3>
-            <div className="modal-navigation">
-              <button onClick={handlePrevSlide} disabled={currentSlide === 0}>
-                ←
-              </button>
-              <button
-                onClick={handleNextSlide}
-                disabled={currentSlide === tutorialSlides.length - 1}
-              >
-                →
-              </button>
-            </div>
-            <button className="close-button" onClick={handleCloseModal}>
-              {currentSlide === tutorialSlides.length - 1
-                ? "Close"
-                : "Skip Tutorial"}
-            </button>
-          </div>
-        </div>
+      {musicEnabled && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: "15px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            backgroundColor: "rgba(0,0,0,0.3)",
+            borderRadius: "12px",
+            padding: "8px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            color: "white",
+            zIndex: 2000,
+            backdropFilter: "blur(4px)",
+            marginTop: "70px",
+          }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+            Track {currentTrackIndex + 1}
+          </Typography>
+
+          <IconButton
+            onClick={() => {
+              if (!audioRef.current) return;
+              if (audioRef.current.paused) {
+                audioRef.current.play().catch(() => {});
+                setIsPlaying(true);
+              } else {
+                audioRef.current.pause();
+                setIsPlaying(false);
+              }
+            }}
+            sx={{
+              backgroundColor: "rgb(207,78,10)",
+              "&:hover": { backgroundColor: "darkorange" },
+              color: "white",
+            }}
+          >
+            {isPlaying ? <Pause /> : <PlayArrow />}
+          </IconButton>
+
+          <IconButton
+            onClick={() => {
+              if (!audioRef.current) return;
+              const next = (currentTrackIndex + 1) % 10;
+              setCurrentTrackIndex(next);
+              audioRef.current.src = `/assets/audio/Track${next + 1}.mp3`;
+              audioRef.current.currentTime = 0;
+              if (isPlaying) audioRef.current.play().catch(() => {});
+            }}
+            sx={{
+              backgroundColor: "rgb(207,78,10)",
+              "&:hover": { backgroundColor: "darkorange" },
+              color: "white",
+            }}
+          >
+            <SkipNext />
+          </IconButton>
+        </Box>
       )}
 
       {/* Outer wrapper: full viewport width */}
@@ -203,11 +350,14 @@ function Game() {
                 fontSize: "0.9rem",
                 lineHeight: "1.3",
                 textAlign: "left",
-
                 display: "flex",
                 flexDirection: "column",
                 gap: "6px",
                 marginBottom: "8px",
+                maxHeight: "100%", // stays within 400px box
+                wordWrap: "break-word",
+                overflowWrap: "break-word",
+                whiteSpace: "pre-wrap", // preserve line breaks but wrap long lines
               }}
             >
               {messages.length === 0 ? (
@@ -392,6 +542,32 @@ function Game() {
       <div style={{ marginTop: "20px" }}>
         <PlayerActionInput onSubmitResponse={setStoryResponse} />
       </div>
+
+      {/* Tutorial Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>{tutorialSlides[currentSlide].title}</h2>
+            <h3>{tutorialSlides[currentSlide].content}</h3>
+            <div className="modal-navigation">
+              <button onClick={handlePrevSlide} disabled={currentSlide === 0}>
+                ←
+              </button>
+              <button
+                onClick={handleNextSlide}
+                disabled={currentSlide === tutorialSlides.length - 1}
+              >
+                →
+              </button>
+            </div>
+            <button className="close-button" onClick={handleCloseModal}>
+              {currentSlide === tutorialSlides.length - 1
+                ? "Close"
+                : "Skip Tutorial"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

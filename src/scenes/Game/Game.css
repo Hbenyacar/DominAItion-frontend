@@ -9,8 +9,11 @@ body, html {
 }
 
 .game-page {
-  display: block; /* make sure this parent doesn’t force flex column */
-  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;        /* Fill full viewport height */
+  overflow: hidden;     /* Prevent scrollbars */
+  
 }
 
 /* Wrapper for horizontal scroll */
@@ -32,6 +35,7 @@ body, html {
   min-width: 900px; /* 👈 ensures scrollable area when screen is smaller */
   gap: 40px;
   padding: 0 20px;
+  margin-top: 10px;
 }
 
 .game-chat {
