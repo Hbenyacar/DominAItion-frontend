@@ -6,6 +6,7 @@ import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import BackgroundMusic from "../../components/BackgroundMusic";
+import Trophy from '@mui/icons-material/EmojiEvents';
 
 
 // MUI components
@@ -47,6 +48,7 @@ import WorldGenPanels from "../../widgets/WorldGen/WorldGen";
 import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
 import LobbyList from "../../components/LobbyList";
 import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
+import Achievements from "../Achievements/Achievements";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
@@ -472,6 +474,26 @@ function Home() {
                 </ListItemIcon>
                 <ListItemText primary="Maps" />
               </ListItemButton>
+              <ListItemButton
+                sx={{
+                  minWidth: "300px",
+                  paddingLeft: "30px",
+                  "&.Mui-selected": {
+                    backgroundColor: "rgba(230, 160, 120, 0.8)", // darker shade
+                    color: "black", // text/icon color
+                    "&:hover": {
+                      backgroundColor: "rgba(220, 145, 105, 0.9)", // slightly darker on hover
+                    },
+                  },
+                }}
+                selected={selectedIndex === 6}
+                onClick={(event) => handleListItemClick(event, 6)}
+              >
+                <ListItemIcon>
+                  <Trophy />
+                </ListItemIcon>
+                <ListItemText primary="Achievements" />
+              </ListItemButton>
             </List>
           </Box>
           <Box
@@ -757,6 +779,7 @@ function Home() {
           {selectedIndex === 2 && <FriendsPage />}
           {selectedIndex === 3 && <Settings />}
           {selectedIndex === 5 && <Messages />}
+          {selectedIndex === 6 && <Achievements/>}
         </div>
       </div>
     </div>
