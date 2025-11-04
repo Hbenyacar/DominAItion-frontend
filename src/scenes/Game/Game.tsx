@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
 import Navbar from "../navbar/NavBar";
@@ -9,6 +9,8 @@ import "./Game.css";
 import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import Europe from "../../widgets/Maps/USA/Europe";
 import { Pause, PlayArrow, PlayCircle, SkipNext } from "@mui/icons-material";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/";
 
 function Game() {
   const map = useSelector((state: RootState) => state.map.map);
@@ -16,17 +18,21 @@ function Game() {
     (state: RootState) => state.auth.user?.email || null
   );
 
+  const [userId, setUserId] = useState<string | null>(null);
+
   /* ---------------------- START STATES ---------------------------- */
   const [showModal, setShowModal] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [storyResponse, setStoryResponse] = useState("");
-  const [score, setScore] = useState(0); // 🟢 new state for score
+  const [score, setScore] = useState(0);
   const [messages, setMessages] = useState<{ sender: string; text: string }[]>(
     []
   );
   const [isNarrating, setIsNarrating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [chatInput, setChatInput] = useState("");
+
+  const [gameId, setGameId] = useState<string | null>(null);
 
   /* ---------------------- START BACKGROUND MUSIC ---------------------------- */
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -137,7 +143,94 @@ function Game() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
-  /* ---------------------- END BACKGROUND MUSIC ---------------------------- */
+  /* ---------------------- START CREATE GAME ---------------------------- */
+
+  useEffect(() => {
+    const createGame = async () => {
+      try {
+        console.log("Creating new game...");
+
+        // Make the POST request to your backend
+        const response = await fetch(`${API_BASE_URL}/api/game/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            worldId: map || "USA", // current map from Redux state
+            winningPoints: "100", // you can make this dynamic later
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to create game: ${response.status}`);
+        }
+
+        // The backend returns the new game ID as plain text
+        const newGameId = await response.text();
+        console.log("✅ Game created with ID:", newGameId);
+
+        // Save the ID in React state
+        setGameId(newGameId);
+
+        // 2: Get user ID directly (not via setState)
+        const res = await fetch(
+          `http://localhost:8080/api/users/email/${currentUserEmail}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch user ID");
+
+        const user = await res.json();
+        const fetchedUserId = user.id; // ✅ use local variable
+        setUserId(fetchedUserId);
+
+        console.log("👤 Current User ID:", fetchedUserId);
+
+        // 3: Add player to the game
+        const addPlayerResponse = await fetch(
+          `${API_BASE_URL}/api/game/addPlayer`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              gameId: newGameId, // current map from Redux state
+              playerId: fetchedUserId, // you can make this dynamic later
+            }),
+          }
+        );
+
+        if (addPlayerResponse.ok) {
+          console.log("🙋 Player added to game:", fetchedUserId);
+        } else {
+          console.warn("⚠️ Failed to add player");
+        }
+
+        // 4: start the game
+        const startResponse = await fetch(
+          "http://localhost:8080/api/game/start",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ gameId: newGameId }),
+          }
+        );
+
+        if (startResponse.ok) {
+          console.log("🚀 Game started successfully");
+        } else {
+          console.warn("⚠️ Failed to start game after creation");
+        }
+      } catch (error) {
+        console.error("❌ Error creating game:", error);
+      }
+    };
+
+    // Only create a game once when the page loads
+    if (!gameId) createGame();
+  }, [map]);
+
+  /* ---------------------- END CREATE GAME ---------------------------- */
 
   const handleSendMessage = () => {
     if (!chatInput.trim()) return;
@@ -540,7 +633,11 @@ function Game() {
 
       {/* Player action input */}
       <div style={{ marginTop: "20px" }}>
-        <PlayerActionInput onSubmitResponse={setStoryResponse} />
+        <PlayerActionInput
+          gameId={gameId!}
+          playerId={userId!}
+          onSubmitResponse={setStoryResponse}
+        />
       </div>
 
       {/* Tutorial Modal */}
