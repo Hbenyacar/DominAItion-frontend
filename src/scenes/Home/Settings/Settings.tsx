@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -18,6 +18,10 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import UploadIcon from "@mui/icons-material/Upload";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+
+import { Switch, FormControlLabel } from "@mui/material";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
@@ -39,6 +43,34 @@ export default function Settings() {
     msg: "",
     type: "success",
   });
+
+  const [musicEnabled, setMusicEnabled] = useState<boolean>(
+    localStorage.getItem("musicEnabled") !== "false" // default true
+  );
+
+  // Handle background music
+  useEffect(() => {
+    const fetchMusicPreference = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/users/email/${currentUserEmail}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch user");
+
+        const user = await res.json();
+
+        // If the backend returns user.musicEnabled, sync it locally
+        if (user.musicEnabled !== undefined) {
+          setMusicEnabled(user.musicEnabled);
+          localStorage.setItem("musicEnabled", user.musicEnabled.toString());
+        }
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      }
+    };
+
+    fetchMusicPreference();
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const MAX_IMAGE_MB = 5;
@@ -168,7 +200,6 @@ export default function Settings() {
           Report Bug
         </Button>
       </Box>
-
       {/* Report Bug Dialog */}
       <Dialog
         open={open}
@@ -295,6 +326,61 @@ export default function Settings() {
         </DialogActions>
       </Dialog>
 
+      {/* Background music */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 1,
+          mb: 2,
+        }}
+      >
+        <Typography variant="h6" fontWeight="bold">
+          Background Music
+        </Typography>
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={musicEnabled}
+              onChange={async (e) => {
+                const enabled = e.target.checked;
+                setMusicEnabled(enabled);
+                localStorage.setItem("musicEnabled", enabled.toString());
+
+                try {
+                  await fetch(
+                    `http://localhost:8080/api/users/backgroundMusic/${currentUserEmail}`,
+                    {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ musicEnabled: enabled }),
+                    }
+                  );
+
+                  setToast({
+                    open: true,
+                    msg: enabled
+                      ? "Background music enabled."
+                      : "Background music disabled.",
+                    type: "success",
+                  });
+                } catch (err) {
+                  console.error(err);
+                  setToast({
+                    open: true,
+                    msg: "Failed to update music preference.",
+                    type: "error",
+                  });
+                }
+              }}
+              color="primary"
+            />
+          }
+          label={musicEnabled ? "Enabled" : "Disabled"}
+        />
+      </Box>
       <Snackbar
         open={toast.open}
         autoHideDuration={4000}

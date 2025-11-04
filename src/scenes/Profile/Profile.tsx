@@ -28,6 +28,7 @@ function Profile() {
   const [bio, setBio] = useState("");
   const [password, setPassword] = useState("");
   const [wins, setWins] = useState(0);
+  const [totalPlayTime, setTotalPlayTime] = useState(0);
   const [losses, setLosses] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
 
@@ -61,6 +62,7 @@ function Profile() {
         setPassword(data.password);
         setWins(data.wins || 0);
         setLosses(data.losses || 0);
+        setTotalPlayTime(data.totalPlayTime || 0);
         setGamesPlayed(data.gamesPlayed || 0);
         setEmailVerified(data.emailVerified || false);
       })
@@ -244,9 +246,9 @@ function Profile() {
             Reset Password
           </Button>
 
-          {/* Game Stats, Implementing Later
           <Divider />
-          
+
+          {/* User Stats */}
           <Typography variant="h5">Game Stats</Typography>
           <Box sx={{ display: "flex", gap: 4 }}>
             <Box>
@@ -261,9 +263,14 @@ function Profile() {
               <Typography variant="h6">Games Played</Typography>
               <Typography>{gamesPlayed}</Typography>
             </Box>
-          </Box>*/}
+            <Box>
+              <Typography variant="h6">Time Played</Typography>
+              <Typography>{Math.round(totalPlayTime)} hrs</Typography>
+            </Box>
+          </Box>
         </Stack>
       </Box>
+
       <ToastContainer
         position="bottom-center"
         autoClose={3000}
