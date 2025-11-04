@@ -5,12 +5,16 @@ interface PlayerActionInputProps {
   maxLength?: number;
   placeholder?: string;
   onSubmitResponse?: (response: string) => void;
+  gameId?: string;
+  playerId?: string;
 }
 
 const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
   maxLength = 250,
   placeholder = "Make Your Move...",
   onSubmitResponse,
+  gameId,
+  playerId, // ✅ now destructured
 }) => {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,33 +26,39 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
     }
   };
 
+  /* ---------------------- SUBMIT USER PROMPT TO BACKEND ---------------------- */
   const handleSubmit = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !gameId || !playerId) {
+      console.warn("❌ Missing required fields:", { gameId, playerId });
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/ai/story", {
+      const response = await fetch("http://localhost:8080/api/ai/story", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ request: text }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameId: gameId, // ✅ send current game ID
+          playerId: playerId, // ✅ send current player ID
+          request: text.trim(), // ✅ player’s action
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit");
+        throw new Error(`Failed to submit: ${response.status}`);
       }
 
       const data = await response.text(); // backend returns a string
 
       if (onSubmitResponse) {
-        onSubmitResponse(data); // Pass the response up
+        onSubmitResponse(data);
       }
 
       setText("");
     } catch (error) {
-      console.error("Error submitting request:", error);
+      console.error("❌ Error submitting request:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -61,6 +71,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
     }
   };
 
+  /* ---------------------- STYLES ---------------------- */
   const styles = {
     container: {
       display: "flex",
@@ -75,7 +86,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
     },
     textarea: {
       width: "100%",
-      padding: "10px 60px 10px 10px", // space for button
+      padding: "10px 60px 10px 10px",
       fontSize: "1rem",
       borderRadius: "8px",
       border: "1px solid rgba(255, 255, 255, 0.2)",
@@ -83,9 +94,9 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
       fontFamily: "inherit",
       boxSizing: "border-box" as const,
       outline: "none",
-      backgroundColor: "rgba(0, 0, 0, 0.3)", // 🟣 matches chat/story box
-      color: "white", // white text for contrast
-      backdropFilter: "blur(4px)", // optional: gives a subtle glassy look
+      backgroundColor: "rgba(0, 0, 0, 0.3)",
+      color: "white",
+      backdropFilter: "blur(4px)",
     },
     button: {
       position: "absolute" as const,
@@ -97,7 +108,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
       backgroundColor:
         isSubmitting || !text.trim()
           ? "rgba(207, 78, 10, 0.6)"
-          : "rgb(207, 78, 10)", // 🔸 your orange
+          : "rgb(207, 78, 10)",
       color: "white",
       border: "none",
       cursor: isSubmitting || !text.trim() ? "not-allowed" : "pointer",
