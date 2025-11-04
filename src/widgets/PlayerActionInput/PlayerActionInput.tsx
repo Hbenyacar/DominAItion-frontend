@@ -40,9 +40,10 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          gameId: gameId, // ✅ send current game ID
-          playerId: playerId, // ✅ send current player ID
-          request: text.trim(), // ✅ player’s action
+          gameId: gameId, // send current game ID
+          playerId: playerId, // send current player ID
+          request: text.trim(), // player’s action
+          difficulty: 4, // replace with non hard codes
         }),
       });
 
