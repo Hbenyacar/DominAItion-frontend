@@ -242,6 +242,13 @@ function Game() {
     }
   };
 
+  const [isMuted, setIsMuted] = useState(false);
+
+  const handleMuteToggle = () => {
+    setIsMuted(!isMuted);
+    // Optionally: stop sound alerts, notifications, etc.
+  };
+
   return (
     <div className="game-page">
       {/* nav bar at top of screen */}
@@ -331,15 +338,27 @@ function Game() {
               flexDirection: "column",
             }}
           >
-            {/* Title pinned at top */}
-            <strong
+            {/* Title row with mute button */}
+            <div
               style={{
-                fontSize: "1.1rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                gap: "8px",
                 marginBottom: "10px",
               }}
             >
-              Game Chat
-            </strong>
+
+
+              {/* Title text */}
+              <strong
+                style={{
+                  fontSize: "1.1rem",
+                }}
+              >
+                Game Chat
+              </strong>
+            </div>
 
             {/* Scrollable message area */}
             <div
@@ -354,32 +373,32 @@ function Game() {
                 flexDirection: "column",
                 gap: "6px",
                 marginBottom: "8px",
-                maxHeight: "100%", // stays within 400px box
+                maxHeight: "100%",
                 wordWrap: "break-word",
                 overflowWrap: "break-word",
-                whiteSpace: "pre-wrap", // preserve line breaks but wrap long lines
+                whiteSpace: "pre-wrap",
               }}
             >
-              {messages.length === 0 ? (
-                <p style={{ opacity: 0.6 }}>No messages yet...</p>
-              ) : (
-                messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      backgroundColor: "rgba(255, 255, 255, 0.1)",
-                      borderRadius: "6px",
-                      padding: "4px 6px",
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    <strong style={{ color: "rgb(207,78,10)" }}>
-                      {msg.sender}:
-                    </strong>{" "}
-                    {msg.text}
-                  </div>
-                ))
-              )}
+              {isMuted ? (
+                  <p style={{ opacity: 0.6 }}>Chat is muted</p>
+                ) : messages.length === 0 ? (
+                  <p style={{ opacity: 0.6 }}>No messages yet...</p>
+                ) : (
+                  messages.map((msg, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.1)",
+                        borderRadius: "6px",
+                        padding: "4px 6px",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      <strong style={{ color: "rgb(207,78,10)" }}>{msg.sender}:</strong>{" "}
+                      {msg.text}
+                    </div>
+                  ))
+                )}
             </div>
 
             {/* Input row */}
@@ -412,8 +431,24 @@ function Game() {
               >
                 Send
               </button>
+              
             </div>
+                          {/* Mute button on the left */}
+              <button
+                onClick={handleMuteToggle}
+                style={{
+                  backgroundColor: isMuted ? "rgba(255, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.1)",
+                  border: "none",
+                  color: "white",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                {isMuted ? "Unmute" : "Mute"}
+              </button>
           </div>
+          
 
           {/* Center map */}
           <div
