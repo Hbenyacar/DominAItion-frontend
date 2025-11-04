@@ -2,7 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../navbar/NavBar";
 import "./Home.css";
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 import BackgroundMusic from "../../components/BackgroundMusic";
+
 
 // MUI components
 import {
@@ -41,7 +45,24 @@ import { useDispatch, useSelector } from "react-redux";
 import { setMap } from "../../store/mapSlice";
 import WorldGenPanels from "../../widgets/WorldGen/WorldGen";
 import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
+import LobbyList from "../../components/LobbyList";
 import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
+export interface User {
+  id: string;
+  username: string;
+  icon?: string;
+}
+
+export interface Lobby {
+  id: string;
+  code: string;
+  map: string;
+  users: User[];
+}
+
 
 function loadOpenCV(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -191,11 +212,18 @@ function Home() {
   const [alignment, setAlignment] = React.useState("");
   const [value1, setValue1] = useState(30);
   const [selectedImg, setSelectedImg] = React.useState<string | null>(null);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [mapName, setMapName] = React.useState<string | null>(null);
 
   const dispatch = useDispatch();
   const handleMap = (title: string, image: string) => {
     setSelectedImg(image);
+    setMapName(title);
     dispatch(setMap({ map: title }));
+  };
+
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setIsPrivate(event.target.checked);
   };
 
   const [openFind, setOpenFind] = useState(false);
@@ -229,21 +257,48 @@ function Home() {
   };
 
   const handleCreateLobby = async () => {
-    const newLobby = await createLobby("desert"); // or any map
+    const lobbyMap = mapName || "default"; 
+    const newLobby = await createLobby(lobbyMap, isPrivate); // or any map
     if (newLobby) {
       console.log("Lobby created:", newLobby);
       navigate(`/lobby/${newLobby.id}`);
     }
   };
 
-  const createLobby = async (map: string = "desert"): Promise<Lobby | null> => {
+  const getAllLobbies = async (): Promise<Lobby[]> => {
     try {
+      const response = await fetch("http://localhost:8080/api/lobby", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        console.error("Failed to fetch lobbies:", response.statusText);
+        return [];
+      }
+  
+      const lobbies: Lobby[] = await response.json();
+      return lobbies;
+    } catch (error) {
+      console.error("Error fetching lobbies:", error);
+      return [];
+    }
+  };
+
+  const createLobby = async (
+    map: string,
+    isPrivate: boolean
+  ): Promise<Lobby | null> => {
+    try {
+      console.log("isPrivat: " + isPrivate)
       const response = await fetch("http://localhost:8080/api/lobby", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ map }), // start empty
+        body: JSON.stringify({ map: map, privateLobby: isPrivate }), // ✅ pass both
       });
 
       if (!response.ok) {
@@ -258,6 +313,7 @@ function Home() {
       return null;
     }
   };
+  
 
   const handleClick = (item: (typeof itemData)[0]) => {
     setSelectedImg(item.img);
@@ -538,6 +594,7 @@ function Home() {
                           </ToggleButton>
                         </ToggleButtonGroup>
                       </Box>
+                      
                       {/* Points to Win inline */}
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 2 }}
@@ -561,7 +618,12 @@ function Home() {
                           {valuetext(value1)}
                         </p>
                       </Box>
+                      
                     </Box>
+                    <FormGroup>
+                    <FormControlLabel control={<Checkbox checked={isPrivate}
+                      onChange={handleCheckboxChange}/>} label="Private" />
+                    </FormGroup>
                     {/* Maps Section */}
                     <div>
                       <h2>Maps</h2>
@@ -637,11 +699,13 @@ function Home() {
                     <Box>{alignment === "single" && <AIPlayerSettings />}</Box>
                     <Button
                       onClick={() => {
+                        handleCreateLobby();
                         const audio = new Audio(
                           "/assets/sound_effects/game_start.mp3"
                         );
                         audio.play();
                         toGame();
+
                       }}
                       disabled={alignment == "" || selectedImg == null}
                       variant="contained"
@@ -682,6 +746,7 @@ function Home() {
                       Sample Game
                     </Button>
                   </div>
+                  <LobbyList/>
                 </CustomTabPanel>
                 <CustomTabPanel value={value} index={2}>
                   History Coming Soon!

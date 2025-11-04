@@ -20,6 +20,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 function Profile() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -46,7 +48,7 @@ function Profile() {
 
   useEffect(() => {
     console.log(currentUserEmail);
-    fetch(`http://localhost:8080/api/users/email/${currentUserEmail}`)
+    fetch(`${API_BASE_URL}/api/users/email/${currentUserEmail}`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch user");
         return res.json();
@@ -80,7 +82,7 @@ function Profile() {
     }
 
     // Check for duplicate usernames
-    const res = await fetch("http://localhost:8080/api/users");
+    const res = await fetch(`${API_BASE_URL}/api/users`);
     const users = await res.json();
     const duplicate = users.some(
       (u: any) =>
@@ -97,7 +99,7 @@ function Profile() {
 
     try {
       const updateRes = await fetch(
-        `http://localhost:8080/api/users/updateProfile/${currentUserEmail}`,
+        `${API_BASE_URL}/api/users/updateProfile/${currentUserEmail}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -122,7 +124,7 @@ function Profile() {
   const handleResetPassword = async () => {
     try {
       const res = await fetch(
-        `http://localhost:8080/api/users/forgotPassword/${email}`,
+        `${API_BASE_URL}/api/users/forgotPassword/${email}`,
         { method: "PUT" }
       );
       if (!res.ok) throw new Error("Failed to send email");
@@ -181,7 +183,7 @@ function Profile() {
                   try {
                     console.log("Email: " + email);
                     const res = await fetch(
-                      `http://localhost:8080/api/users/verify/${email}`,
+                      `${API_BASE_URL}/api/users/verify/${email}`,
                       { method: "PUT" }
                     );
 
