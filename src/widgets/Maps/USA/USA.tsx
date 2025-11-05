@@ -984,8 +984,11 @@ const states: USState[] = [
 },
 
 ];
+interface InteractiveUSMapProps {
+  gameInfo?: { territoryName: string; ownerId: string | null }[]; // optional prop
+}
 
-const InteractiveUSMap: React.FC = () => {
+const InteractiveUSMap: React.FC<InteractiveUSMapProps> = ({ gameInfo }) => {
   const [tooltip, setTooltip] = useState<Tooltip>({
     visible: false,
     name: "",
@@ -1025,36 +1028,32 @@ const InteractiveUSMap: React.FC = () => {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="map-container"
-      style={{ position: "relative", display: "inline-block" }}
-    >
+    <div ref={containerRef} className="map-container" style={{ position: "relative", display: "inline-block" }}>
       {tooltip.visible && (
-        <div
-          className="tooltip"
-          style={{
-            left: tooltip.x + 10,
-            top: tooltip.y + 10,
-          } as React.CSSProperties}
-        >
+        <div className="tooltip" style={{ left: tooltip.x + 10, top: tooltip.y + 10 } as React.CSSProperties}>
           {tooltip.name}
         </div>
       )}
 
       <svg viewBox="0 0 1000 589" width="700" height="auto">
-        {states.map((state) => (
-          <path
-            key={state.id}
-            d={state.path}
-            style={state.style}
-            className="state"
-            onMouseEnter={(e) => handleMouseEnter(state, e)}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            onClick={() => handleClick(state)}
-          />
-        ))}
+        {states.map((state) => {
+          // If gameInfo exists, find the corresponding territory
+          const territory = gameInfo?.find((t) => t.territoryName === state.name);
+          const fillColor = territory?.ownerId ? "red" : state.style?.fill || "#f9f9f9";
+
+          return (
+            <path
+              key={state.id}
+              d={state.path}
+              style={{ ...state.style, fill: fillColor }}
+              className="state"
+              onMouseEnter={(e) => handleMouseEnter(state, e)}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              onClick={() => handleClick(state)}
+            />
+          );
+        })}
       </svg>
     </div>
   );
