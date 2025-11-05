@@ -97,6 +97,7 @@ function Game() {
   const currentUserID = useSelector(
     (state: RootState) => state.auth.user?.id || null
   );
+  
 
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -244,92 +245,6 @@ function Game() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
-  /* ---------------------- START CREATE GAME ---------------------------- */
-
-  useEffect(() => {
-    const createGame = async () => {
-      try {
-        console.log("Creating new game...");
-
-        // Make the POST request to your backend
-        const response = await fetch(`${API_BASE_URL}/api/game/create`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            worldId: map || "USA", // current map from Redux state
-            winningPoints: "100", // you can make this dynamic later
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to create game: ${response.status}`);
-        }
-
-        // The backend returns the new game ID as plain text
-        const newGameId = await response.text();
-        console.log("✅ Game created with ID:", newGameId);
-
-        // Save the ID in React state
-        setGameId(newGameId);
-
-        // 2: Get user ID directly (not via setState)
-        const res = await fetch(
-          `http://localhost:8080/api/users/email/${currentUserEmail}`
-        );
-        if (!res.ok) throw new Error("Failed to fetch user ID");
-
-        const user = await res.json();
-        const fetchedUserId = user.id; // ✅ use local variable
-        setUserId(fetchedUserId);
-
-        console.log("👤 Current User ID:", fetchedUserId);
-
-        // 3: Add player to the game
-        const addPlayerResponse = await fetch(
-          `${API_BASE_URL}/api/game/addPlayer`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              gameId: newGameId, // current map from Redux state
-              playerId: fetchedUserId, // you can make this dynamic later
-            }),
-          }
-        );
-
-        if (addPlayerResponse.ok) {
-          console.log("🙋 Player added to game:", fetchedUserId);
-        } else {
-          console.warn("⚠️ Failed to add player");
-        }
-
-        // 4: start the game
-        const startResponse = await fetch(
-          "http://localhost:8080/api/game/start",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ gameId: newGameId }),
-          }
-        );
-
-        if (startResponse.ok) {
-          console.log("🚀 Game started successfully");
-        } else {
-          console.warn("⚠️ Failed to start game after creation");
-        }
-      } catch (error) {
-        console.error("❌ Error creating game:", error);
-      }
-    };
-
-    // Only create a game once when the page loads
-    if (!gameId) createGame();
-  }, [map]);
 
   /* ---------------------- END CREATE GAME ---------------------------- */
 
@@ -814,7 +729,7 @@ function Game() {
       <div style={{ marginTop: "20px" }}>
         <PlayerActionInput
           gameId={gameID!}
-          playerId={userId!}
+          playerId={currentUserID!}
           onSubmitResponse={setStoryResponse}
         />
       </div>
