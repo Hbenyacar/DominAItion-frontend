@@ -16,6 +16,39 @@ const API_BASE_URL =
     gameId: string;
   }
 
+  interface GameInfo {
+    id: string;
+    worldId: string;
+    players: any[];
+    status: string;
+    createdAt: string;
+    [key: string]: any;
+  }
+
+  async function getPoints(gameId: string): Promise<GameInfo | null> {
+    try {
+      const response = await fetch("/api/game/getInfo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ gameId }),
+      });
+  
+      if (!response.ok) {
+        console.error("Failed to fetch game info:", response.statusText);
+        return null;
+      }
+  
+      const data = await response.json();
+      console.log("Fetched game info:", data);
+      return data as GameInfo;
+    } catch (error) {
+      console.error("Error fetching game info:", error);
+      return null;
+    }
+  }
+
   async function sendStory({
     gameId,
     playerId,
@@ -352,6 +385,7 @@ function Game() {
   
   const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [winPoints, setWinPoints] = useState(1000);
 
   async function getGameInfo(gameId: string): Promise<Record<string, any>> {
     try {
@@ -373,6 +407,22 @@ function Game() {
   }
 
   const [points, setPoints] = useState(0);
+  const [wonGame, setWonGame] = useState(false);
+
+  useEffect(() => {
+    console.log("Player wins the game!");
+  }, [wonGame]);
+
+  const fetchGamePoints = async () => {
+    const info = await getPoints(`${gameID}`);
+   // if (info) {
+   //   setWinPoints(info.winningPoints);
+   // }
+   setWinPoints(2);
+  };
+  fetchGamePoints();
+
+
 
   const handleFetchInfo = async () => {
     setLoading(true);
@@ -383,17 +433,18 @@ function Game() {
       console.log(info);
       let currPoints = 0;
       info.forEach((territory: any, index: number) => {
-        console.log(`Territory #${index + 1}`);
-        console.log("Name:", territory.territoryName);
-        console.log("Points:", territory.pointValue);
-        console.log("ID:", territory.territoryId);
-        console.log("Owner:", territory.ownerId);
-        console.log("----------------------");
+  //       console.log(`Territory #${index + 1}`);
+  //       console.log("Name:", territory.territoryName);
+  //       console.log("Points:", territory.pointValue);
+  //       console.log("ID:", territory.territoryId);
+  //       console.log("Owner:", territory.ownerId);
+  //       console.log("----------------------");
         if (territory.ownerId !== null) {
           currPoints += territory.pointValue;
         }
       });
       setScore(currPoints);
+      return currPoints;
     } catch {
       setError("Failed to fetch game info.");
       setGameInfo(null);
@@ -402,10 +453,19 @@ function Game() {
     }
   };
 
+  useEffect(() => {
+    if (winPoints <= score) {
+      setWonGame(true);
+    }
+  }, [winPoints, score]);
+
   // when storyResponse changes (i.e., new action result),
   // randomly add between 5 and 30 points
   useEffect(() => {
     handleFetchInfo();
+    fetchGamePoints();
+    console.log("winPoints: " + winPoints);
+    console.log("Score: " + score);
     if (storyResponse && storyResponse !== "Awaiting your first move...") {
       const utterance = new SpeechSynthesisUtterance(storyResponse);
       utterance.rate = 1.1; // 🔹 Speed (1.0 = normal)
@@ -429,9 +489,6 @@ function Game() {
         setIsNarrating(false);
         setIsPaused(false);
       };
-
-      const pointsEarned = Math.floor(Math.random() * 26) + 5; // 5–30
-      setScore((prev) => prev + pointsEarned);
 
       const audio = new Audio("/assets/sound_effects/point_won.mp3");
       audio.play();
