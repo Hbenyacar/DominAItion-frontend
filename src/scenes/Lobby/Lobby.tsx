@@ -4,6 +4,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
+import { useNavigate } from "react-router-dom";
 import "./Lobby.css";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -53,6 +54,35 @@ function Lobby() {
     });
   };
 
+  const [winningPoints, setWinningPoints] = useState(20);
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
+
+  const createGame = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/game/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ winningPoints }),
+      });
+
+      if (!response.ok) throw new Error("Failed to create game");
+
+      const data = await response.text(); // backend returns String
+      setGameId(data);
+      console.log("Game created:", data);
+      navigate(`/game/${data}`);
+    } catch (err) {
+      console.error("Error creating game:", err);
+      alert("Error creating game");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ✅ Fetch user’s friends
   useEffect(() => {
     if (!userId) return;
@@ -67,6 +97,7 @@ function Lobby() {
       }
     };
     fetchFriends();
+
   }, [userId]);
 
   // ✅ Setup WebSocket
@@ -86,6 +117,9 @@ function Lobby() {
         const updatedLobby: Lobby = JSON.parse(message.body);
         setLobby(updatedLobby);
         setJoinedUsers(updatedLobby.users || []);
+        if (updatedLobby.users.length == 1) {
+          createGame();
+        }
       });
 
       client.publish({

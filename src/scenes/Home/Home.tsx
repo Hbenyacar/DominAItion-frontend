@@ -288,7 +288,7 @@ function Home() {
       return [];
     }
   };
-
+  
   const createLobby = async (
     map: string,
     isPrivate: boolean

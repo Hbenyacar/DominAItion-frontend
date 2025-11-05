@@ -12,10 +12,57 @@ import { Pause, PlayArrow, PlayCircle, SkipNext } from "@mui/icons-material";
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/";
 
+  interface RouteParams {
+    gameId: string;
+  }
+
+  async function sendStory({
+    gameId,
+    playerId,
+    request,
+    difficulty,
+  }: {
+    gameId: string;
+    playerId: string;
+    request: string;
+    difficulty: number;
+  }): Promise<string> {
+    try {
+      const response = await fetch("/api/ai/story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameId,
+          playerId,
+          request,
+          difficulty,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+  
+      const text = await response.text();
+      console.log("text: " + text);
+      return text;
+    } catch (error) {
+      console.error("Failed to send story request:", error);
+      throw error;
+    }
+  }
+
+
+
 function Game() {
   const map = useSelector((state: RootState) => state.map.map);
+  const params = useParams<{ gameId: string }>();
+  const gameID = params.gameId;
   const currentUserEmail = useSelector(
     (state: RootState) => state.auth.user?.email || null
+  );
+  const currentUserID = useSelector(
+    (state: RootState) => state.auth.user?.id || null
   );
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -46,6 +93,27 @@ function Game() {
   const [currentTime, setCurrentTime] = useState<number>(
     Number(localStorage.getItem("currentTime")) || 0
   );
+
+  const [story, setStory] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSend = async () => {
+    setLoading(true);
+    try {
+      const response = await sendStory({
+        gameId: `${gameID}`,
+        playerId: `${currentUserID}`,
+        request: "Describe the next event in the game",
+        difficulty: 2,
+      });
+      setStory(response);
+      console.log(response);
+    } catch (err) {
+      setStory("Error retrieving story");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchMusicPreference = async () => {
@@ -281,9 +349,63 @@ function Game() {
     }
   }, []);
 
+  
+  const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function getGameInfo(gameId: string): Promise<Record<string, any>> {
+    try {
+      const response = await fetch("/api/game/territories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (err) {
+      console.error("Failed to get game info:", err);
+      throw err;
+    }
+  }
+
+  const [points, setPoints] = useState(0);
+
+  const handleFetchInfo = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const info = await getGameInfo(`${gameID}`);
+      setGameInfo(info);
+      console.log(info);
+      let currPoints = 0;
+      info.forEach((territory: any, index: number) => {
+        console.log(`Territory #${index + 1}`);
+        console.log("Name:", territory.territoryName);
+        console.log("Points:", territory.pointValue);
+        console.log("ID:", territory.territoryId);
+        console.log("Owner:", territory.ownerId);
+        console.log("----------------------");
+        if (territory.ownerId !== null) {
+          currPoints += territory.pointValue;
+        }
+      });
+      setScore(currPoints);
+    } catch {
+      setError("Failed to fetch game info.");
+      setGameInfo(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // when storyResponse changes (i.e., new action result),
   // randomly add between 5 and 30 points
   useEffect(() => {
+    handleFetchInfo();
     if (storyResponse && storyResponse !== "Awaiting your first move...") {
       const utterance = new SpeechSynthesisUtterance(storyResponse);
       utterance.rate = 1.1; // 🔹 Speed (1.0 = normal)
@@ -515,7 +637,7 @@ function Game() {
               marginLeft: map === "Medieval Europe" ? "-100px" : "-20px",
             }}
           >
-            {map === "USA" && <InteractiveUSMap />}
+            {map === "USA" && <InteractiveUSMap gameInfo={gameInfo} />}
             {map === "Medieval Europe" && <Europe />}
           </div>
 
@@ -634,7 +756,7 @@ function Game() {
       {/* Player action input */}
       <div style={{ marginTop: "20px" }}>
         <PlayerActionInput
-          gameId={gameId!}
+          gameId={gameID!}
           playerId={userId!}
           onSubmitResponse={setStoryResponse}
         />
