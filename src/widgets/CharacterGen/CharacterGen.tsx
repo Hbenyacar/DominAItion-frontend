@@ -1,14 +1,12 @@
 import React, { useState } from "react";
-import { Button, Box } from "@mui/material";
+import { Box, Typography, TextField, Button, Alert } from "@mui/material";
 
 const CharacterGen = () => {
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleChange = (event: {
-    target: { value: React.SetStateAction<string> };
-  }) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDescription(event.target.value);
     setMessage("");
   };
@@ -37,8 +35,7 @@ const CharacterGen = () => {
 
       setMessage("Description submitted successfully!");
       setDescription("");
-    } catch (error) {
-      // @ts-ignore
+    } catch (error: any) {
       setMessage(error.message || "An error occurred.");
     } finally {
       setIsSubmitting(false);
@@ -46,34 +43,51 @@ const CharacterGen = () => {
   };
 
   return (
-    <div style={{ maxWidth: "400px" }}>
-      <h3> Character Description</h3>
+    <Box sx={{ maxWidth: 500 }}>
+      <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+        Character Description
+      </Typography>
+
       <Box
         sx={{
           display: "flex",
-          alignItems: "flex-start", // keeps button aligned with top of textarea
-          gap: "0.5rem", // space between textarea and button
+          alignItems: "flex-start",
+          gap: 2,
         }}
       >
-        <textarea
+        <TextField
+          multiline
+          minRows={4}
+          fullWidth
+          placeholder="Enter your character description..."
           value={description}
           onChange={handleChange}
-          placeholder="Enter your description..."
-          style={{
-            alignItems: "center",
-            width: "100%",
-            padding: "8px",
-            boxSizing: "border-box",
+          variant="outlined"
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                borderColor: "#ccc",
+              },
+              "&:hover fieldset": {
+                borderColor: "rgb(207,78,10)",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: "rgb(207,78,10)",
+              },
+            },
           }}
-        ></textarea>
+        />
+
         <Button
           onClick={handleSubmit}
           disabled={isSubmitting}
+          variant="contained"
           sx={{
-            my: 0.5,
-            backgroundColor: "rgb(207, 78, 10)", // your color
+            alignSelf: "stretch",
+            backgroundColor: "rgb(207,78,10)",
             "&:hover": { backgroundColor: "darkorange" },
             color: "white",
+            px: 2,
           }}
         >
           {isSubmitting ? "Submitting..." : "Submit"}
@@ -81,16 +95,16 @@ const CharacterGen = () => {
       </Box>
 
       {message && (
-        <div
-          style={{
-            marginTop: "0.5rem",
-            color: message.includes("successfully") ? "green" : "red",
-          }}
+        <Alert
+          severity={
+            message.toLowerCase().includes("success") ? "success" : "error"
+          }
+          sx={{ mt: 2 }}
         >
           {message}
-        </div>
+        </Alert>
       )}
-    </div>
+    </Box>
   );
 };
 

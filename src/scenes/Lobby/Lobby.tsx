@@ -4,6 +4,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
+import { useNavigate } from "react-router-dom";
 import "./Lobby.css";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -33,6 +34,7 @@ function Lobby() {
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const userId = currentUser?.id;
+  
 
   // ✅ Function can now access stompClientRef.current
   const sendInvite = (friendId: string, friendName: string) => {
@@ -53,6 +55,78 @@ function Lobby() {
     });
   };
 
+  const [winningPoints, setWinningPoints] = useState(2);
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate();
+
+  const createGame = async () => {
+    try {
+      setLoading(true);
+      console.log("Creating new game...");
+  
+      // 1️⃣ Create the game
+      const response = await fetch(`${API_BASE_URL}/api/game/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+         // worldId: lobby?.map || "USA",
+          worldId: "USA",
+          winningPoints: String(winningPoints),
+        }),
+      });
+  
+      if (!response.ok) throw new Error(`Failed to create game: ${response.status}`);
+  
+      const newGameId = await response.text();
+      setGameId(newGameId);
+      console.log("✅ Game created with ID:", newGameId);
+  
+      // 2️⃣ Add *all* users in the lobby to the new game
+      if (joinedUsers.length > 0) {
+        console.log(`Adding ${joinedUsers.length} users to game...`);
+        for (const user of joinedUsers) {
+          const addPlayerResponse = await fetch(`${API_BASE_URL}/api/game/addPlayer`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              gameId: newGameId,
+              playerId: user.id,
+            }),
+          });
+  
+          if (addPlayerResponse.ok) {
+            console.log(`🙋 Added player: ${user.username} (${user.id})`);
+          } else {
+            console.warn(`⚠️ Failed to add player ${user.username}`);
+          }
+        }
+      } else {
+        console.warn("⚠️ No users in lobby to add");
+      }
+  
+      // 3️⃣ Start the game
+      const startResponse = await fetch(`${API_BASE_URL}/api/game/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId: newGameId }),
+      });
+  
+      if (startResponse.ok) {
+        console.log("🚀 Game started successfully!");
+        navigate(`/game/${newGameId}`); // redirect to game page
+      } else {
+        console.warn("⚠️ Failed to start game after creation");
+      }
+    } catch (error) {
+      console.error("❌ Error creating game:", error);
+      alert("Error creating game. Check console for details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ✅ Fetch user’s friends
   useEffect(() => {
     if (!userId) return;
@@ -67,6 +141,7 @@ function Lobby() {
       }
     };
     fetchFriends();
+
   }, [userId]);
 
   // ✅ Setup WebSocket
@@ -86,6 +161,9 @@ function Lobby() {
         const updatedLobby: Lobby = JSON.parse(message.body);
         setLobby(updatedLobby);
         setJoinedUsers(updatedLobby.users || []);
+        if (updatedLobby.users.length == 1) {
+          createGame();
+        }
       });
 
       client.publish({
@@ -130,9 +208,15 @@ function Lobby() {
             ))}
           </div>
 
-          <button className="invite-btn" onClick={handleInviteClick}>
-            Invite Friends
-          </button>
+          {loading ? (
+  <button className="invite-btn" disabled>
+    Creating a game...
+  </button>
+) : (
+  <p className="invite-btn" onClick={handleInviteClick}>
+    Invite Friends
+  </p>
+)}
         </>
       ) : (
         <p>Loading lobby info...</p>

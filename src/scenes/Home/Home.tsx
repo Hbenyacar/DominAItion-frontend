@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../navbar/NavBar";
 import "./Home.css";
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
 import BackgroundMusic from "../../components/BackgroundMusic";
-import Trophy from '@mui/icons-material/EmojiEvents';
-
+import Trophy from "@mui/icons-material/EmojiEvents";
+import { Typography } from "@mui/material";
 
 // MUI components
 import {
@@ -50,7 +50,8 @@ import LobbyList from "../../components/LobbyList";
 import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
 import Achievements from "../Achievements/Achievements";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 export interface User {
   id: string;
@@ -64,7 +65,6 @@ export interface Lobby {
   map: string;
   users: User[];
 }
-
 
 function loadOpenCV(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -176,24 +176,24 @@ interface ItemData {
 function Home() {
   const [itemData, setItemData] = useState<ItemData[]>([
     {
-      img: "homepageUSmap.png",
+      img: "usa_map.png",
       title: "USA",
       cols: 1,
       rows: 1,
       imgContents: (() => {
         const img = new Image();
-        img.src = process.env.PUBLIC_URL + "/homepageUSmap.png";
+        img.src = process.env.PUBLIC_URL + "/images/usa_map.png";
         return img;
       })(),
     },
     {
-      img: "europe.jpeg",
+      img: "medieval_europe_map.png",
       title: "Medieval Europe",
       cols: 1,
       rows: 1,
       imgContents: (() => {
         const img = new Image();
-        img.src = process.env.PUBLIC_URL + "/europe.jpeg";
+        img.src = process.env.PUBLIC_URL + "/images/medieval_europe_map.png";
         return img;
       })(),
     },
@@ -259,7 +259,7 @@ function Home() {
   };
 
   const handleCreateLobby = async () => {
-    const lobbyMap = mapName || "default"; 
+    const lobbyMap = mapName || "default";
     const newLobby = await createLobby(lobbyMap, isPrivate); // or any map
     if (newLobby) {
       console.log("Lobby created:", newLobby);
@@ -275,12 +275,12 @@ function Home() {
           "Content-Type": "application/json",
         },
       });
-  
+
       if (!response.ok) {
         console.error("Failed to fetch lobbies:", response.statusText);
         return [];
       }
-  
+
       const lobbies: Lobby[] = await response.json();
       return lobbies;
     } catch (error) {
@@ -294,7 +294,7 @@ function Home() {
     isPrivate: boolean
   ): Promise<Lobby | null> => {
     try {
-      console.log("isPrivat: " + isPrivate)
+      console.log("isPrivat: " + isPrivate);
       const response = await fetch("http://localhost:8080/api/lobby", {
         method: "POST",
         headers: {
@@ -315,7 +315,6 @@ function Home() {
       return null;
     }
   };
-  
 
   const handleClick = (item: (typeof itemData)[0]) => {
     setSelectedImg(item.img);
@@ -551,239 +550,327 @@ function Home() {
 
         <div className="main" style={{ display: "flex" }}>
           {selectedIndex === 1 && (
-            <div className="games">
-              <h1>Games</h1>
-              <div>
-                <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                  <Tabs
-                    value={value}
-                    onChange={handleChange}
-                    aria-label="basic tabs example"
+            <Box className="games" sx={{ p: 4 }}>
+              <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>
+                Games
+              </Typography>
+
+              {/* Tabs */}
+              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                <Tabs
+                  value={value}
+                  onChange={handleChange}
+                  aria-label="game tabs"
+                  sx={{
+                    color: "black",
+                    "& .MuiTabs-indicator": {
+                      backgroundColor: "black",
+                      height: 3,
+                    },
+                  }}
+                >
+                  <Tab label="Create Game" {...a11yProps(0)} sx={tabStyle} />
+                  <Tab label="Join Game" {...a11yProps(1)} sx={tabStyle} />
+                  <Tab label="History" {...a11yProps(2)} sx={tabStyle} />
+                </Tabs>
+              </Box>
+
+              {/* Create Game Tab */}
+              <CustomTabPanel value={value} index={0}>
+                <Box
+                  sx={{
+                    backgroundColor: "white",
+                    borderRadius: 2,
+                    p: 3,
+                    mt: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 3,
+                    // maxWidth: 1200, // wider box
+                    width: "100%", // ensures it expands with screen
+                    mx: "auto", // centers it horizontally
+                    boxShadow: 2,
+                  }}
+                >
+                  {/* Game Settings Row */}
+                  <Box
                     sx={{
-                      color: "black",
-                      "& .MuiTabs-indicator": {
-                        backgroundColor: "black",
-                        height: 3,
-                      },
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 6,
+                      alignItems: "center",
                     }}
                   >
-                    <Tab
-                      label="Create Game"
-                      {...a11yProps(0)}
-                      sx={{ "&.Mui-selected": { color: "rgb(207, 78, 10)" } }}
+                    {/* Game Mode */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Typography variant="h6" sx={{ m: 0 }}>
+                        Game Mode
+                      </Typography>
+                      <ToggleButtonGroup
+                        color="primary"
+                        value={alignment}
+                        exclusive
+                        onChange={handleChange1}
+                        aria-label="game mode"
+                      >
+                        <ToggleButton value="single">
+                          Single Player
+                        </ToggleButton>
+                        <ToggleButton value="multi">Multi-player</ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
+
+                    {/* Private Game Checkbox */}
+                    <FormGroup>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={isPrivate}
+                            onChange={handleCheckboxChange}
+                          />
+                        }
+                        label="Private"
+                      />
+                    </FormGroup>
+                  </Box>
+
+                  {/* Points to Win */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <Typography variant="h6" sx={{ m: 0 }}>
+                      Points to Win
+                    </Typography>
+                    <Slider
+                      aria-label="Points"
+                      defaultValue={30}
+                      getAriaValueText={valuetext}
+                      valueLabelDisplay="auto"
+                      step={10}
+                      marks
+                      onChange={(e, newValue) => setValue1(newValue as number)}
+                      min={10}
+                      max={110}
+                      sx={{ width: 200 }}
                     />
-                    <Tab
-                      label="Join Game"
-                      {...a11yProps(1)}
-                      sx={{ "&.Mui-selected": { color: "rgb(207, 78, 10)" } }}
-                    />
-                    <Tab
-                      label="History"
-                      {...a11yProps(2)}
-                      sx={{ "&.Mui-selected": { color: "rgb(207, 78, 10)" } }}
-                    />
-                  </Tabs>
-                </Box>
-                <CustomTabPanel value={value} index={0}>
-                  <div className="white-box">
+                    <Typography sx={{ whiteSpace: "nowrap" }}>
+                      {valuetext(value1)}
+                    </Typography>
+                  </Box>
+
+                  {/* Maps Section */}
+                  <Box>
+                    <Typography variant="h6" gutterBottom>
+                      Maps
+                    </Typography>
+
+                    {/* Maps Grid + Upload Tile */}
                     <Box
                       sx={{
                         display: "flex",
-                        bottom: 20,
-                        left: 20,
-                        alignItems: "center",
-                        gap: 6,
-                        paddingTop: 2,
+                        alignItems: "flex-start",
+                        gap: 3,
+                        flexWrap: "wrap",
+                        maxWidth: 850,
                       }}
                     >
-                      {/* Game Mode inline */}
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
-                      >
-                        <h2 style={{ margin: 0 }}>Game Mode</h2>
-                        <ToggleButtonGroup
-                          color="primary"
-                          value={alignment}
-                          exclusive
-                          onChange={handleChange1}
-                          aria-label="Platform"
+                      {itemData.map((item) => (
+                        <Box
+                          key={item.img}
+                          onClick={() => handleMap(item.title, item.img)}
+                          sx={{
+                            width: 220,
+                            height: 200,
+                            border:
+                              selectedImg === item.img
+                                ? "4px solid blue"
+                                : "2px solid gray",
+                            borderRadius: 2,
+                            cursor: "pointer",
+                            overflow: "hidden",
+                            transition: "0.2s",
+                            "&:hover": { borderColor: "rgb(207, 78, 10)" },
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                          }}
                         >
-                          <ToggleButton value="single">
-                            Single Player
-                          </ToggleButton>
-                          <ToggleButton value="multi">
-                            Multi-player
-                          </ToggleButton>
-                        </ToggleButtonGroup>
-                      </Box>
-                      
-                      {/* Points to Win inline */}
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
-                      >
-                        <h2 style={{ margin: 0 }}>Points to Win</h2>
-                        <Slider
-                          aria-label="Points"
-                          defaultValue={30}
-                          getAriaValueText={valuetext}
-                          valueLabelDisplay="auto"
-                          step={10}
-                          marks
-                          onChange={(e, newValue) =>
-                            setValue1(newValue as number)
-                          }
-                          min={10}
-                          max={110}
-                          sx={{ width: 200 }}
-                        />
-                        <p style={{ whiteSpace: "nowrap", margin: 0 }}>
-                          {valuetext(value1)}
-                        </p>
-                      </Box>
-                      
-                    </Box>
-                    <FormGroup>
-                    <FormControlLabel control={<Checkbox checked={isPrivate}
-                      onChange={handleCheckboxChange}/>} label="Private" />
-                    </FormGroup>
-                    {/* Maps Section */}
-                    <div>
-                      <h2>Maps</h2>
-                      <ImageList
-                        sx={{ width: 1000, overflow: "visible" }} // ✅ remove height, let it expand
-                        variant="quilted"
-                        cols={4} // number of columns
-                        rowHeight={180} // image height scale
-                      >
-                        {itemData.map((item) => (
-                          <ImageListItem
-                            key={item.img}
-                            cols={item.cols || 2} // custom grid size if defined
-                            rows={item.rows || 1}
+                          {/* Title above image */}
+                          <Typography
+                            variant="subtitle1"
                             sx={{
-                              border:
-                                selectedImg === item.img
-                                  ? "4px solid blue"
-                                  : "2px solid gray",
-                              borderRadius: "8px",
-                              cursor: "pointer",
-                              position: "relative",
+                              mt: 1,
+                              mb: 1,
+                              fontWeight: "bold",
+                              textAlign: "center",
                             }}
-                            onClick={() => handleMap(item.title, item.img)}
                           >
-                            <img
-                              //Resizing has been temporarily removed to allow for custom image uploads to appear in the thumbnail
-                              src={`${item.imgContents.src}`}
-                              //srcSet={`${item.imgContents.src}?w=${180 * (item.cols || 2)}&h=${180 * (item.rows || 1)}&fit=crop&auto=format&dpr=2 2x`}
-                              srcSet={`${item.imgContents.src}`}
-                              alt={item.title}
-                              loading="lazy"
-                              style={{
-                                objectFit: "cover",
-                                width: "100%",
-                                height: "100%",
-                              }}
+                            {item.title}
+                          </Typography>
+
+                          {/* Map image stretched to fill box */}
+                          <Box
+                            component="img"
+                            src={`${item.imgContents.src}`}
+                            alt={item.title}
+                            loading="lazy"
+                            sx={{
+                              width: "90%",
+                              height: "150px",
+                              objectFit: "cover", // stretches vertically while keeping ratio
+                              borderRadius: 1,
+                            }}
+                          />
+
+                          {/* Radio indicator in corner */}
+                          <Box sx={{ position: "absolute", top: 4, right: 4 }}>
+                            <Radio
+                              checked={selectedImg === item.img}
+                              color="primary"
                             />
-                            <ImageListItemBar
-                              title={item.title}
-                              position="below"
-                              sx={{ textAlign: "center", fontSize: "0.9rem" }}
-                            />
-                            <Box
-                              sx={{ position: "absolute", top: 4, right: 4 }}
-                            >
-                              <Radio
-                                checked={selectedImg === item.img}
-                                color="primary"
-                              />
-                            </Box>
-                          </ImageListItem>
-                        ))}
-                      </ImageList>
-                    </div>
-                    <Button
-                      onClick={handleUploadButtonClick}
-                      sx={{
-                        marginTop: "20px",
-                        color: "white",
-                        backgroundColor: "rgb(207, 78, 10)",
-                      }}
-                    >
-                      Upload Image
-                    </Button>
-                    <Box mt={3}>
+                          </Box>
+                        </Box>
+                      ))}
+
+                      {/* Upload Image Tile */}
+                      <Box
+                        sx={{
+                          width: 220,
+                          height: 200,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "2px dashed gray",
+                          borderRadius: 2,
+                          cursor: "pointer",
+                          transition: "0.3s",
+                          "&:hover": {
+                            borderColor: "rgb(207, 78, 10)",
+                            backgroundColor: "rgba(207, 78, 10, 0.05)",
+                          },
+                        }}
+                        onClick={handleUploadButtonClick}
+                      >
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            color: "rgb(207, 78, 10)",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                            mb: 1,
+                          }}
+                        >
+                          + Upload Image
+                        </Typography>
+                        <Box
+                          sx={{
+                            width: "90%",
+                            height: "150px",
+                            border: "2px dashed lightgray",
+                            borderRadius: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontStyle: "italic",
+                            color: "gray",
+                          }}
+                        >
+                          Click to add
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* WorldGenPanels + CharacterGen Side by Side */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      gap: 3, // spacing between boxes
+                      alignItems: "flex-start",
+                      mt: 3,
+                      flexWrap: "wrap", // allows wrapping on smaller screens
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
                       <WorldGenPanels />
                     </Box>
 
-                    <Box>
+                    <Box sx={{ flex: 1 }}>
                       <CharacterGen />
                     </Box>
-                    <Box>{alignment === "single" && <AIPlayerSettings />}</Box>
-                    <Button
-                      onClick={() => {
-                        handleCreateLobby();
-                        const audio = new Audio(
-                          "/assets/sound_effects/game_start.mp3"
-                        );
-                        audio.play();
-                        toGame();
+                  </Box>
 
-                      }}
-                      disabled={alignment == "" || selectedImg == null}
-                      variant="contained"
-                      color="primary"
-                      sx={{
-                        borderRadius: "8px",
-                        paddingX: 3,
-                        paddingY: 1.5,
-                        backgroundColor: "rgb(207, 78, 10)", // your color
-                        "&:hover": { backgroundColor: "darkorange" },
-                        color: "white",
-                        marginTop: 4,
-                      }}
-                    >
-                      Start Game
-                    </Button>
-                  </div>
+                  {alignment === "single" && <AIPlayerSettings />}
 
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    style={{ display: "none" }}
-                  />
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={1}>
-                  <div>Join Game Coming Soon!</div>
-                  <br />
-                  <div>
-                    <Button
-                      onClick={() => {
-                        toSampleGame();
-                      }}
-                      variant="contained"
-                      color="primary"
-                    >
-                      Sample Game
-                    </Button>
-                  </div>
-                  <LobbyList/>
-                </CustomTabPanel>
-                <CustomTabPanel value={value} index={2}>
-                  History Coming Soon!
-                </CustomTabPanel>
-              </div>
-            </div>
+                  {/* Start Game Button */}
+                  <Button
+                    onClick={() => {
+                      handleCreateLobby();
+                      const audio = new Audio(
+                        "/assets/sound_effects/game_start.mp3"
+                      );
+                      audio.play();
+                      toGame();
+                    }}
+                    disabled={alignment === "" || selectedImg == null}
+                    variant="contained"
+                    sx={{
+                      borderRadius: 2,
+                      px: 3,
+                      py: 1.5,
+                      backgroundColor: "rgb(207, 78, 10)",
+                      "&:hover": { backgroundColor: "darkorange" },
+                      color: "white",
+                      mt: 4,
+                      alignSelf: "flex-start",
+                    }}
+                  >
+                    Start Game
+                  </Button>
+                </Box>
+
+                <Box
+                  component="input"
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  sx={{ display: "none" }}
+                />
+              </CustomTabPanel>
+
+              {/* Join Game Tab */}
+              <CustomTabPanel value={value} index={1}>
+                <Typography>Join Game Coming Soon!</Typography>
+                <Box mt={2}>
+                  <Button
+                    onClick={toSampleGame}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Sample Game
+                  </Button>
+                </Box>
+                <LobbyList />
+              </CustomTabPanel>
+
+              {/* History Tab */}
+              <CustomTabPanel value={value} index={2}>
+                <Typography>History Coming Soon!</Typography>
+              </CustomTabPanel>
+            </Box>
           )}
           {selectedIndex === 2 && <FriendsPage />}
           {selectedIndex === 3 && <Settings />}
           {selectedIndex === 5 && <Messages />}
-          {selectedIndex === 6 && <Achievements/>}
+          {selectedIndex === 6 && <Achievements />}
         </div>
       </div>
     </div>
   );
 }
+
+const tabStyle = {
+  "&.Mui-selected": { color: "rgb(207, 78, 10)" },
+};
 
 export default Home;
