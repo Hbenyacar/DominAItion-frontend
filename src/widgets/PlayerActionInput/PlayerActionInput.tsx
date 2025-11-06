@@ -1,5 +1,6 @@
 import { Button } from "@mui/material";
 import React, { useState } from "react";
+import { CircularProgress } from "@mui/material";
 
 interface PlayerActionInputProps {
   maxLength?: number;
@@ -144,7 +145,11 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
           disabled={isSubmitting || text.trim() === ""}
           style={styles.button}
         >
-          {isSubmitting ? "..." : "Send"}
+          {isSubmitting ? (
+            <CircularProgress size={18} thickness={4} sx={{ color: "white" }} />
+          ) : (
+            "Send"
+          )}
         </Button>
       </div>
       <div style={styles.counter}>

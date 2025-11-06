@@ -6,8 +6,10 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { useNavigate } from "react-router-dom";
 import "./Lobby.css";
+import { useLocation } from "react-router-dom";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 interface User {
   id: string;
@@ -34,12 +36,19 @@ function Lobby() {
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const userId = currentUser?.id;
-  
+
+  const location = useLocation();
+  const passedWinningPoints = location.state?.winningPoints;
 
   // ✅ Function can now access stompClientRef.current
   const sendInvite = (friendId: string, friendName: string) => {
     const stompClient = stompClientRef.current;
-    if (!stompClient || !stompClient.connected || !userId || !currentUser?.username)
+    if (
+      !stompClient ||
+      !stompClient.connected ||
+      !userId ||
+      !currentUser?.username
+    )
       return;
 
     const inviteMsg = {
@@ -55,7 +64,7 @@ function Lobby() {
     });
   };
 
-  const [winningPoints, setWinningPoints] = useState(2);
+  const [winningPoints, setWinningPoints] = useState(passedWinningPoints);
   const [gameId, setGameId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -65,37 +74,41 @@ function Lobby() {
     try {
       setLoading(true);
       console.log("Creating new game...");
-  
+
       // 1️⃣ Create the game
       const response = await fetch(`${API_BASE_URL}/api/game/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-         // worldId: lobby?.map || "USA",
+          // worldId: lobby?.map || "USA",
           worldId: "USA",
           winningPoints: String(winningPoints),
         }),
       });
-  
-      if (!response.ok) throw new Error(`Failed to create game: ${response.status}`);
-  
+
+      if (!response.ok)
+        throw new Error(`Failed to create game: ${response.status}`);
+
       const newGameId = await response.text();
       setGameId(newGameId);
       console.log("✅ Game created with ID:", newGameId);
-  
+
       // 2️⃣ Add *all* users in the lobby to the new game
       if (joinedUsers.length > 0) {
         console.log(`Adding ${joinedUsers.length} users to game...`);
         for (const user of joinedUsers) {
-          const addPlayerResponse = await fetch(`${API_BASE_URL}/api/game/addPlayer`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              gameId: newGameId,
-              playerId: user.id,
-            }),
-          });
-  
+          const addPlayerResponse = await fetch(
+            `${API_BASE_URL}/api/game/addPlayer`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                gameId: newGameId,
+                playerId: user.id,
+              }),
+            }
+          );
+
           if (addPlayerResponse.ok) {
             console.log(`🙋 Added player: ${user.username} (${user.id})`);
           } else {
@@ -105,14 +118,14 @@ function Lobby() {
       } else {
         console.warn("⚠️ No users in lobby to add");
       }
-  
+
       // 3️⃣ Start the game
       const startResponse = await fetch(`${API_BASE_URL}/api/game/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ gameId: newGameId }),
       });
-  
+
       if (startResponse.ok) {
         console.log("🚀 Game started successfully!");
         navigate(`/game/${newGameId}`); // redirect to game page
@@ -141,7 +154,6 @@ function Lobby() {
       }
     };
     fetchFriends();
-
   }, [userId]);
 
   // ✅ Setup WebSocket
@@ -201,7 +213,11 @@ function Lobby() {
             {joinedUsers.map((user) => (
               <div key={user.id} className="user-item">
                 {user.icon && (
-                  <img src={user.icon} alt={user.username} className="user-avatar" />
+                  <img
+                    src={user.icon}
+                    alt={user.username}
+                    className="user-avatar"
+                  />
                 )}
                 <p className="username">{user.username}</p>
               </div>
@@ -209,14 +225,14 @@ function Lobby() {
           </div>
 
           {loading ? (
-  <button className="invite-btn" disabled>
-    Creating a game...
-  </button>
-) : (
-  <p className="invite-btn" onClick={handleInviteClick}>
-    Invite Friends
-  </p>
-)}
+            <button className="invite-btn" disabled>
+              Creating a game...
+            </button>
+          ) : (
+            <p className="invite-btn" onClick={handleInviteClick}>
+              Invite Friends
+            </p>
+          )}
         </>
       ) : (
         <p>Loading lobby info...</p>
@@ -232,7 +248,11 @@ function Lobby() {
                 {friends.map((friend) => (
                   <li key={friend.id} className="friend-item">
                     {friend.icon && (
-                      <img src={friend.icon} alt={friend.username} className="friend-avatar" />
+                      <img
+                        src={friend.icon}
+                        alt={friend.username}
+                        className="friend-avatar"
+                      />
                     )}
                     <span>{friend.username}</span>
                     <button

@@ -17,7 +17,8 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../store/store";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 type ChatMessage = {
   chatId?: string;
@@ -134,9 +135,7 @@ export default function Messages() {
       );
 
       // 2️⃣ Re-fetch updated messages from backend (fresh data)
-      const res = await fetch(
-        `${API_BASE_URL}/api/chats/${chat.id}/messages`
-      );
+      const res = await fetch(`${API_BASE_URL}/api/chats/${chat.id}/messages`);
       const msgsRaw = await res.json();
       const msgs = normalizeMessages(msgsRaw); // ✅ normalize
       setMessages((prev) => ({ ...prev, [chat.id]: msgs }));
@@ -222,7 +221,7 @@ export default function Messages() {
   }, [messages, selectedChat]);
 
   return (
-    <div className="messages" style={{ flexGrow: 1 }}>
+    <div className="messages" style={{ flexGrow: 1, marginLeft: 30 }}>
       <h1>Messages</h1>
 
       {loading ? (

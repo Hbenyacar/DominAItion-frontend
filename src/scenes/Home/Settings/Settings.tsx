@@ -23,7 +23,8 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 import { Switch, FormControlLabel } from "@mui/material";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 export default function Settings() {
   // 👤 Replace with your actual current user's email (can later fetch dynamically)
@@ -174,7 +175,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="settings" style={{ flexGrow: 1 }}>
+    <div className="settings" style={{ flexGrow: 1, marginLeft: 30 }}>
       {/* Header + Button (vertical layout) */}
       <Box
         sx={{
