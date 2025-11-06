@@ -366,28 +366,41 @@ function Game() {
   // Check if the Notifications API is available
   if ("Notification" in window) {
     if (Notification.permission === "granted") {
-      new Notification("Your Turn!", {
+      const notification = new Notification("Your Turn!", {
         body: "It’s your move — take your next action!",
       });
+
+      // Play the sound when the notification is shown
+      notification.onshow = () => {
+        const audio = new Audio("/assets/sound_effects/notification.mp3");
+        audio.play().catch((err) => {
+          console.warn("Notification sound blocked by browser:", err);
+        });
+      };
+
     } else if (Notification.permission !== "denied") {
       Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
-          new Notification("Your Turn!", {
+          const notification = new Notification("Your Turn!", {
             body: "It’s your move — take your next action!",
           });
+          notification.onshow = () => {
+            const audio = new Audio("/assets/sound_effects/notification.mp3");
+            audio.play().catch((err) => {
+              console.warn("Notification sound blocked by browser:", err);
+            });
+          };
         } else {
-          // Fallback if denied
           alert("It’s your turn — take your next action!");
         }
       });
     } else {
-      // Fallback if blocked
       alert("It’s your turn — take your next action!");
     }
   } else {
-    // Fallback if not supported
     alert("It’s your turn — take your next action!");
   }
+  
 }, [storyResponse]);
 
   const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);
