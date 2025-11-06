@@ -163,7 +163,7 @@ function Game() {
     const fetchMusicPreference = async () => {
       try {
         const res = await fetch(
-          `http://localhost:8080/api/users/email/${currentUserEmail}`
+          `${API_BASE_URL}/api/users/email/${currentUserEmail}`
         );
         if (!res.ok) throw new Error("Failed to fetch user");
         const user = await res.json();
@@ -280,7 +280,48 @@ function Game() {
     // (Later) send to backend:
     // fetch(`/api/games/${gameId}/chat`, { method: "POST", body: JSON.stringify(newMessage) })
   };
-  const handleCloseModal = () => setShowModal(false);
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [tutorialCompleted, setTutorialCompleted] = useState(false);
+
+  const [showTerritoryModal, setShowTerritoryModal] = useState(false);
+  const [territoryName, setTerritoryName] = useState("N/A");
+
+  const handleCloseModal = () => {
+    setShowModal(false);          // hide tutorial modal
+    setTutorialCompleted(true);   // mark tutorial as completed
+    setTimeout(() => setShowTerritoryModal(true), 0); // show territory modal after tutorial closes
+  };
+
+  const handleTerritorySubmit = () => {
+    console.log("User selected territory:", territoryName);
+
+    // Hide the modal
+    setShowTerritoryModal(false);
+
+    // Only update if the user didn't pick N/A
+    if (territoryName !== "N/A" && gameInfo) {
+      // Make a copy of gameInfo so we don't mutate state directly
+      const updatedGameInfo = gameInfo.map((territory: any) => {
+        if (territory.territoryName === territoryName) {
+          return {
+            ...territory,
+            ownerId: currentUserID, // Set yourself as owner
+          };
+        }
+        return territory;
+      });
+
+      setGameInfo(updatedGameInfo);
+
+      // Update the score for newly claimed territory
+      const claimedTerritory = updatedGameInfo.find(
+        (t: any) => t.territoryName === territoryName
+      );
+      if (claimedTerritory) {
+        setScore((prevScore) => prevScore + claimedTerritory.pointValue);
+      }
+    }
+  };
   const tutorialSlides = [
     {
       title: "Welcome to DominAItion!",
@@ -448,6 +489,13 @@ function Game() {
       setIsNarrating(false);
       setIsPaused(false);
     }
+  };
+
+  const [isMuted, setIsMuted] = useState(false);
+
+  const handleMuteToggle = () => {
+    setIsMuted(!isMuted);
+    // Optionally: stop sound alerts, notifications, etc.
   };
 
   return (
