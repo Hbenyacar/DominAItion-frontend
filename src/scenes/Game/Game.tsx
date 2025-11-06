@@ -1003,6 +1003,64 @@ function Game() {
           </Button>
         </Box>
       )}
+
+      {/* Tutorial Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>{tutorialSlides[currentSlide].title}</h2>
+            <h3>{tutorialSlides[currentSlide].content}</h3>
+            <div className="modal-navigation">
+              <button onClick={handlePrevSlide} disabled={currentSlide === 0}>
+                ←
+              </button>
+              <button
+                onClick={handleNextSlide}
+                disabled={currentSlide === tutorialSlides.length - 1}
+              >
+                →
+              </button>
+            </div>
+            <button className="close-button" onClick={handleCloseModal}>
+              {currentSlide === tutorialSlides.length - 1
+                ? "Close"
+                : "Skip Tutorial"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Territory Selection Modal */}
+      {showTerritoryModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Select Your Starting Territory</h2>
+            <p>Please select the territory you would like to start at:</p>
+
+            <select
+  value={territoryName}
+  onChange={(e) => setTerritoryName(e.target.value)}
+  style={{ padding: "6px", borderRadius: "4px", width: "80%" }}
+>
+  <option value="N/A">N/A</option>
+  {gameInfo?.map((territory, index) => (
+    <option key={index} value={territory.territoryName}>
+      {territory.territoryName}
+    </option>
+  ))}
+</select>
+
+            <button
+              onClick={handleTerritorySubmit}
+              style={{ marginTop: "10px" }}
+              disabled={!territoryName} // optional: prevent submit without selection
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      )}
+
     </Box>
   );
 }
