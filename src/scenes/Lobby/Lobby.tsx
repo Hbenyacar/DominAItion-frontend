@@ -145,7 +145,7 @@ function Lobby() {
     if (!userId) return;
     const fetchFriends = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/friends/${userId}`);
+        const res = await fetch(`${API_BASE_URL}/api/friends/${userId}`);
         if (!res.ok) throw new Error("Failed to fetch friends");
         const data: User[] = await res.json();
         setFriends(data);
@@ -161,7 +161,7 @@ function Lobby() {
     if (!lobbyId || !userId) return;
 
     const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
       reconnectDelay: 5000,
       debug: (str) => console.log(str),
     });

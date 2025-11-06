@@ -54,7 +54,7 @@ export default function Settings() {
     const fetchMusicPreference = async () => {
       try {
         const res = await fetch(
-          `http://localhost:8080/api/users/email/${currentUserEmail}`
+          `${API_BASE_URL}/api/users/email/${currentUserEmail}`
         );
         if (!res.ok) throw new Error("Failed to fetch user");
 
@@ -352,7 +352,7 @@ export default function Settings() {
 
                 try {
                   await fetch(
-                    `http://localhost:8080/api/users/backgroundMusic/${currentUserEmail}`,
+                    `${API_BASE_URL}/api/users/backgroundMusic/${currentUserEmail}`,
                     {
                       method: "PUT",
                       headers: { "Content-Type": "application/json" },

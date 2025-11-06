@@ -270,7 +270,7 @@ function Home() {
 
   const getAllLobbies = async (): Promise<Lobby[]> => {
     try {
-      const response = await fetch("http://localhost:8080/api/lobby", {
+      const response = await fetch(`${API_BASE_URL}/api/lobby`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -296,7 +296,7 @@ function Home() {
   ): Promise<Lobby | null> => {
     try {
       console.log("isPrivat: " + isPrivate);
-      const response = await fetch("http://localhost:8080/api/lobby", {
+      const response = await fetch(`${API_BASE_URL}/api/lobby`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -11,6 +11,8 @@ import {
   Alert,
 } from "@mui/material";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
 // Types
 export interface User {
   id: string;
@@ -121,7 +123,7 @@ function LobbyList() {
 
   const getAllLobbies = async (): Promise<Lobby[]> => {
     try {
-      const response = await fetch("http://localhost:8080/api/lobby");
+      const response = await fetch(`${API_BASE_URL}/api/lobby`);
       if (!response.ok) {
         console.error("Failed to fetch lobbies:", response.statusText);
         return [];
@@ -139,7 +141,7 @@ function LobbyList() {
 
   const handleJoinByCode = async (code: string): Promise<boolean> => {
     try {
-      const response = await fetch(`http://localhost:8080/api/lobby/code/${code}`, {
+      const response = await fetch(`${API_BASE_URL}/api/lobby/code/${code}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
