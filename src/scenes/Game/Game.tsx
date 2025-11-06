@@ -122,6 +122,9 @@ function Game() {
 
   const [gameId, setGameId] = useState<string | null>(null);
 
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean | null>(null);
+
+
   /* ---------------------- START BACKGROUND MUSIC ---------------------------- */
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(
@@ -168,9 +171,11 @@ function Game() {
         if (!res.ok) throw new Error("Failed to fetch user");
         const user = await res.json();
         setMusicEnabled(user.musicEnabled ?? true); // default to true if missing
+        setNotificationsEnabled(user.notificationsEnabled ?? true);
       } catch (err) {
         console.error("Error fetching user:", err);
         setMusicEnabled(true); // fallback to true if fetch fails
+        setNotificationsEnabled(true);
       }
     };
 
@@ -361,33 +366,46 @@ function Game() {
 
   
   useEffect(() => {
-  if (!storyResponse) return; // don't notify on empty initial value
+  if (!storyResponse || notificationsEnabled === false) return; // don't notify on empty initial value
 
   // Check if the Notifications API is available
   if ("Notification" in window) {
     if (Notification.permission === "granted") {
-      new Notification("Your Turn!", {
+      const notification = new Notification("Your Turn!", {
         body: "It’s your move — take your next action!",
       });
+
+      // Play the sound when the notification is shown
+      notification.onshow = () => {
+        const audio = new Audio("/assets/sound_effects/notification.mp3");
+        audio.play().catch((err) => {
+          console.warn("Notification sound blocked by browser:", err);
+        });
+      };
+
     } else if (Notification.permission !== "denied") {
       Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
-          new Notification("Your Turn!", {
+          const notification = new Notification("Your Turn!", {
             body: "It’s your move — take your next action!",
           });
+          notification.onshow = () => {
+            const audio = new Audio("/assets/sound_effects/notification.mp3");
+            audio.play().catch((err) => {
+              console.warn("Notification sound blocked by browser:", err);
+            });
+          };
         } else {
-          // Fallback if denied
           alert("It’s your turn — take your next action!");
         }
       });
     } else {
-      // Fallback if blocked
       alert("It’s your turn — take your next action!");
     }
   } else {
-    // Fallback if not supported
     alert("It’s your turn — take your next action!");
   }
+  
 }, [storyResponse]);
 
   const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);

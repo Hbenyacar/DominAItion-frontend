@@ -18,6 +18,8 @@ import { CheckCircle } from "@mui/icons-material";
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
+import { Checkbox, FormControlLabel } from "@mui/material";
+
 import "react-toastify/dist/ReactToastify.css";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -40,7 +42,10 @@ function Profile() {
 
   const [originalUsername, setOriginalUsername] = useState("");
   const [originalBio, setOriginalBio] = useState("");
+  const [originalNotificationsEnabled, setOriginalNotificationsEnabled] = useState<boolean>(true);
   const [usernameError, setUsernameError] = useState("");
+
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true); // default true
 
   const currentUserEmail = useSelector(
     (state: RootState) => state.auth.user?.email || null
@@ -65,6 +70,8 @@ function Profile() {
         setTotalPlayTime(data.totalPlayTime || 0);
         setGamesPlayed(data.gamesPlayed || 0);
         setEmailVerified(data.emailVerified || false);
+        setNotificationsEnabled(data.notificationsEnabled ?? true);
+        setOriginalNotificationsEnabled(data.notificationsEnabled ?? true);
       })
       .catch((err) => console.error(err));
   }, []);
@@ -72,7 +79,8 @@ function Profile() {
   // detect if user made any changes
   const hasChanges =
     username.trim() !== originalUsername.trim() ||
-    bio.trim() !== originalBio.trim();
+    bio.trim() !== originalBio.trim() ||
+    notificationsEnabled !== originalNotificationsEnabled;
 
   // Handle save
   const handleSaveChanges = async () => {
@@ -87,7 +95,8 @@ function Profile() {
     const duplicate = users.some(
       (u: any) =>
         u.username.toLowerCase() === username.trim().toLowerCase() &&
-        u.email !== currentUserEmail
+        u.email !== currentUserEmail &&
+        u.notificationsEnabled !== notificationsEnabled
     );
     if (duplicate) {
       setUsernameError("That username is already taken");
@@ -103,7 +112,7 @@ function Profile() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, bio }),
+          body: JSON.stringify({ username, bio, notificationsEnabled }),
         }
       );
 
@@ -111,6 +120,7 @@ function Profile() {
 
       setOriginalUsername(username);
       setOriginalBio(bio);
+      setOriginalNotificationsEnabled(notificationsEnabled);
       toast.success("Profile updated successfully!");
     } catch (err) {
       console.error("Error updating profile:", err);
@@ -210,6 +220,17 @@ function Profile() {
             multiline
             minRows={3}
           />
+
+          <FormControlLabel
+          control={
+            <Checkbox
+              checked={notificationsEnabled}
+              onChange={(e) => setNotificationsEnabled(e.target.checked)}
+              color="primary"
+            />
+          }
+          label="Notifications enabled?"
+        />
 
           {/* Save Changes Button */}
           <Box>
