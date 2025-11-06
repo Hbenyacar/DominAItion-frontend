@@ -11,19 +11,15 @@ body, html {
 .game-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;        /* Fill full viewport height */
-  overflow: hidden;     /* Prevent scrollbars */
+  min-height: 100vh;
   
+  background-color: bisque;
+
+  /* 👇 This is your clean, consistent vertical offset 
+  padding-top: 20px; /* Adjust based on your Navbar height */
 }
 
-/* Wrapper for horizontal scroll */
-.content-wrapper {
-  width: 100%;
-  margin-top: 120px;
-  overflow-x: auto; /* 👈 horizontal scroll enabled */
-  overflow-y: hidden;
-  white-space: nowrap; /* prevents wrapping of flex items */
-}
+
 
 
 /* Flex container: this is now independent of parents */
@@ -33,9 +29,8 @@ body, html {
   align-items: flex-start;
   justify-content: center;
   min-width: 900px; /* 👈 ensures scrollable area when screen is smaller */
-  gap: 40px;
-  padding: 0 20px;
-  margin-top: 10px;
+
+  
 }
 
 .game-chat {

@@ -216,6 +216,7 @@ function Home() {
   const [selectedImg, setSelectedImg] = React.useState<string | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
   const [mapName, setMapName] = React.useState<string | null>(null);
+  const [winningPoints, setWinningPoints] = useState(30);
 
   const dispatch = useDispatch();
   const handleMap = (title: string, image: string) => {
@@ -263,7 +264,7 @@ function Home() {
     const newLobby = await createLobby(lobbyMap, isPrivate); // or any map
     if (newLobby) {
       console.log("Lobby created:", newLobby);
-      navigate(`/lobby/${newLobby.id}`);
+      navigate(`/lobby/${newLobby.id}`, { state: { winningPoints } });
     }
   };
 
@@ -300,7 +301,11 @@ function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ map: map, privateLobby: isPrivate }), // ✅ pass both
+        body: JSON.stringify({
+          map: map,
+          privateLobby: isPrivate,
+          winningPoints: winningPoints,
+        }),
       });
 
       if (!response.ok) {
@@ -396,7 +401,6 @@ function Home() {
                 sx={{
                   minWidth: "300px",
                   paddingLeft: "30px",
-                  marginTop: "80px",
                   "&.Mui-selected": {
                     backgroundColor: "rgba(230, 160, 120, 0.8)", // darker shade
                     color: "black", // text/icon color
@@ -499,7 +503,6 @@ function Home() {
             sx={{
               width: "100%",
               maxWidth: 360,
-              mt: "375px", // same as marginTop: -32px (1 unit = 8px in MUI)
             }}
           >
             {" "}
@@ -640,17 +643,59 @@ function Home() {
                       Points to Win
                     </Typography>
                     <Slider
-                      aria-label="Points"
-                      defaultValue={30}
+                      aria-label="Points to Win"
+                      value={winningPoints}
+                      onChange={(e, newValue) =>
+                        setWinningPoints(newValue as number)
+                      }
                       getAriaValueText={valuetext}
                       valueLabelDisplay="auto"
-                      step={10}
+                      step={5}
                       marks
-                      onChange={(e, newValue) => setValue1(newValue as number)}
-                      min={10}
+                      min={5}
                       max={110}
-                      sx={{ width: 200 }}
+                      sx={{
+                        ml: "10px",
+                        width: 250,
+                        color: "rgb(207, 78, 10)", // main orange color
+                        "& .MuiSlider-thumb": {
+                          height: 24,
+                          width: 24,
+                          backgroundColor: "white",
+                          border: "3px solid rgb(207, 78, 10)",
+                          "&:hover, &.Mui-focusVisible": {
+                            boxShadow: "0px 0px 0px 8px rgba(207,78,10,0.16)",
+                          },
+                        },
+                        "& .MuiSlider-track": {
+                          height: 8,
+                          border: "none",
+                          backgroundColor: "rgb(207, 78, 10)",
+                        },
+                        "& .MuiSlider-rail": {
+                          height: 8,
+                          opacity: 0.3,
+                          backgroundColor: "#d0d0d0",
+                          borderRadius: 4,
+                        },
+                        "& .MuiSlider-mark": {
+                          backgroundColor: "#aaa",
+                          height: 8,
+                          width: 2,
+                          "&.MuiSlider-markActive": {
+                            opacity: 1,
+                            backgroundColor: "rgb(207,78,10)",
+                          },
+                        },
+                        "& .MuiSlider-valueLabel": {
+                          backgroundColor: "rgb(207, 78, 10)",
+                          color: "white",
+                          borderRadius: "6px",
+                          fontWeight: "bold",
+                        },
+                      }}
                     />
+
                     <Typography sx={{ whiteSpace: "nowrap" }}>
                       {valuetext(value1)}
                     </Typography>

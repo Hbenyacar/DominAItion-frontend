@@ -27,7 +27,8 @@ import { RootState } from "../../../store/store";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 type Friend = {
   id: string;
@@ -257,7 +258,7 @@ export default function FriendsPage() {
   };
 
   return (
-    <div className="friends" style={{ flexGrow: 1 }}>
+    <div className="friends" style={{ flexGrow: 1, marginLeft: 30 }}>
       <Typography variant="h4" marginBottom="30px" fontWeight="bold">
         Friends
       </Typography>
