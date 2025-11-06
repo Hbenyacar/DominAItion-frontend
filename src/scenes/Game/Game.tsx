@@ -639,103 +639,136 @@ function Game() {
         }}
       >
         {/* Left Chat Box */}
-        <Box
-          sx={{
-            flex: "0 0 20%",
-            height: "75%",
-            backgroundColor: "rgba(0,0,0,0.3)",
-            borderRadius: "20px",
-            padding: 2,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "4px 4px 10px rgba(0,0,0,0.3)",
-            marginLeft: "40px",
-          }}
-        >
-          {/* Chat content */}
-          <Typography
-            variant="h6"
-            sx={{ mb: 1, color: "white", fontWeight: "bold" }}
-          >
-            Game Chat
-          </Typography>
+<Box
+  sx={{
+    flex: "0 0 20%",
+    height: "75%",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: "20px",
+    padding: 2,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    boxShadow: "4px 4px 10px rgba(0,0,0,0.3)",
+    marginLeft: "40px",
+  }}
+>
+  {/* Title row with mute button */}
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      mb: 1,
+    }}
+  >
+    <Typography
+      variant="h6"
+      sx={{ color: "white", fontWeight: "bold" }}
+    >
+      Game Chat
+    </Typography>
 
-          <Box
-            id="chat-messages"
+    {/* Mute button */}
+    <button
+      onClick={handleMuteToggle}
+      style={{
+        backgroundColor: isMuted
+          ? "rgba(255, 0, 0, 0.2)"
+          : "rgba(255, 255, 255, 0.1)",
+        border: "none",
+        color: "white",
+        padding: "4px 8px",
+        borderRadius: "4px",
+        cursor: "pointer",
+      }}
+    >
+      {isMuted ? "Unmute" : "Mute"}
+    </button>
+  </Box>
+
+  {/* Scrollable message area */}
+  <Box
+    id="chat-messages"
+    sx={{
+      flexGrow: 1,
+      overflowY: "auto",
+      fontSize: "0.9rem",
+      display: "flex",
+      flexDirection: "column",
+      gap: "6px",
+      mb: 1,
+    }}
+  >
+    {!isMuted && (
+      <>
+        {messages.length === 0 ? (
+          <Typography
             sx={{
-              flexGrow: 1,
-              overflowY: "auto",
-              fontSize: "0.9rem",
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              mb: 1,
+              opacity: 0.6,
+              color: "lightgray",
+              fontSize: "0.7rem",
+              lineHeight: 1.4,
             }}
           >
-            {messages.length === 0 ? (
-              <Typography
-                sx={{
-                  opacity: 0.6,
-                  color: "lightgray",
-                  fontSize: "0.7rem",
-                  lineHeight: 1.4,
-                }}
-              >
-                No messages yet...
-              </Typography>
-            ) : (
-              messages.map((msg, i) => (
-                <Box
-                  key={i}
-                  sx={{
-                    backgroundColor: "rgba(255,255,255,0.1)",
-                    borderRadius: "6px",
-                    p: "4px 6px",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  <strong style={{ color: "rgb(207,78,10)" }}>
-                    {msg.sender}:
-                  </strong>{" "}
-                  {msg.text}
-                </Box>
-              ))
-            )}
-          </Box>
-
-          <Box sx={{ display: "flex", gap: "5px" }}>
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              style={{
-                flexGrow: 1,
+            No messages yet...
+          </Typography>
+        ) : (
+          messages.map((msg, i) => (
+            <Box
+              key={i}
+              sx={{
+                backgroundColor: "rgba(255,255,255,0.1)",
                 borderRadius: "6px",
-                border: "1px solid rgba(255,255,255,0.2)",
-                backgroundColor: "rgba(0,0,0,0.1)",
-                padding: "6px",
-                fontSize: "0.85rem",
-                color: "white",
-              }}
-            />
-            <button
-              onClick={handleSendMessage}
-              style={{
-                border: "none",
-                borderRadius: "6px",
-                backgroundColor: "rgb(207,78,10)",
-                color: "white",
-                padding: "6px 10px",
-                cursor: "pointer",
+                p: "4px 6px",
+                wordBreak: "break-word",
               }}
             >
-              Send
-            </button>
-          </Box>
-        </Box>
+              <strong style={{ color: "rgb(207,78,10)" }}>
+                {msg.sender}:
+              </strong>{" "}
+              {msg.text}
+            </Box>
+          ))
+        )}
+      </>
+    )}
+  </Box>
+
+  {/* Input + send button */}
+  <Box sx={{ display: "flex", gap: "5px" }}>
+    <input
+      type="text"
+      placeholder="Type a message..."
+      value={chatInput}
+      onChange={(e) => setChatInput(e.target.value)}
+      onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+      style={{
+        flexGrow: 1,
+        borderRadius: "6px",
+        border: "1px solid rgba(255,255,255,0.2)",
+        backgroundColor: "rgba(0,0,0,0.1)",
+        padding: "6px",
+        fontSize: "0.85rem",
+        color: "white",
+      }}
+    />
+    <button
+      onClick={handleSendMessage}
+      style={{
+        border: "none",
+        borderRadius: "6px",
+        backgroundColor: "rgb(207,78,10)",
+        color: "white",
+        padding: "6px 10px",
+        cursor: "pointer",
+      }}
+    >
+      Send
+    </button>
+  </Box>
+</Box>
+
 
         {/* Center Map */}
         <Box
