@@ -1,23 +1,38 @@
 import { Box, Typography } from "@mui/material";
 import Navbar from "../navbar/NavBar";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
 
 const achievements = [
   {
-    src: "/achievements/1color.png",
+    number: 1,
+    colorSrc: "/achievements/1color.png",
+    blackSrc: "/achievements/1black.png",
     text: "You’ve earned your first achievement! Keep playing and exploring to unlock more milestones and badges.",
   },
   {
-    src: "/achievements/3color.png",
+    number: 3,
+    colorSrc: "/achievements/3color.png",
+    blackSrc: "/achievements/3black.png",
     text: "Third achievement achieved! Your progress is impressive.",
   },
   {
-    src: "/achievements/10color.png",
+    number: 10,
+    colorSrc: "/achievements/10color.png",
+    blackSrc: "/achievements/10black.png",
     text: "Tenth achievement unlocked! Keep going to earn more rewards.",
   },
   // Add more achievements here as needed
 ];
 
 function Achievements() {
+  const wins = useSelector((state: RootState) => state.auth.wins);
+
+  useEffect(() => {
+    console.log("wins: " + wins);
+  }, [wins]);
+
   return (
     <Box
       sx={{
@@ -28,7 +43,6 @@ function Achievements() {
     >
       <Navbar />
       <Box className="page">
-        {/* Matches structure of other tabs */}
         <Box
           className="content"
           sx={{
@@ -57,7 +71,7 @@ function Achievements() {
               {/* Achievement Image */}
               <Box
                 component="img"
-                src={achievement.src}
+                src={wins >= achievement.number ? achievement.colorSrc : achievement.blackSrc}
                 alt={`Achievement ${index + 1}`}
                 sx={{
                   width: "260px",
