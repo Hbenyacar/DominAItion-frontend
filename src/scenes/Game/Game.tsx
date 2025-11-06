@@ -6,9 +6,10 @@ import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput
 import Navbar from "../navbar/NavBar";
 import { RootState } from "../../store/store";
 import "./Game.css";
-import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, Button, IconButton, Tooltip, Typography, LinearProgress } from "@mui/material";
 import Europe from "../../widgets/Maps/USA/Europe";
 import { Pause, PlayArrow, PlayCircle, SkipNext } from "@mui/icons-material";
+
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/";
 
@@ -153,7 +154,7 @@ function Game() {
     const fetchMusicPreference = async () => {
       try {
         const res = await fetch(
-          `http://localhost:8080/api/users/email/${currentUserEmail}`
+          `${API_BASE_URL}/api/users/email/${currentUserEmail}`
         );
         if (!res.ok) throw new Error("Failed to fetch user");
         const user = await res.json();
@@ -259,7 +260,48 @@ function Game() {
     // (Later) send to backend:
     // fetch(`/api/games/${gameId}/chat`, { method: "POST", body: JSON.stringify(newMessage) })
   };
-  const handleCloseModal = () => setShowModal(false);
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [tutorialCompleted, setTutorialCompleted] = useState(false);
+
+  const [showTerritoryModal, setShowTerritoryModal] = useState(false);
+  const [territoryName, setTerritoryName] = useState("N/A");
+
+  const handleCloseModal = () => {
+    setShowModal(false);          // hide tutorial modal
+    setTutorialCompleted(true);   // mark tutorial as completed
+    setTimeout(() => setShowTerritoryModal(true), 0); // show territory modal after tutorial closes
+  };
+
+  const handleTerritorySubmit = () => {
+    console.log("User selected territory:", territoryName);
+
+    // Hide the modal
+    setShowTerritoryModal(false);
+
+    // Only update if the user didn't pick N/A
+    if (territoryName !== "N/A" && gameInfo) {
+      // Make a copy of gameInfo so we don't mutate state directly
+      const updatedGameInfo = gameInfo.map((territory: any) => {
+        if (territory.territoryName === territoryName) {
+          return {
+            ...territory,
+            ownerId: currentUserID, // Set yourself as owner
+          };
+        }
+        return territory;
+      });
+
+      setGameInfo(updatedGameInfo);
+
+      // Update the score for newly claimed territory
+      const claimedTerritory = updatedGameInfo.find(
+        (t: any) => t.territoryName === territoryName
+      );
+      if (claimedTerritory) {
+        setScore((prevScore) => prevScore + claimedTerritory.pointValue);
+      }
+    }
+  };
   const tutorialSlides = [
     {
       title: "Welcome to DominAItion!",
@@ -298,7 +340,9 @@ function Game() {
   }, []);
 
   
-  const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);
+  //const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);
+  const [gameInfo, setGameInfo] = useState<{ territoryName: string; ownerId: string | null }[] | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [winPoints, setWinPoints] = useState(1000);
 
@@ -409,6 +453,37 @@ function Game() {
       audio.play();
     }
   }, [storyResponse]);
+
+  useEffect(() => {
+  if (!storyResponse) return; // don't notify on empty initial value
+
+  // Check if the Notifications API is available
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      new Notification("Your Turn!", {
+        body: "It’s your move — take your next action!",
+      });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          new Notification("Your Turn!", {
+            body: "It’s your move — take your next action!",
+          });
+        } else {
+          // Fallback if denied
+          alert("It’s your turn — take your next action!");
+        }
+      });
+    } else {
+      // Fallback if blocked
+      alert("It’s your turn — take your next action!");
+    }
+  } else {
+    // Fallback if not supported
+    alert("It’s your turn — take your next action!");
+  }
+}, [storyResponse]);
+
   const handlePauseNarration = () => {
     if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
       window.speechSynthesis.pause();
@@ -427,6 +502,13 @@ function Game() {
       setIsNarrating(false);
       setIsPaused(false);
     }
+  };
+
+  const [isMuted, setIsMuted] = useState(false);
+
+  const handleMuteToggle = () => {
+    setIsMuted(!isMuted);
+    // Optionally: stop sound alerts, notifications, etc.
   };
 
   return (
@@ -518,15 +600,27 @@ function Game() {
               flexDirection: "column",
             }}
           >
-            {/* Title pinned at top */}
-            <strong
+            {/* Title row with mute button */}
+            <div
               style={{
-                fontSize: "1.1rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                gap: "8px",
                 marginBottom: "10px",
               }}
             >
-              Game Chat
-            </strong>
+
+
+              {/* Title text */}
+              <strong
+                style={{
+                  fontSize: "1.1rem",
+                }}
+              >
+                Game Chat
+              </strong>
+            </div>
 
             {/* Scrollable message area */}
             <div
@@ -541,32 +635,32 @@ function Game() {
                 flexDirection: "column",
                 gap: "6px",
                 marginBottom: "8px",
-                maxHeight: "100%", // stays within 400px box
+                maxHeight: "100%",
                 wordWrap: "break-word",
                 overflowWrap: "break-word",
-                whiteSpace: "pre-wrap", // preserve line breaks but wrap long lines
+                whiteSpace: "pre-wrap",
               }}
             >
-              {messages.length === 0 ? (
-                <p style={{ opacity: 0.6 }}>No messages yet...</p>
-              ) : (
-                messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      backgroundColor: "rgba(255, 255, 255, 0.1)",
-                      borderRadius: "6px",
-                      padding: "4px 6px",
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    <strong style={{ color: "rgb(207,78,10)" }}>
-                      {msg.sender}:
-                    </strong>{" "}
-                    {msg.text}
-                  </div>
-                ))
-              )}
+              {isMuted ? (
+                  <p style={{ opacity: 0.6 }}>Chat is muted</p>
+                ) : messages.length === 0 ? (
+                  <p style={{ opacity: 0.6 }}>No messages yet...</p>
+                ) : (
+                  messages.map((msg, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.1)",
+                        borderRadius: "6px",
+                        padding: "4px 6px",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      <strong style={{ color: "rgb(207,78,10)" }}>{msg.sender}:</strong>{" "}
+                      {msg.text}
+                    </div>
+                  ))
+                )}
             </div>
 
             {/* Input row */}
@@ -599,8 +693,24 @@ function Game() {
               >
                 Send
               </button>
+              
             </div>
+                          {/* Mute button on the left */}
+              <button
+                onClick={handleMuteToggle}
+                style={{
+                  backgroundColor: isMuted ? "rgba(255, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.1)",
+                  border: "none",
+                  color: "white",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                {isMuted ? "Unmute" : "Mute"}
+              </button>
           </div>
+          
 
           {/* Center map */}
           <div
@@ -666,6 +776,27 @@ function Game() {
             >
               Score: {score}
             </div>
+            {/* Progress Bar */}
+            <Box sx={{ width: "100%", mt: 1 }}>
+              <Typography
+                variant="body2"
+                sx={{ color: "white", mb: 0.5, textAlign: "center" }}
+              >
+                Progress: {Math.min((score / winPoints) * 100, 100).toFixed(1)}%
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={Math.min((score / winPoints) * 100, 100)}
+                sx={{
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  "& .MuiLinearProgress-bar": {
+                    backgroundColor: "rgb(207,78,10)",
+                  },
+                }}
+              />
+            </Box>
             <Box
               sx={{
                 display: "flex",
@@ -722,6 +853,7 @@ function Game() {
               )}
             </Box>
           </div>
+          
         </div>
       </div>
 
@@ -755,6 +887,37 @@ function Game() {
               {currentSlide === tutorialSlides.length - 1
                 ? "Close"
                 : "Skip Tutorial"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Territory Selection Modal */}
+      {showTerritoryModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Select Your Starting Territory</h2>
+            <p>Please select the territory you would like to start at:</p>
+
+            <select
+  value={territoryName}
+  onChange={(e) => setTerritoryName(e.target.value)}
+  style={{ padding: "6px", borderRadius: "4px", width: "80%" }}
+>
+  <option value="N/A">N/A</option>
+  {gameInfo?.map((territory, index) => (
+    <option key={index} value={territory.territoryName}>
+      {territory.territoryName}
+    </option>
+  ))}
+</select>
+
+            <button
+              onClick={handleTerritorySubmit}
+              style={{ marginTop: "10px" }}
+              disabled={!territoryName} // optional: prevent submit without selection
+            >
+              Submit
             </button>
           </div>
         </div>
