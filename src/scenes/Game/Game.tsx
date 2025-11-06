@@ -359,6 +359,37 @@ function Game() {
     }
   }, []);
 
+  
+  useEffect(() => {
+  if (!storyResponse) return; // don't notify on empty initial value
+
+  // Check if the Notifications API is available
+  if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+      new Notification("Your Turn!", {
+        body: "It’s your move — take your next action!",
+      });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          new Notification("Your Turn!", {
+            body: "It’s your move — take your next action!",
+          });
+        } else {
+          // Fallback if denied
+          alert("It’s your turn — take your next action!");
+        }
+      });
+    } else {
+      // Fallback if blocked
+      alert("It’s your turn — take your next action!");
+    }
+  } else {
+    // Fallback if not supported
+    alert("It’s your turn — take your next action!");
+  }
+}, [storyResponse]);
+
   const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [winPoints, setWinPoints] = useState(30);
