@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useParams } from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
 import Navbar from "../navbar/NavBar";
 import { RootState } from "../../store/store";
+import { setWins } from "../../store/authSlice";
 import "./Game.css";
 import {
   Box,
@@ -17,6 +18,7 @@ import {
 import Europe from "../../widgets/Maps/USA/Europe";
 import { Pause, PlayArrow, PlayCircle, SkipNext } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import WinPopup from "../../components/WinPopup";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/";
@@ -104,6 +106,7 @@ function Game() {
   const currentUserID = useSelector(
     (state: RootState) => state.auth.user?.id || null
   );
+  const currentUser = useSelector((state: RootState) => state.auth.user);
   const navigate = useNavigate();
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -113,12 +116,14 @@ function Game() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [storyResponse, setStoryResponse] = useState("");
   const [score, setScore] = useState(0);
+  const [totalWins, setTotalWins] = useState(0);
   const [messages, setMessages] = useState<{ sender: string; text: string }[]>(
     []
   );
   const [isNarrating, setIsNarrating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const dispatch = useDispatch();
 
   const [gameId, setGameId] = useState<string | null>(null);
 
@@ -392,7 +397,7 @@ function Game() {
 
   const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [winPoints, setWinPoints] = useState(30);
+  const [winPoints, setWinPoints] = useState(2);
 
   async function getGameInfo(gameId: string): Promise<Record<string, any>> {
     try {
@@ -424,7 +429,8 @@ function Game() {
     const info = await getPoints(`${gameID}`);
 
     if (info) {
-      setWinPoints(info.winningPoints || 3);
+      //setWinPoints(info.winningPoints || 3);
+      setWinPoints(2);
       setSummary(info.summary);
       setStatus(info.status);
     }
@@ -458,12 +464,51 @@ function Game() {
       setLoading(false);
     }
   };
+  async function incrementWins(email: string): Promise<number> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/wins/${email}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        console.error("Failed to update wins:", response.status);
+        return -1;
+      }
+  
+      const wins = await response.json();
+      return wins; // previous number of wins (as returned by backend)
+    } catch (error) {
+      console.error("Error updating wins:", error);
+      return -1;
+    }
+  }
 
+  const [message, setMessage] = useState("🎉 Congrats on your win!");
   useEffect(() => {
     if (winPoints <= score) {
       setWonGame(true);
       const audio = new Audio("/assets/sound_effects/game_won.mp3");
       audio.play();
+      const updateWins = async () => {
+        const wins = await incrementWins(currentUserEmail);
+        dispatch(setWins(wins));
+  
+        if (wins === 1) {
+          setMessage("🎉 Congrats on your 1st win!");
+        }
+        if (wins === 3) {
+          setMessage("🎉 Congrats on your 3rd win!");
+        }
+        if (wins === 10) {
+          setMessage("🎉 Congrats on your 10th win!");
+        }
+      };
+      updateWins();
+
+
     }
   }, [winPoints, score]);
 
@@ -1001,7 +1046,9 @@ function Game() {
           >
             Home
           </Button>
+          <WinPopup wonGame={wonGame} message={message}/>
         </Box>
+        
       )}
 
       {/* Tutorial Modal */}

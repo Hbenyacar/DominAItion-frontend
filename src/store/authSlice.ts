@@ -10,6 +10,7 @@ interface AuthState {
   restaurant: any | null;
   userMealSelection: string;
   icon: string; // store avatar URL
+  wins: number;
 }
 
 const initialState: AuthState = {
@@ -22,6 +23,7 @@ const initialState: AuthState = {
   restaurant: null,
   userMealSelection: "all",
   icon: "", // default avatar
+  wins: 0,
 };
 
 const authSlice = createSlice({
@@ -39,6 +41,10 @@ const authSlice = createSlice({
       state.icon = action.payload;
     },
 
+    setWins: (state, action: PayloadAction<number>) => {
+      state.wins = action.payload;
+    },
+
     // Log out
     logout: (state) => {
       state.user = null;
@@ -54,5 +60,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setLogin, setAvatar, logout, toggleMode } = authSlice.actions;
+export const { setLogin, setAvatar, logout, toggleMode, setWins } = authSlice.actions;
 export default authSlice.reducer;
