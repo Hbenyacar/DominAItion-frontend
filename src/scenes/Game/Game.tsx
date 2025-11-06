@@ -122,6 +122,9 @@ function Game() {
 
   const [gameId, setGameId] = useState<string | null>(null);
 
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean | null>(null);
+
+
   /* ---------------------- START BACKGROUND MUSIC ---------------------------- */
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(
@@ -168,9 +171,11 @@ function Game() {
         if (!res.ok) throw new Error("Failed to fetch user");
         const user = await res.json();
         setMusicEnabled(user.musicEnabled ?? true); // default to true if missing
+        setNotificationsEnabled(user.notificationsEnabled ?? true);
       } catch (err) {
         console.error("Error fetching user:", err);
         setMusicEnabled(true); // fallback to true if fetch fails
+        setNotificationsEnabled(true);
       }
     };
 
@@ -361,7 +366,7 @@ function Game() {
 
   
   useEffect(() => {
-  if (!storyResponse) return; // don't notify on empty initial value
+  if (!storyResponse || notificationsEnabled === false) return; // don't notify on empty initial value
 
   // Check if the Notifications API is available
   if ("Notification" in window) {
