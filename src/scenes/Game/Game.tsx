@@ -401,7 +401,7 @@ function Game() {
 
   const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [winPoints, setWinPoints] = useState(2);
+  const [winPoints, setWinPoints] = useState(30);
 
   async function getGameInfo(gameId: string): Promise<Record<string, any>> {
     try {
@@ -454,7 +454,10 @@ function Game() {
         //       console.log("ID:", territory.territoryId);
         //       console.log("Owner:", territory.ownerId);
         //       console.log("----------------------");
-        if (territory.ownerId !== null || territory.territoryName === territoryName) {
+        if (
+          territory.ownerId !== null ||
+          territory.territoryName === territoryName
+        ) {
           currPoints += territory.pointValue;
         }
       });
@@ -701,15 +704,17 @@ function Game() {
         </Box>
 
         <div style={{ padding: "1rem" }}>
-      <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        <input
-          type="checkbox"
-          checked={notificationsEnabled}
-          onChange={(e) => setNotificationsEnabled(e.target.checked)}
-        />
-        Enable Notifications?
-      </label>
-    </div>
+          <label
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+          >
+            <input
+              type="checkbox"
+              checked={notificationsEnabled}
+              onChange={(e) => setNotificationsEnabled(e.target.checked)}
+            />
+            Enable Notifications?
+          </label>
+        </div>
 
         {/* Music box */}
         {musicEnabled && (
@@ -927,7 +932,9 @@ function Game() {
             marginRight: "-30px",
           }}
         >
-          {map === "USA" && <InteractiveUSMap gameInfo={gameInfo} start={territoryName} />}
+          {map === "USA" && (
+            <InteractiveUSMap gameInfo={gameInfo} start={territoryName} />
+          )}
           {map === "Medieval Europe" && <Europe />}
         </Box>
 
@@ -1170,11 +1177,9 @@ function Game() {
             >
               Submit
             </button>
-            
           </div>
         </div>
       )}
-      
     </Box>
   );
 }
