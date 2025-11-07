@@ -16,9 +16,16 @@ import {
   Typography,
 } from "@mui/material";
 import Europe from "../../widgets/Maps/USA/Europe";
-import { Pause, PlayArrow, PlayCircle, SkipNext } from "@mui/icons-material";
+import {
+  Pause,
+  PlayArrow,
+  PlayCircle,
+  SkipNext,
+  PictureAsPdf,
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import WinPopup from "../../components/WinPopup";
+import { jsPDF } from "jspdf";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/";
@@ -635,6 +642,7 @@ function Game() {
     }
   };
 
+  // @ts-ignore
   return (
     <Box
       sx={{
@@ -932,6 +940,7 @@ function Game() {
             marginRight: "-30px",
           }}
         >
+          @ts-ignore
           {map === "USA" && (
             <InteractiveUSMap gameInfo={gameInfo} start={territoryName} />
           )}
@@ -953,13 +962,48 @@ function Game() {
             boxShadow: "-4px 4px 10px rgba(0,0,0,0.3)",
           }}
         >
-          <Typography
-            variant="h6"
-            sx={{ mb: 1, color: "white", fontWeight: "bold" }}
+          {/* Header with PDF Icon */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 1,
+            }}
           >
-            Story Board
-          </Typography>
+            <Typography
+              variant="h6"
+              sx={{ color: "white", fontWeight: "bold" }}
+            >
+              Story Board
+            </Typography>
 
+            <Tooltip title="Download as PDF">
+              <IconButton
+                onClick={() => {
+                  const doc = new jsPDF();
+                  const content = storyResponse || "Awaiting your move...";
+                  const pageWidth = doc.internal.pageSize.getWidth();
+                  const margin = 10;
+                  const maxWidth = pageWidth - margin * 2;
+
+                  doc.setFont("helvetica", "normal");
+                  doc.setFontSize(12);
+                  const lines = doc.splitTextToSize(content, maxWidth);
+                  doc.text(lines, margin, 20);
+                  doc.save("storyboard.pdf");
+                }}
+                sx={{
+                  color: "white",
+                  "&:hover": { color: "orange" },
+                }}
+              >
+                <PictureAsPdf />
+              </IconButton>
+            </Tooltip>
+          </Box>
+
+          {/* Story Text */}
           <Box
             sx={{
               flexGrow: 1,
@@ -1163,6 +1207,7 @@ function Game() {
               style={{ padding: "6px", borderRadius: "4px", width: "80%" }}
             >
               <option value="N/A">N/A</option>
+
               {gameInfo?.map((territory, index) => (
                 <option key={index} value={territory.territoryName}>
                   {territory.territoryName}
