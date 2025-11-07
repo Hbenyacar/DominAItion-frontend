@@ -7,6 +7,7 @@ import { RootState } from "../../store/store";
 import { useNavigate } from "react-router-dom";
 import "./Lobby.css";
 import { useLocation } from "react-router-dom";
+import { CircularProgress, Box, Typography } from "@mui/material";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -198,7 +199,7 @@ function Lobby() {
 
   return (
     <div className="lobby-container">
-      <h1>Lobby Link: http://localhost:3000/lobby/{lobbyId}</h1>
+      <h3>Lobby Link: http://localhost:3000/lobby/{lobbyId}</h3>
 
       {lobby ? (
         <>
@@ -225,13 +226,53 @@ function Lobby() {
           </div>
 
           {loading ? (
-            <button className="invite-btn" disabled>
-              Creating a game...
-            </button>
+            <Box
+              className="invite-btn"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                opacity: 0.8,
+                cursor: "not-allowed",
+                backgroundColor: "rgba(207,78,10,0.8)",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                color: "white",
+                fontWeight: "bold",
+                "&:hover": {
+                  backgroundColor: "#ba5700",
+                  boxShadow: "none",
+                },
+              }}
+            >
+              <CircularProgress size={18} sx={{ color: "white" }} />
+              <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+                Loading game...
+              </Typography>
+            </Box>
           ) : (
-            <p className="invite-btn" onClick={handleInviteClick}>
+            <Box
+              className="invite-btn"
+              onClick={handleInviteClick}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgb(207,78,10)",
+                borderRadius: "6px",
+                padding: "8px 16px",
+                color: "white",
+                fontWeight: "bold",
+                cursor: "pointer",
+                transition: "none",
+                "&:hover": {
+                  backgroundColor: "rgb(207,78,10)", // 👈 stays the same color on hover
+                },
+              }}
+            >
               Invite Friends
-            </p>
+            </Box>
           )}
         </>
       ) : (

@@ -31,7 +31,7 @@ function Profile() {
   const [bio, setBio] = useState("");
   const [password, setPassword] = useState("");
   const [wins, setWins] = useState(0);
-  const [totalPlayTime, setTotalPlayTime] = useState(0);
+  const [totalPlayTime, setTotalPlayTime] = useState(0.0);
   const [losses, setLosses] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
 
@@ -69,7 +69,7 @@ function Profile() {
         setPassword(data.password);
         setWins(data.wins || 0);
         setLosses(data.losses || 0);
-        setTotalPlayTime(data.totalPlayTime || 0);
+        setTotalPlayTime(data.totalPlayTime || 0.0);
         setGamesPlayed(data.gamesPlayed || 0);
         setEmailVerified(data.emailVerified || false);
         setNotificationsEnabled(data.notificationsEnabled ?? true);
@@ -277,19 +277,19 @@ function Profile() {
           <Box sx={{ display: "flex", gap: 4 }}>
             <Box>
               <Typography variant="h6">Wins</Typography>
-              <Typography>{wins}</Typography>
+              <Typography>{wins ?? 0}</Typography>
             </Box>
             <Box>
               <Typography variant="h6">Losses</Typography>
-              <Typography>{losses}</Typography>
+              <Typography>{losses ?? 0}</Typography>
             </Box>
             <Box>
               <Typography variant="h6">Games Played</Typography>
-              <Typography>{gamesPlayed}</Typography>
+              <Typography>{gamesPlayed ?? 0}</Typography>
             </Box>
             <Box>
               <Typography variant="h6">Time Played</Typography>
-              <Typography>{Math.round(totalPlayTime)} hrs</Typography>
+              <Typography>{(totalPlayTime ?? 0).toFixed(1)} hrs</Typography>
             </Box>
           </Box>
         </Stack>
