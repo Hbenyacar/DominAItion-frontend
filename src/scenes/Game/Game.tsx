@@ -131,8 +131,8 @@ function Game() {
   const [gameId, setGameId] = useState<string | null>(null);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState<
-    boolean | null
-  >(null);
+    boolean | undefined
+  >(undefined);
 
   /* ---------------------- START BACKGROUND MUSIC ---------------------------- */
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -371,33 +371,22 @@ function Game() {
 
   useEffect(() => {
     if (!storyResponse || notificationsEnabled === false) return; // don't notify on empty initial value
-
+    const audio = new Audio("/assets/sound_effects/notification.mp3");
+    audio.play().catch((err) => {
+      console.warn("Notification sound blocked by browser:", err);
+    });
     // Check if the Notifications API is available
     if ("Notification" in window) {
       if (Notification.permission === "granted") {
         const notification = new Notification("Your Turn!", {
           body: "It’s your move — take your next action!",
         });
-
-        // Play the sound when the notification is shown
-        notification.onshow = () => {
-          const audio = new Audio("/assets/sound_effects/notification.mp3");
-          audio.play().catch((err) => {
-            console.warn("Notification sound blocked by browser:", err);
-          });
-        };
       } else if (Notification.permission !== "denied") {
         Notification.requestPermission().then((permission) => {
           if (permission === "granted") {
             const notification = new Notification("Your Turn!", {
               body: "It’s your move — take your next action!",
             });
-            notification.onshow = () => {
-              const audio = new Audio("/assets/sound_effects/notification.mp3");
-              audio.play().catch((err) => {
-                console.warn("Notification sound blocked by browser:", err);
-              });
-            };
           } else {
             alert("It’s your turn — take your next action!");
           }
@@ -662,13 +651,12 @@ function Game() {
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: musicEnabled ? "space-between" : "center",
           alignItems: "center",
           width: "40%",
           maxWidth: "1400px",
           height: "10vh",
           margin: "0 auto",
-
           mt: 10,
           px: 2,
         }}
@@ -711,6 +699,17 @@ function Game() {
             }}
           />
         </Box>
+
+        <div style={{ padding: "1rem" }}>
+      <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <input
+          type="checkbox"
+          checked={notificationsEnabled}
+          onChange={(e) => setNotificationsEnabled(e.target.checked)}
+        />
+        Enable Notifications?
+      </label>
+    </div>
 
         {/* Music box */}
         {musicEnabled && (
@@ -1171,9 +1170,11 @@ function Game() {
             >
               Submit
             </button>
+            
           </div>
         </div>
       )}
+      
     </Box>
   );
 }

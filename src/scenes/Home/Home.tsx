@@ -680,7 +680,9 @@ function Home() {
                       onChange={(e, newValue) =>
                         setWinningPoints(newValue as number)
                       }
-                      getAriaValueText={valuetext}
+                      getAriaValueText={(winningPoints) =>
+                        winningPoints.toString()
+                      }
                       valueLabelDisplay="auto"
                       step={5}
                       marks
@@ -729,7 +731,7 @@ function Home() {
                     />
 
                     <Typography sx={{ whiteSpace: "nowrap" }}>
-                      {valuetext(value1)}
+                      {winningPoints}
                     </Typography>
                   </Box>
 
