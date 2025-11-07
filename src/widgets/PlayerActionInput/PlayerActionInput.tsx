@@ -1,8 +1,10 @@
-import { Button } from "@mui/material";
-import React, { useState } from "react";
-import { CircularProgress } from "@mui/material";
+import { Button, IconButton, CircularProgress } from "@mui/material";
+import React, { useState, useEffect, useRef } from "react";
+import MicIcon from "@mui/icons-material/Mic";
+import MicOffIcon from "@mui/icons-material/MicOff";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 interface PlayerActionInputProps {
   maxLength?: number;
@@ -17,11 +19,63 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
   placeholder = "Make Your Move...",
   onSubmitResponse,
   gameId,
-  playerId, // ✅ now destructured
+  playerId,
 }) => {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any | null>(null);
 
+  // Speech to text
+  useEffect(() => {
+    if (
+      !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
+    ) {
+      console.warn("Speech Recognition API not supported in this browser.");
+      return;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          setText((prev) => (prev + transcript).slice(0, maxLength));
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+  }, [maxLength]);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  /* ---------------------- HANDLE TEXT INPUT ---------------------- */
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     if (value.length <= maxLength) {
@@ -29,7 +83,14 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
     }
   };
 
-  /* ---------------------- SUBMIT USER PROMPT TO BACKEND ---------------------- */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  /* ---------------------- SUBMIT USER PROMPT ---------------------- */
   const handleSubmit = async () => {
     if (!text.trim() || !gameId || !playerId) {
       console.warn("❌ Missing required fields:", { gameId, playerId });
@@ -43,35 +104,23 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          gameId: gameId, // send current game ID
-          playerId: playerId, // send current player ID
-          request: text.trim(), // player’s action
-          difficulty: 4, // replace with non hard codes
+          gameId,
+          playerId,
+          request: text.trim(),
+          difficulty: 4,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to submit: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Failed to submit: ${response.status}`);
 
-      const data = await response.text(); // backend returns a string
-
-      if (onSubmitResponse) {
-        onSubmitResponse(data);
-      }
+      const data = await response.text();
+      if (onSubmitResponse) onSubmitResponse(data);
 
       setText("");
     } catch (error) {
       console.error("❌ Error submitting request:", error);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
     }
   };
 
@@ -87,6 +136,8 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
     inputWrapper: {
       position: "relative" as const,
       width: "90%",
+      display: "flex",
+      alignItems: "center",
     },
     textarea: {
       width: "100%",
@@ -118,6 +169,10 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
       cursor: isSubmitting || !text.trim() ? "not-allowed" : "pointer",
       transition: "background-color 0.2s ease-in-out",
     },
+    micButton: {
+      marginLeft: "8px",
+      color: isListening ? "red" : "white",
+    },
     counter: {
       alignSelf: "flex-end",
       marginTop: "5px",
@@ -129,7 +184,15 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
 
   return (
     <div style={styles.container}>
+      {/* Mic Button */}
+      <IconButton onClick={toggleListening} style={styles.micButton}>
+        {isListening ? <MicIcon /> : <MicOffIcon />}
+      </IconButton>
+
+      {/* Input Row */}
+
       <div style={styles.inputWrapper}>
+        {/* Text Input */}
         <textarea
           value={text}
           onChange={handleChange}
@@ -138,6 +201,8 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
           rows={4}
           style={styles.textarea}
         />
+
+        {/* Send Button */}
         <Button
           onClick={() => {
             const audio = new Audio("/assets/sound_effects/submit_prompt.mp3");
@@ -154,6 +219,8 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
           )}
         </Button>
       </div>
+
+      {/* Counter Below */}
       <div style={styles.counter}>
         {text.length} / {maxLength}
       </div>

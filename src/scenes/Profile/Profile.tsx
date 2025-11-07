@@ -18,9 +18,12 @@ import { CheckCircle } from "@mui/icons-material";
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
+import { Checkbox, FormControlLabel } from "@mui/material";
+
 import "react-toastify/dist/ReactToastify.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 function Profile() {
   const [username, setUsername] = useState("");
@@ -28,7 +31,7 @@ function Profile() {
   const [bio, setBio] = useState("");
   const [password, setPassword] = useState("");
   const [wins, setWins] = useState(0);
-  const [totalPlayTime, setTotalPlayTime] = useState(0);
+  const [totalPlayTime, setTotalPlayTime] = useState(0.0);
   const [losses, setLosses] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
 
@@ -40,7 +43,11 @@ function Profile() {
 
   const [originalUsername, setOriginalUsername] = useState("");
   const [originalBio, setOriginalBio] = useState("");
+  const [originalNotificationsEnabled, setOriginalNotificationsEnabled] =
+    useState<boolean>(true);
   const [usernameError, setUsernameError] = useState("");
+
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true); // default true
 
   const currentUserEmail = useSelector(
     (state: RootState) => state.auth.user?.email || null
@@ -62,9 +69,12 @@ function Profile() {
         setPassword(data.password);
         setWins(data.wins || 0);
         setLosses(data.losses || 0);
-        setTotalPlayTime(data.totalPlayTime || 0);
+        setTotalPlayTime(data.totalPlayTime || 0.0);
         setGamesPlayed(data.gamesPlayed || 0);
         setEmailVerified(data.emailVerified || false);
+        setNotificationsEnabled(data.notificationsEnabled ?? true);
+        setOriginalNotificationsEnabled(data.notificationsEnabled ?? true);
+        setGamesPlayed(data.gamesPlayed);
       })
       .catch((err) => console.error(err));
   }, []);
@@ -72,7 +82,8 @@ function Profile() {
   // detect if user made any changes
   const hasChanges =
     username.trim() !== originalUsername.trim() ||
-    bio.trim() !== originalBio.trim();
+    bio.trim() !== originalBio.trim() ||
+    notificationsEnabled !== originalNotificationsEnabled;
 
   // Handle save
   const handleSaveChanges = async () => {
@@ -87,7 +98,8 @@ function Profile() {
     const duplicate = users.some(
       (u: any) =>
         u.username.toLowerCase() === username.trim().toLowerCase() &&
-        u.email !== currentUserEmail
+        u.email !== currentUserEmail &&
+        u.notificationsEnabled !== notificationsEnabled
     );
     if (duplicate) {
       setUsernameError("That username is already taken");
@@ -103,7 +115,7 @@ function Profile() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, bio }),
+          body: JSON.stringify({ username, bio, notificationsEnabled }),
         }
       );
 
@@ -111,6 +123,7 @@ function Profile() {
 
       setOriginalUsername(username);
       setOriginalBio(bio);
+      setOriginalNotificationsEnabled(notificationsEnabled);
       toast.success("Profile updated successfully!");
     } catch (err) {
       console.error("Error updating profile:", err);
@@ -211,6 +224,17 @@ function Profile() {
             minRows={3}
           />
 
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={notificationsEnabled}
+                onChange={(e) => setNotificationsEnabled(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Notifications enabled?"
+          />
+
           {/* Save Changes Button */}
           <Box>
             <Button
@@ -253,19 +277,19 @@ function Profile() {
           <Box sx={{ display: "flex", gap: 4 }}>
             <Box>
               <Typography variant="h6">Wins</Typography>
-              <Typography>{wins}</Typography>
+              <Typography>{wins ?? 0}</Typography>
             </Box>
             <Box>
               <Typography variant="h6">Losses</Typography>
-              <Typography>{losses}</Typography>
+              <Typography>{losses ?? 0}</Typography>
             </Box>
             <Box>
               <Typography variant="h6">Games Played</Typography>
-              <Typography>{gamesPlayed}</Typography>
+              <Typography>{gamesPlayed ?? 0}</Typography>
             </Box>
             <Box>
               <Typography variant="h6">Time Played</Typography>
-              <Typography>{Math.round(totalPlayTime)} hrs</Typography>
+              <Typography>{(totalPlayTime ?? 0).toFixed(1)} hrs</Typography>
             </Box>
           </Box>
         </Stack>

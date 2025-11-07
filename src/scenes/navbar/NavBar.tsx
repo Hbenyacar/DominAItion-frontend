@@ -70,7 +70,7 @@ function Navbar() {
     <Box className="navbar">
       <div className="logo">
         <img
-          src="DominAItionLogo.png"
+          src="/DominAItionLogo.png"
           onClick={() => toHome()}
           style={{ cursor: "pointer" }}
         />

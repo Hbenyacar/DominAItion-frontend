@@ -49,6 +49,7 @@ import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
 import LobbyList from "../../components/LobbyList";
 import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
 import Achievements from "../Achievements/Achievements";
+import { RootState } from "../../store/store";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -218,6 +219,10 @@ function Home() {
   const [mapName, setMapName] = React.useState<string | null>(null);
   const [winningPoints, setWinningPoints] = useState(30);
 
+  const currentUserEmail = useSelector(
+    (state: RootState) => state.auth.user?.email || null
+  );
+
   const dispatch = useDispatch();
   const handleMap = (title: string, image: string) => {
     setSelectedImg(image);
@@ -383,6 +388,25 @@ function Home() {
 
     const objectUrl = URL.createObjectURL(file);
     setPreview(objectUrl);
+  };
+
+  const incrementGamesPlayed = async (email: string) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/gamesPlayed/${email}`,
+        {
+          method: "PUT",
+        }
+      );
+      if (!response.ok) {
+        console.error("Failed to increment gamesPlayed:", response.statusText);
+      } else {
+        const data = await response.json();
+        console.log("✅ Games played updated:", data.gamesPlayed);
+      }
+    } catch (error) {
+      console.error("Error incrementing gamesPlayed:", error);
+    }
   };
 
   return (
@@ -850,6 +874,10 @@ function Home() {
                   <Button
                     onClick={() => {
                       handleCreateLobby();
+
+                      if (currentUserEmail) {
+                        incrementGamesPlayed(currentUserEmail);
+                      }
                       const audio = new Audio(
                         "/assets/sound_effects/game_start.mp3"
                       );
