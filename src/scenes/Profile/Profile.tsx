@@ -22,7 +22,8 @@ import { Checkbox, FormControlLabel } from "@mui/material";
 
 import "react-toastify/dist/ReactToastify.css";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 function Profile() {
   const [username, setUsername] = useState("");
@@ -42,7 +43,8 @@ function Profile() {
 
   const [originalUsername, setOriginalUsername] = useState("");
   const [originalBio, setOriginalBio] = useState("");
-  const [originalNotificationsEnabled, setOriginalNotificationsEnabled] = useState<boolean>(true);
+  const [originalNotificationsEnabled, setOriginalNotificationsEnabled] =
+    useState<boolean>(true);
   const [usernameError, setUsernameError] = useState("");
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true); // default true
@@ -72,6 +74,7 @@ function Profile() {
         setEmailVerified(data.emailVerified || false);
         setNotificationsEnabled(data.notificationsEnabled ?? true);
         setOriginalNotificationsEnabled(data.notificationsEnabled ?? true);
+        setGamesPlayed(data.gamesPlayed);
       })
       .catch((err) => console.error(err));
   }, []);
@@ -222,15 +225,15 @@ function Profile() {
           />
 
           <FormControlLabel
-          control={
-            <Checkbox
-              checked={notificationsEnabled}
-              onChange={(e) => setNotificationsEnabled(e.target.checked)}
-              color="primary"
-            />
-          }
-          label="Notifications enabled?"
-        />
+            control={
+              <Checkbox
+                checked={notificationsEnabled}
+                onChange={(e) => setNotificationsEnabled(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Notifications enabled?"
+          />
 
           {/* Save Changes Button */}
           <Box>

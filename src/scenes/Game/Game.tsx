@@ -111,6 +111,9 @@ function Game() {
 
   const [userId, setUserId] = useState<string | null>(null);
 
+  const [secondsSpent, setSecondsSpent] = useState(0);
+  const sessionStartRef = useRef<Date | null>(null);
+
   /* ---------------------- START STATES ---------------------------- */
   const [showModal, setShowModal] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -127,8 +130,9 @@ function Game() {
 
   const [gameId, setGameId] = useState<string | null>(null);
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean | null>(null);
-
+  const [notificationsEnabled, setNotificationsEnabled] = useState<
+    boolean | null
+  >(null);
 
   /* ---------------------- START BACKGROUND MUSIC ---------------------------- */
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -297,8 +301,8 @@ function Game() {
   const [territoryName, setTerritoryName] = useState("N/A");
 
   const handleCloseModal = () => {
-    setShowModal(false);          // hide tutorial modal
-    setTutorialCompleted(true);   // mark tutorial as completed
+    setShowModal(false); // hide tutorial modal
+    setTutorialCompleted(true); // mark tutorial as completed
     setTimeout(() => setShowTerritoryModal(true), 0); // show territory modal after tutorial closes
   };
 
@@ -369,49 +373,46 @@ function Game() {
     }
   }, []);
 
-  
   useEffect(() => {
-  if (!storyResponse || notificationsEnabled === false) return; // don't notify on empty initial value
+    if (!storyResponse || notificationsEnabled === false) return; // don't notify on empty initial value
 
-  // Check if the Notifications API is available
-  if ("Notification" in window) {
-    if (Notification.permission === "granted") {
-      const notification = new Notification("Your Turn!", {
-        body: "It’s your move — take your next action!",
-      });
-
-      // Play the sound when the notification is shown
-      notification.onshow = () => {
-        const audio = new Audio("/assets/sound_effects/notification.mp3");
-        audio.play().catch((err) => {
-          console.warn("Notification sound blocked by browser:", err);
+    // Check if the Notifications API is available
+    if ("Notification" in window) {
+      if (Notification.permission === "granted") {
+        const notification = new Notification("Your Turn!", {
+          body: "It’s your move — take your next action!",
         });
-      };
 
-    } else if (Notification.permission !== "denied") {
-      Notification.requestPermission().then((permission) => {
-        if (permission === "granted") {
-          const notification = new Notification("Your Turn!", {
-            body: "It’s your move — take your next action!",
+        // Play the sound when the notification is shown
+        notification.onshow = () => {
+          const audio = new Audio("/assets/sound_effects/notification.mp3");
+          audio.play().catch((err) => {
+            console.warn("Notification sound blocked by browser:", err);
           });
-          notification.onshow = () => {
-            const audio = new Audio("/assets/sound_effects/notification.mp3");
-            audio.play().catch((err) => {
-              console.warn("Notification sound blocked by browser:", err);
+        };
+      } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then((permission) => {
+          if (permission === "granted") {
+            const notification = new Notification("Your Turn!", {
+              body: "It’s your move — take your next action!",
             });
-          };
-        } else {
-          alert("It’s your turn — take your next action!");
-        }
-      });
+            notification.onshow = () => {
+              const audio = new Audio("/assets/sound_effects/notification.mp3");
+              audio.play().catch((err) => {
+                console.warn("Notification sound blocked by browser:", err);
+              });
+            };
+          } else {
+            alert("It’s your turn — take your next action!");
+          }
+        });
+      } else {
+        alert("It’s your turn — take your next action!");
+      }
     } else {
       alert("It’s your turn — take your next action!");
     }
-  } else {
-    alert("It’s your turn — take your next action!");
-  }
-  
-}, [storyResponse]);
+  }, [storyResponse]);
 
   const [gameInfo, setGameInfo] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -447,8 +448,7 @@ function Game() {
     const info = await getPoints(`${gameID}`);
 
     if (info) {
-      //setWinPoints(info.winningPoints || 3);
-      setWinPoints(2);
+      setWinPoints(info.winningPoints || 3);
       setSummary(info.summary);
       setStatus(info.status);
     }
@@ -490,12 +490,12 @@ function Game() {
           "Content-Type": "application/json",
         },
       });
-  
+
       if (!response.ok) {
         console.error("Failed to update wins:", response.status);
         return -1;
       }
-  
+
       const wins = await response.json();
       return wins; // previous number of wins (as returned by backend)
     } catch (error) {
@@ -513,7 +513,7 @@ function Game() {
       const updateWins = async () => {
         const wins = await incrementWins(currentUserEmail);
         dispatch(setWins(wins));
-  
+
         if (wins === 1) {
           setMessage("🎉 Congrats on your 1st win!");
         }
@@ -525,8 +525,6 @@ function Game() {
         }
       };
       updateWins();
-
-
     }
   }, [winPoints, score]);
 
@@ -590,6 +588,63 @@ function Game() {
   const handleMuteToggle = () => {
     setIsMuted(!isMuted);
     // Optionally: stop sound alerts, notifications, etc.
+  };
+
+  //
+  useEffect(() => {
+    sessionStartRef.current = new Date();
+
+    const interval = setInterval(() => {
+      setSecondsSpent((prev) => prev + 1);
+    }, 1000); // increment every second
+
+    return () => {
+      // Cleanup — stop timer
+      clearInterval(interval);
+
+      if (sessionStartRef.current) {
+        const sessionEnd = new Date();
+        const durationMs =
+          sessionEnd.getTime() - sessionStartRef.current.getTime();
+        const durationHours = durationMs / (1000 * 60 * 60);
+        console.log(
+          `User spent ${durationHours.toFixed(2)} hours on Game page`
+        );
+
+        if (currentUserEmail) {
+          savePlaytime(currentUserEmail, durationHours);
+        }
+      }
+    };
+  }, []);
+
+  const savePlaytime = async (email: string, hours: number) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/totalPlayTime/${email}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hours }),
+        }
+      );
+
+      if (!response.ok) {
+        console.error(
+          "Failed to increment totalPlayTime:",
+          response.statusText
+        );
+      } else {
+        const data = await response.json();
+        console.log(
+          "✅ Incremented totalPlayTime:",
+          data.totalPlayTime.toFixed(3),
+          "hours total"
+        );
+      }
+    } catch (error) {
+      console.error("Error updating totalPlayTime:", error);
+    }
   };
 
   return (
@@ -733,136 +788,135 @@ function Game() {
         }}
       >
         {/* Left Chat Box */}
-<Box
-  sx={{
-    flex: "0 0 20%",
-    height: "75%",
-    backgroundColor: "rgba(0,0,0,0.3)",
-    borderRadius: "20px",
-    padding: 2,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    boxShadow: "4px 4px 10px rgba(0,0,0,0.3)",
-    marginLeft: "40px",
-  }}
->
-  {/* Title row with mute button */}
-  <Box
-    sx={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      mb: 1,
-    }}
-  >
-    <Typography
-      variant="h6"
-      sx={{ color: "white", fontWeight: "bold" }}
-    >
-      Game Chat
-    </Typography>
-
-    {/* Mute button */}
-    <button
-      onClick={handleMuteToggle}
-      style={{
-        backgroundColor: isMuted
-          ? "rgba(255, 0, 0, 0.2)"
-          : "rgba(255, 255, 255, 0.1)",
-        border: "none",
-        color: "white",
-        padding: "4px 8px",
-        borderRadius: "4px",
-        cursor: "pointer",
-      }}
-    >
-      {isMuted ? "Unmute" : "Mute"}
-    </button>
-  </Box>
-
-  {/* Scrollable message area */}
-  <Box
-    id="chat-messages"
-    sx={{
-      flexGrow: 1,
-      overflowY: "auto",
-      fontSize: "0.9rem",
-      display: "flex",
-      flexDirection: "column",
-      gap: "6px",
-      mb: 1,
-    }}
-  >
-    {!isMuted && (
-      <>
-        {messages.length === 0 ? (
-          <Typography
+        <Box
+          sx={{
+            flex: "0 0 20%",
+            height: "75%",
+            backgroundColor: "rgba(0,0,0,0.3)",
+            borderRadius: "20px",
+            padding: 2,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            boxShadow: "4px 4px 10px rgba(0,0,0,0.3)",
+            marginLeft: "40px",
+          }}
+        >
+          {/* Title row with mute button */}
+          <Box
             sx={{
-              opacity: 0.6,
-              color: "lightgray",
-              fontSize: "0.7rem",
-              lineHeight: 1.4,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 1,
             }}
           >
-            No messages yet...
-          </Typography>
-        ) : (
-          messages.map((msg, i) => (
-            <Box
-              key={i}
-              sx={{
-                backgroundColor: "rgba(255,255,255,0.1)",
-                borderRadius: "6px",
-                p: "4px 6px",
-                wordBreak: "break-word",
+            <Typography
+              variant="h6"
+              sx={{ color: "white", fontWeight: "bold" }}
+            >
+              Game Chat
+            </Typography>
+
+            {/* Mute button */}
+            <button
+              onClick={handleMuteToggle}
+              style={{
+                backgroundColor: isMuted
+                  ? "rgba(255, 0, 0, 0.2)"
+                  : "rgba(255, 255, 255, 0.1)",
+                border: "none",
+                color: "white",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                cursor: "pointer",
               }}
             >
-              <strong style={{ color: "rgb(207,78,10)" }}>
-                {msg.sender}:
-              </strong>{" "}
-              {msg.text}
-            </Box>
-          ))
-        )}
-      </>
-    )}
-  </Box>
+              {isMuted ? "Unmute" : "Mute"}
+            </button>
+          </Box>
 
-  {/* Input + send button */}
-  <Box sx={{ display: "flex", gap: "5px" }}>
-    <input
-      type="text"
-      placeholder="Type a message..."
-      value={chatInput}
-      onChange={(e) => setChatInput(e.target.value)}
-      onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-      style={{
-        flexGrow: 1,
-        borderRadius: "6px",
-        border: "1px solid rgba(255,255,255,0.2)",
-        backgroundColor: "rgba(0,0,0,0.1)",
-        padding: "6px",
-        fontSize: "0.85rem",
-        color: "white",
-      }}
-    />
-    <button
-      onClick={handleSendMessage}
-      style={{
-        border: "none",
-        borderRadius: "6px",
-        backgroundColor: "rgb(207,78,10)",
-        color: "white",
-        padding: "6px 10px",
-        cursor: "pointer",
-      }}
-    >
-      Send
-    </button>
-  </Box>
-</Box>
+          {/* Scrollable message area */}
+          <Box
+            id="chat-messages"
+            sx={{
+              flexGrow: 1,
+              overflowY: "auto",
+              fontSize: "0.9rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              mb: 1,
+            }}
+          >
+            {!isMuted && (
+              <>
+                {messages.length === 0 ? (
+                  <Typography
+                    sx={{
+                      opacity: 0.6,
+                      color: "lightgray",
+                      fontSize: "0.7rem",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    No messages yet...
+                  </Typography>
+                ) : (
+                  messages.map((msg, i) => (
+                    <Box
+                      key={i}
+                      sx={{
+                        backgroundColor: "rgba(255,255,255,0.1)",
+                        borderRadius: "6px",
+                        p: "4px 6px",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      <strong style={{ color: "rgb(207,78,10)" }}>
+                        {msg.sender}:
+                      </strong>{" "}
+                      {msg.text}
+                    </Box>
+                  ))
+                )}
+              </>
+            )}
+          </Box>
 
+          {/* Input + send button */}
+          <Box sx={{ display: "flex", gap: "5px" }}>
+            <input
+              type="text"
+              placeholder="Type a message..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+              style={{
+                flexGrow: 1,
+                borderRadius: "6px",
+                border: "1px solid rgba(255,255,255,0.2)",
+                backgroundColor: "rgba(0,0,0,0.1)",
+                padding: "6px",
+                fontSize: "0.85rem",
+                color: "white",
+              }}
+            />
+            <button
+              onClick={handleSendMessage}
+              style={{
+                border: "none",
+                borderRadius: "6px",
+                backgroundColor: "rgb(207,78,10)",
+                color: "white",
+                padding: "6px 10px",
+                cursor: "pointer",
+              }}
+            >
+              Send
+            </button>
+          </Box>
+        </Box>
 
         {/* Center Map */}
         <Box
@@ -1064,9 +1118,8 @@ function Game() {
           >
             Home
           </Button>
-          <WinPopup wonGame={wonGame} message={message}/>
+          <WinPopup wonGame={wonGame} message={message} />
         </Box>
-        
       )}
 
       {/* Tutorial Modal */}
@@ -1103,17 +1156,17 @@ function Game() {
             <p>Please select the territory you would like to start at:</p>
 
             <select
-  value={territoryName}
-  onChange={(e) => setTerritoryName(e.target.value)}
-  style={{ padding: "6px", borderRadius: "4px", width: "80%" }}
->
-  <option value="N/A">N/A</option>
-  {gameInfo?.map((territory, index) => (
-    <option key={index} value={territory.territoryName}>
-      {territory.territoryName}
-    </option>
-  ))}
-</select>
+              value={territoryName}
+              onChange={(e) => setTerritoryName(e.target.value)}
+              style={{ padding: "6px", borderRadius: "4px", width: "80%" }}
+            >
+              <option value="N/A">N/A</option>
+              {gameInfo?.map((territory, index) => (
+                <option key={index} value={territory.territoryName}>
+                  {territory.territoryName}
+                </option>
+              ))}
+            </select>
 
             <button
               onClick={handleTerritorySubmit}
@@ -1125,7 +1178,6 @@ function Game() {
           </div>
         </div>
       )}
-
     </Box>
   );
 }
