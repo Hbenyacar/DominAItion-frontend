@@ -45,34 +45,46 @@ function Achievements() {
       }}
     >
       <Navbar />
-      <Box className="page">
-        <Box
-          className="content"
+      <Box
+        className="content"
+        sx={{
+          flex: 1,
+          padding: "100px 60px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start", // ✅ align everything to the left
+          justifyContent: "flex-start",
+        }}
+      >
+        <Typography
+          variant="h4"
           sx={{
-            flex: 1,
-            padding: "80px 60px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-start",
+            fontWeight: "bold",
+            color: "#2c2c2c",
+            mb: 4,
           }}
         >
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: "bold",
-              color: "#2c2c2c",
-              mb: 4,
-              alignSelf: "flex-start",
-            }}
-          >
-            Achievements
-          </Typography>
+          Achievements
+        </Typography>
 
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start", // ✅ no centering inside child box either
+            width: "100%",
+          }}
+        >
           {achievements.map((achievement, index) => {
             const achieved = wins >= achievement.number;
             return (
-              <Box key={index} sx={{ mb: 6, textAlign: "center" }}>
+              <Box
+                key={index}
+                sx={{
+                  mb: 6,
+                  textAlign: "left", // ✅ left-align text
+                }}
+              >
                 {/* Image */}
                 <Box
                   component="img"
@@ -83,8 +95,9 @@ function Achievements() {
                     height: "auto",
                     borderRadius: "20px",
                     boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-                    mb: 3,
+                    mb: 2,
                     opacity: achieved ? 1 : 0.6,
+                    display: "block", // ✅ ensures image respects left alignment
                   }}
                 />
 
@@ -111,11 +124,14 @@ function Achievements() {
                       }}
                     >
                       Unlocked on{" "}
-                      {new Date(achievement.date).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                      {new Date(achievement.date).toLocaleDateString(
+                        undefined,
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )}
                     </Typography>
                   </>
                 )}
