@@ -141,6 +141,16 @@ function Game() {
     boolean | undefined
   >(undefined);
 
+  const [storyResponses, setStoryResponses] = useState<string[]>([]);
+  const storyEndRef = useRef<HTMLDivElement | null>(null);
+
+// Auto-scroll to bottom whenever new story arrives
+  useEffect(() => {
+    if (storyEndRef.current) {
+      storyEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [storyResponses]);
+
   /* ---------------------- START BACKGROUND MUSIC ---------------------------- */
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(
@@ -983,7 +993,7 @@ function Game() {
               <IconButton
                 onClick={() => {
                   const doc = new jsPDF();
-                  const content = storyResponse || "Awaiting your move...";
+                  const content = storyResponses.join("\n\n") || "Awaiting your move...";
                   const pageWidth = doc.internal.pageSize.getWidth();
                   const margin = 10;
                   const maxWidth = pageWidth - margin * 2;
@@ -1006,20 +1016,39 @@ function Game() {
 
           {/* Story Text */}
           <Box
-            sx={{
-              flexGrow: 1,
-              overflowY: "auto",
-              fontSize: "0.8rem",
-              textAlign: "justify",
-              color: "white",
-            }}
+              sx={{
+                flexGrow: 1,
+                overflowY: "auto",
+                fontSize: "0.8rem",
+                textAlign: "justify",
+                color: "white",
+                paddingRight: "8px",
+              }}
           >
-            <Typography
-              sx={{ color: "lightgray", fontSize: "0.7rem", lineHeight: 1.4 }}
-            >
-              {storyResponse || "Awaiting your move..."}
-            </Typography>
+            {storyResponses.length === 0 ? (
+                <Typography
+                    sx={{ color: "lightgray", fontSize: "0.7rem", lineHeight: 1.4 }}
+                >
+                  Awaiting your move...
+                </Typography>
+            ) : (
+                storyResponses.map((response, index) => (
+                    <Typography
+                        key={index}
+                        sx={{
+                          color: "lightgray",
+                          fontSize: "0.75rem",
+                          lineHeight: 1.5,
+                          marginBottom: "10px",
+                        }}
+                    >
+                      {response}
+                    </Typography>
+                ))
+            )}
+            <div ref={storyEndRef} />
           </Box>
+
 
           {/* Narration Controls */}
           <Box
@@ -1090,9 +1119,11 @@ function Game() {
         }}
       >
         <PlayerActionInput
-          gameId={gameID!}
-          playerId={currentUserID!}
-          onSubmitResponse={setStoryResponse}
+            gameId={gameID!}
+            playerId={currentUserID!}
+            onSubmitResponse={(newResponse: string) => {
+              setStoryResponses((prev) => [...prev, newResponse]);
+            }}
         />
       </Box>
 
