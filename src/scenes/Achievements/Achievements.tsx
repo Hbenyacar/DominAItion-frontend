@@ -4,26 +4,29 @@ import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 
+// Each achievement has a threshold (number), color + black images, and optional unlockDate + message
 const achievements = [
   {
     number: 1,
     colorSrc: "/achievements/1color.png",
     blackSrc: "/achievements/1black.png",
-    text: "You’ve earned your first achievement! Keep playing and exploring to unlock more milestones and badges.",
+    date: "2025-11-01",
+    message: "Unlocked your first win! Great start!",
   },
   {
     number: 3,
     colorSrc: "/achievements/3color.png",
     blackSrc: "/achievements/3black.png",
-    text: "Third achievement achieved! Your progress is impressive.",
+    date: "2025-11-03",
+    message: "Consistency pays off — 3 wins achieved!",
   },
   {
     number: 10,
     colorSrc: "/achievements/10color.png",
     blackSrc: "/achievements/10black.png",
-    text: "Tenth achievement unlocked! Keep going to earn more rewards.",
+    date: "2025-11-06",
+    message: "You’ve reached 10 wins! A true champion!",
   },
-  // Add more achievements here as needed
 ];
 
 function Achievements() {
@@ -66,37 +69,59 @@ function Achievements() {
             Achievements
           </Typography>
 
-          {achievements.map((achievement, index) => (
-            <Box key={index} sx={{ mb: 6, textAlign: "center" }}>
-              {/* Achievement Image */}
-              <Box
-                component="img"
-                src={wins >= achievement.number ? achievement.colorSrc : achievement.blackSrc}
-                alt={`Achievement ${index + 1}`}
-                sx={{
-                  width: "260px",
-                  height: "auto",
-                  borderRadius: "20px",
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-                  mb: 3,
-                }}
-              />
+          {achievements.map((achievement, index) => {
+            const achieved = wins >= achievement.number;
+            return (
+              <Box key={index} sx={{ mb: 6, textAlign: "center" }}>
+                {/* Image */}
+                <Box
+                  component="img"
+                  src={achieved ? achievement.colorSrc : achievement.blackSrc}
+                  alt={`Achievement ${index + 1}`}
+                  sx={{
+                    width: "260px",
+                    height: "auto",
+                    borderRadius: "20px",
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                    mb: 3,
+                    opacity: achieved ? 1 : 0.6,
+                  }}
+                />
 
-              {/* Text */}
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "#555",
-                  maxWidth: "480px",
-                  textAlign: "center",
-                  lineHeight: 1.6,
-                  fontSize: "1.05rem",
-                }}
-              >
-                {achievement.text}
-              </Typography>
-            </Box>
-          ))}
+                {/* Show unlock info only if achieved */}
+                {achieved && (
+                  <>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        color: "#2e7d32",
+                        fontWeight: 600,
+                        mt: 1,
+                      }}
+                    >
+                      {achievement.message}
+                    </Typography>
+
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#888",
+                        fontStyle: "italic",
+                        mt: 0.5,
+                      }}
+                    >
+                      Unlocked on{" "}
+                      {new Date(achievement.date).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            );
+          })}
         </Box>
       </Box>
     </Box>

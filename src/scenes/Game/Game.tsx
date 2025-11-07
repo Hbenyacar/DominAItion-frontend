@@ -465,7 +465,7 @@ function Game() {
         //       console.log("ID:", territory.territoryId);
         //       console.log("Owner:", territory.ownerId);
         //       console.log("----------------------");
-        if (territory.ownerId !== null) {
+        if (territory.ownerId !== null || territory.territoryName === territoryName) {
           currPoints += territory.pointValue;
         }
       });
@@ -928,7 +928,7 @@ function Game() {
             marginRight: "-30px",
           }}
         >
-          {map === "USA" && <InteractiveUSMap gameInfo={gameInfo} />}
+          {map === "USA" && <InteractiveUSMap gameInfo={gameInfo} start={territoryName} />}
           {map === "Medieval Europe" && <Europe />}
         </Box>
 
