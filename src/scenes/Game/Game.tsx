@@ -187,7 +187,7 @@ function Game() {
         if (!res.ok) throw new Error("Failed to fetch user");
         const user = await res.json();
         setMusicEnabled(user.musicEnabled ?? true); // default to true if missing
-        setNotificationsEnabled(user.notificationsEnabled ?? true);
+        setNotificationsEnabled(true);
       } catch (err) {
         console.error("Error fetching user:", err);
         setMusicEnabled(true); // fallback to true if fetch fails
@@ -940,7 +940,7 @@ function Game() {
             marginRight: "-30px",
           }}
         >
-          @ts-ignore
+          {/* @ts-ignore */}
           {map === "USA" && (
             <InteractiveUSMap gameInfo={gameInfo} start={territoryName} />
           )}
