@@ -986,9 +986,10 @@ const states: USState[] = [
 ];
 interface InteractiveUSMapProps {
   gameInfo?: { territoryName: string; ownerId: string | null }[]; // optional prop
+  start?: string
 }
 
-const InteractiveUSMap: React.FC<InteractiveUSMapProps> = ({ gameInfo }) => {
+const InteractiveUSMap: React.FC<InteractiveUSMapProps> = ({ gameInfo, start }) => {
   const [tooltip, setTooltip] = useState<Tooltip>({
     visible: false,
     name: "",
@@ -1039,7 +1040,10 @@ const InteractiveUSMap: React.FC<InteractiveUSMapProps> = ({ gameInfo }) => {
         {states.map((state) => {
           // If gameInfo exists, find the corresponding territory
           const territory = gameInfo?.find((t) => t.territoryName === state.name);
-          const fillColor = territory?.ownerId ? "red" : state.style?.fill || "#f9f9f9";
+          let fillColor = territory?.ownerId ? "red" : state.style?.fill || "#f9f9f9";
+          if (state.name === start) {
+            fillColor = "red";
+          }
 
           return (
             <path
