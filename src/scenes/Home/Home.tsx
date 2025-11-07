@@ -218,6 +218,7 @@ function Home() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [mapName, setMapName] = React.useState<string | null>(null);
   const [winningPoints, setWinningPoints] = useState(30);
+  const [isSingle, setIsSingle] = useState(false);
 
   const currentUserEmail = useSelector(
     (state: RootState) => state.auth.user?.email || null
@@ -266,7 +267,7 @@ function Home() {
 
   const handleCreateLobby = async () => {
     const lobbyMap = mapName || "default";
-    const newLobby = await createLobby(lobbyMap, isPrivate); // or any map
+    const newLobby = await createLobby(lobbyMap, isPrivate, isSingle); // or any map
     if (newLobby) {
       console.log("Lobby created:", newLobby);
       navigate(`/lobby/${newLobby.id}`, { state: { winningPoints } });
@@ -297,7 +298,8 @@ function Home() {
 
   const createLobby = async (
     map: string,
-    isPrivate: boolean
+    isPrivate: boolean,
+    isSingle: boolean
   ): Promise<Lobby | null> => {
     try {
       console.log("isPrivat: " + isPrivate);
@@ -310,6 +312,7 @@ function Home() {
           map: map,
           privateLobby: isPrivate,
           winningPoints: winningPoints,
+          single: isSingle,
         }),
       });
 
@@ -340,6 +343,11 @@ function Home() {
     newAlignment: string
   ) => {
     setAlignment(newAlignment);
+    if (newAlignment == "single") {
+      setIsSingle(true);
+    } else {
+      setIsSingle(false);
+    }
   };
   const toCreateGame = () => {
     navigate("/createGame");

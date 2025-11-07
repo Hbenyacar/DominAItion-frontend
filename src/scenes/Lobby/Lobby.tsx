@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import "./Lobby.css";
 import { useLocation } from "react-router-dom";
 import { CircularProgress, Box, Typography } from "@mui/material";
+import { SettingsInputSvideo } from "@mui/icons-material";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -23,6 +24,7 @@ interface Lobby {
   code: string;
   map: string;
   users: User[];
+  single: boolean;
 }
 
 function Lobby() {
@@ -32,6 +34,7 @@ function Lobby() {
   const [joinedUsers, setJoinedUsers] = useState<User[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
   const [showFriendsModal, setShowFriendsModal] = useState(false);
+  const [isSingle, setSingle] = useState(false);
 
   const stompClientRef = useRef<Client | null>(null); // ✅ shared reference
 
@@ -173,8 +176,9 @@ function Lobby() {
       client.subscribe(`/topic/lobby/${lobbyId}`, (message) => {
         const updatedLobby: Lobby = JSON.parse(message.body);
         setLobby(updatedLobby);
+        setSingle(updatedLobby.single);
         setJoinedUsers(updatedLobby.users || []);
-        if (updatedLobby.users.length == 1) {
+        if (updatedLobby.users.length == 1 && updatedLobby.single) {
           createGame();
         }
       });
