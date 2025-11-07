@@ -662,13 +662,12 @@ function Game() {
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: musicEnabled ? "space-between" : "center",
           alignItems: "center",
           width: "40%",
           maxWidth: "1400px",
           height: "10vh",
           margin: "0 auto",
-
           mt: 10,
           px: 2,
         }}
