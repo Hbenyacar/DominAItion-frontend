@@ -385,6 +385,7 @@ function Game() {
     // Check if the Notifications API is available
     if ("Notification" in window) {
       if (Notification.permission === "granted") {
+        alert("It’s your turn — take your next action!");
         const notification = new Notification("Your Turn!", {
           body: "It’s your move — take your next action!",
         });
@@ -706,7 +707,7 @@ function Game() {
               height: 10,
               borderRadius: 5,
               backgroundColor: "rgba(227, 125, 0, 0.5)",
-              "& .MuiLinearProgress-bar": { backgroundColor: "rgb(207,78,10)" },
+              "& .MuiLinearProgress-bar": { backgroundColor: "rgb(255,0,0)" },
             }}
           />
         </Box>
