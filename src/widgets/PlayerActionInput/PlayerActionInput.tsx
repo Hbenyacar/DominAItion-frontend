@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import MicIcon from "@mui/icons-material/Mic";
 import MicOffIcon from "@mui/icons-material/MicOff";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 interface PlayerActionInputProps {
   maxLength?: number;
@@ -14,12 +15,12 @@ interface PlayerActionInputProps {
 }
 
 const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
-                                                               maxLength = 250,
-                                                               placeholder = "Make Your Move...",
-                                                               onSubmitResponse,
-                                                               gameId,
-                                                               playerId,
-                                                             }) => {
+  maxLength = 250,
+  placeholder = "Make Your Move...",
+  onSubmitResponse,
+  gameId,
+  playerId,
+}) => {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -27,13 +28,16 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
 
   // Speech to text
   useEffect(() => {
-    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+    if (
+      !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
+    ) {
       console.warn("Speech Recognition API not supported in this browser.");
       return;
     }
 
     const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
@@ -45,7 +49,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          setText(prev => (prev + transcript).slice(0, maxLength));
+          setText((prev) => (prev + transcript).slice(0, maxLength));
         } else {
           interimTranscript += transcript;
         }
@@ -157,9 +161,9 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
       fontSize: "0.9rem",
       borderRadius: "6px",
       backgroundColor:
-          isSubmitting || !text.trim()
-              ? "rgba(207, 78, 10, 0.6)"
-              : "rgb(207, 78, 10)",
+        isSubmitting || !text.trim()
+          ? "rgba(207, 78, 10, 0.6)"
+          : "rgb(207, 78, 10)",
       color: "white",
       border: "none",
       cursor: isSubmitting || !text.trim() ? "not-allowed" : "pointer",
@@ -179,39 +183,48 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
   };
 
   return (
-      <div style={styles.container}>
-        <div style={styles.inputWrapper}>
+    <div style={styles.container}>
+      {/* Mic Button */}
+      <IconButton onClick={toggleListening} style={styles.micButton}>
+        {isListening ? <MicIcon /> : <MicOffIcon />}
+      </IconButton>
+
+      {/* Input Row */}
+
+      <div style={styles.inputWrapper}>
+        {/* Text Input */}
         <textarea
-            value={text}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            rows={4}
-            style={styles.textarea}
+          value={text}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          rows={4}
+          style={styles.textarea}
         />
-          <IconButton onClick={toggleListening} style={styles.micButton}>
-            {isListening ? <MicOffIcon /> : <MicIcon />}
-          </IconButton>
-          <Button
-              onClick={() => {
-                const audio = new Audio("/assets/sound_effects/submit_prompt.mp3");
-                audio.play();
-                handleSubmit();
-              }}
-              disabled={isSubmitting || text.trim() === ""}
-              style={styles.button}
-          >
-            {isSubmitting ? (
-                <CircularProgress size={18} thickness={4} sx={{ color: "white" }} />
-            ) : (
-                "Send"
-            )}
-          </Button>
-        </div>
-        <div style={styles.counter}>
-          {text.length} / {maxLength}
-        </div>
+
+        {/* Send Button */}
+        <Button
+          onClick={() => {
+            const audio = new Audio("/assets/sound_effects/submit_prompt.mp3");
+            audio.play();
+            handleSubmit();
+          }}
+          disabled={isSubmitting || text.trim() === ""}
+          style={styles.button}
+        >
+          {isSubmitting ? (
+            <CircularProgress size={18} thickness={4} sx={{ color: "white" }} />
+          ) : (
+            "Send"
+          )}
+        </Button>
       </div>
+
+      {/* Counter Below */}
+      <div style={styles.counter}>
+        {text.length} / {maxLength}
+      </div>
+    </div>
   );
 };
 

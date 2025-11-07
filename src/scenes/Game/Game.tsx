@@ -203,22 +203,22 @@ function Game() {
   }, [storyResponse]);
 
   useEffect(() => {
-    if (musicEnabled === false) return; // Skip all if disabled
-    if (musicEnabled === null) return; // Wait until loaded
+    if (musicEnabled === false || musicEnabled === null) return;
 
     if (!audioRef.current) {
-      audioRef.current = new Audio(
+      const audio = new Audio(
         `/assets/audio/Track${currentTrackIndex + 1}.mp3`
       );
-      audioRef.current.volume = 0.4;
-      audioRef.current.currentTime = currentTime;
-
-      (window as any).globalGameAudio = audioRef.current;
+      audio.volume = 0.4;
+      audio.currentTime = currentTime;
+      audio.loop = false;
+      (window as any).globalGameAudio = audio;
+      audioRef.current = audio;
     }
 
     const audio = audioRef.current;
-    audio.loop = false;
 
+    // When a track finishes, move to the next one
     const handleEnded = () => {
       const next = (currentTrackIndex + 1) % 10;
       setCurrentTrackIndex(next);
@@ -227,36 +227,32 @@ function Game() {
       audio.currentTime = 0;
       audio.play().catch(() => {});
     };
-
     audio.addEventListener("ended", handleEnded);
 
+    // 🔹 Auto play if isPlaying is true
     if (isPlaying) {
-      const startTimeout = setTimeout(() => {
-        audio
-          .play()
-          .catch(() => console.log("Autoplay blocked until user interaction"));
-      }, 3000);
-      return () => clearTimeout(startTimeout);
+      audio
+        .play()
+        .catch(() => console.log("Autoplay blocked until user interaction"));
+    } else {
+      audio.pause();
     }
 
+    // 🔹 Save track progress every 15 seconds
     const interval = setInterval(() => {
       if (!audio.paused) {
         localStorage.setItem("currentTrackIndex", String(currentTrackIndex));
         localStorage.setItem("currentTime", String(audio.currentTime));
+        // console.log("Progress saved:", currentTrackIndex, audio.currentTime);
       }
     }, 15000);
 
+    // 🔹 Cleanup on unmount
     return () => {
       clearInterval(interval);
       audio.removeEventListener("ended", handleEnded);
-
-      audio.pause();
-      audio.currentTime = 0;
-
       localStorage.setItem("currentTrackIndex", String(currentTrackIndex));
-      localStorage.setItem("currentTime", "0");
-
-      audioRef.current = null;
+      localStorage.setItem("currentTime", String(audio.currentTime));
     };
   }, [currentTrackIndex, isPlaying, musicEnabled]);
 
