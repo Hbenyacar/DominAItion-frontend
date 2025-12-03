@@ -71,6 +71,7 @@ function Lobby() {
   const [winningPoints, setWinningPoints] = useState(passedWinningPoints);
   const [gameId, setGameId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [gameCreated, setGameCreated] = useState(false);
 
   const navigate = useNavigate();
 
@@ -132,6 +133,7 @@ function Lobby() {
 
       if (startResponse.ok) {
         console.log("🚀 Game started successfully!");
+        setGameCreated(true);
         navigate(`/game/${newGameId}`); // redirect to game page
       } else {
         console.warn("⚠️ Failed to start game after creation");
@@ -160,6 +162,14 @@ function Lobby() {
     fetchFriends();
   }, [userId]);
 
+  //Auto-start single player
+  useEffect(() => {
+    // Auto-start a single-player game when exactly one user is in the lobby
+    if (!gameCreated && isSingle && joinedUsers.length === 1) {
+      createGame();
+    }
+  }, [gameCreated, isSingle, joinedUsers]);
+
   // ✅ Setup WebSocket
   useEffect(() => {
     if (!lobbyId || !userId) return;
@@ -178,9 +188,6 @@ function Lobby() {
         setLobby(updatedLobby);
         setSingle(updatedLobby.single);
         setJoinedUsers(updatedLobby.users || []);
-        if (updatedLobby.users.length == 1 && updatedLobby.single) {
-          createGame();
-        }
       });
 
       client.publish({

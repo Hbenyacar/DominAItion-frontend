@@ -27,6 +27,7 @@ import {
   ImageListItem,
   ImageListItemBar,
   Radio,
+  TextField,
 } from "@mui/material";
 
 // MUI icons
@@ -37,6 +38,7 @@ import {
   Logout as LogoutIcon,
   Map as MapIcon,
   Mail,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 
 import FriendsPage from "./Friends/Friends";
@@ -174,6 +176,15 @@ interface ItemData {
   imgContents: HTMLImageElement; // the loaded image instance
 }
 
+interface GameHistoryItem {
+  gameId: string;
+  worldName: string;
+  status: string;
+  pointsToWin: number;
+  leadingPlayer: string;
+  summary: string;
+}
+
 function Home() {
   const [itemData, setItemData] = useState<ItemData[]>([
     {
@@ -219,6 +230,12 @@ function Home() {
   const [mapName, setMapName] = React.useState<string | null>(null);
   const [winningPoints, setWinningPoints] = useState(30);
   const [isSingle, setIsSingle] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [historyUserId, setHistoryUserId] = useState<string | null>(null);
+  const [searchPlayerId, setSearchPlayerId] = useState("");
+  const [gameHistory, setGameHistory] = useState<GameHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   const currentUserEmail = useSelector(
     (state: RootState) => state.auth.user?.email || null
@@ -263,6 +280,57 @@ function Home() {
   type Friend = {
     id: number;
     name: string;
+  };
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      if (!currentUserEmail) return;
+
+      try {
+        const res = await fetch(
+            `${API_BASE_URL}/api/users/email/${currentUserEmail}`
+        );
+        if (!res.ok) {
+          console.error("Failed to fetch current user");
+          return;
+        }
+        const userData = await res.json();
+        setCurrentUserId(userData.id);
+        setHistoryUserId(userData.id); // default history = current user
+      } catch (err) {
+        console.error("Error fetching current user:", err);
+      }
+    };
+
+    fetchCurrentUser();
+  }, [currentUserEmail]);
+
+  //helper to add lobby creator to game
+  const addCreatorToGame = async (gameId: string) => {
+    if (!currentUserId) {
+      console.error("currentUserId is null; cannot add creator to game.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/game/addPlayer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameId: gameId,
+          playerId: currentUserId,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Failed to add creator:", errorText);
+      } else {
+        console.log("Creator successfully added to game:", gameId);
+      }
+    } catch (err) {
+      console.error("Error calling addPlayer:", err);
+    }
   };
 
   const handleCreateLobby = async () => {
@@ -416,6 +484,84 @@ function Home() {
       console.error("Error incrementing gamesPlayed:", error);
     }
   };
+
+  const fetchGameHistory = async (targetUserId: string) => {
+    if (!currentUserId) return;
+
+    setIsLoadingHistory(true);
+    setHistoryError(null);
+
+    try {
+      const res = await fetch(
+          `${API_BASE_URL}/api/users/fetchGames/${targetUserId}/${currentUserId}`
+      );
+
+      // 🔹 Special-case: blocked (HTTP 403)
+      if (res.status === 403) {
+        let msg = "You are blocked by this user.";
+        try {
+          const data = await res.json();
+          if (data && typeof data.message === "string") {
+            msg = data.message;
+          }
+        } catch {
+          // ignore JSON parse errors, keep default msg
+        }
+
+        setGameHistory([]);
+        setHistoryError(msg);
+        return;
+      }
+
+      // 🔹 Other non-OK errors
+      if (!res.ok) {
+        setGameHistory([]);
+        setHistoryError("Failed to load game history.");
+        return;
+      }
+
+      const data = await res.json();
+
+      // 🔹 Backend-level failure with success: false
+      if (data && data.success === false) {
+        setGameHistory([]);
+        setHistoryError(
+            data.message || "Unable to view this user's history."
+        );
+        return;
+      }
+
+      // 🔹 Normal success
+      if (!data || !Array.isArray(data.games)) {
+        setGameHistory([]);
+        setHistoryError("No game history found for this player.");
+        return;
+      }
+
+      const mapped: GameHistoryItem[] = data.games.map((g: any) => ({
+        gameId: g.gameId ?? g.id ?? "Unknown",
+        worldName: g["World Name"] ?? g.worldName ?? "Unknown",
+        status: g.status ?? "Unknown",
+        pointsToWin: g.pointsToWin ?? g.winningPoints ?? 0,
+        leadingPlayer: g.leadingPlayerName ?? g.leadingPlayer ?? "N/A",
+        summary: g.summary ?? "",
+      }));
+
+      setGameHistory(mapped);
+    } catch (err) {
+      console.error("Error fetching game history:", err);
+      setGameHistory([]);
+      setHistoryError("Error fetching game history.");
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (historyUserId && currentUserId) {
+      fetchGameHistory(historyUserId);
+    }
+  }, [historyUserId, currentUserId]);
 
   return (
     <div>
@@ -938,7 +1084,152 @@ function Home() {
 
               {/* History Tab */}
               <CustomTabPanel value={value} index={2}>
-                <Typography>History Coming Soon!</Typography>
+                <Box
+                    sx={{
+                      backgroundColor: "white",
+                      borderRadius: 2,
+                      p: 3,
+                      mt: 2,
+                      width: "100%",
+                      mx: "auto",
+                      boxShadow: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 2,
+                    }}
+                >
+                  {/* Header: Title + Search */}
+                  <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 2,
+                      }}
+                  >
+                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                      Game History
+                    </Typography>
+
+                    <Box
+                        component="form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (searchPlayerId.trim()) {
+                            setHistoryUserId(searchPlayerId.trim());
+                            fetchGameHistory(searchPlayerId.trim());
+                          } else if (currentUserId) {
+                            // reset to current player
+                            setHistoryUserId(currentUserId);
+                            fetchGameHistory(currentUserId);
+                          }
+                        }}
+                        sx={{ display: "flex", gap: 1 }}
+                    >
+                      <TextField
+                          size="small"
+                          variant="outlined"
+                          label="Player ID"
+                          value={searchPlayerId}
+                          onChange={(e) => setSearchPlayerId(e.target.value)}
+                          sx={{ minWidth: 220 }}
+                      />
+                      <Button
+                          type="submit"
+                          variant="contained"
+                          startIcon={<SearchIcon />}
+                          sx={{
+                            backgroundColor: "rgb(207, 78, 10)",
+                            "&:hover": { backgroundColor: "darkorange" },
+                          }}
+                      >
+                        Search
+                      </Button>
+                    </Box>
+                  </Box>
+
+                  {/* Status / Error */}
+                  {isLoadingHistory && (
+                      <Typography color="text.secondary">Loading history...</Typography>
+                  )}
+                  {historyError && (
+                      <Typography color="error" sx={{ mb: 1 }}>
+                        {historyError}
+                      </Typography>
+                  )}
+
+                  {/* History List */}
+                  <Box
+                      sx={{
+                        mt: 1,
+                        maxHeight: 400,
+                        overflowY: "auto",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                      }}
+                  >
+                    {gameHistory.length === 0 && !isLoadingHistory && !historyError && (
+                        <Typography color="text.secondary">
+                          No games found for this player.
+                        </Typography>
+                    )}
+
+                    {gameHistory.map((game) => (
+                        <Box
+                            key={game.gameId}
+                            sx={{
+                              borderRadius: 2,
+                              border: "1px solid #ddd",
+                              p: 2,
+                              backgroundColor: "rgba(255, 255, 255, 0.95)",
+                            }}
+                        >
+                          <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                flexWrap: "wrap",
+                                mb: 1,
+                                gap: 1,
+                              }}
+                          >
+                            <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                              Game ID: {game.gameId}
+                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              Status: {game.status}
+                            </Typography>
+                          </Box>
+
+                          <Box
+                              sx={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                                gap: 1,
+                                mb: 1,
+                              }}
+                          >
+                            <Typography variant="body2">
+                              <strong>World:</strong> {game.worldName}
+                            </Typography>
+                            <Typography variant="body2">
+                              <strong>Points to Win:</strong> {game.pointsToWin}
+                            </Typography>
+                            <Typography variant="body2">
+                              <strong>Leading Player:</strong> {game.leadingPlayer}
+                            </Typography>
+                          </Box>
+
+                          {game.summary && (
+                              <Typography variant="body2" color="text.secondary">
+                                <strong>Summary:</strong> {game.summary}
+                              </Typography>
+                          )}
+                        </Box>
+                    ))}
+                  </Box>
+                </Box>
               </CustomTabPanel>
             </Box>
           )}
