@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
+import { Box, Typography } from "@mui/material";
 
 interface GameInfo {
   id: string;
@@ -48,35 +49,44 @@ function Multiplayer() {
   const [submittedText, setSubmittedText] = useState("");
 
   const getPlayerColor = (index: number) => {
-    const colors = ["#FF0000", "#00FF00", "#0000FF", "#FFA500", "#800080", "#00FFFF"];
+    const colors = [
+      "#FF0000",
+      "#00FF00",
+      "#0000FF",
+      "#FFA500",
+      "#800080",
+      "#00FFFF",
+    ];
     return colors[index % colors.length];
   };
 
   useEffect(() => {
-  if (!gameId) return;
+    if (!gameId) return;
 
-  const loadGame = async () => {
-    const info = await getInfo(gameId);
-    if (!info) return;
+    const loadGame = async () => {
+      const info = await getInfo(gameId);
+      if (!info) return;
 
-    setGameInfo(info);
-    console.log(info);
+      setGameInfo(info);
+      console.log(info);
 
-    const mapped = info.playerIds.map((id, index) => ({
-      id,
-      name: `Player ${index + 1}`,
-      color: getPlayerColor(index),
-    }));
+      const mapped = info.playerIds.map((id, index) => ({
+        id,
+        name: `Player ${index + 1}`,
+        color: getPlayerColor(index),
+      }));
 
-    // ⭐ NEW: Log the colors so you see exactly what is being passed
-    console.log("Player colors:", mapped.map(p => ({ id: p.id, color: p.color })));
+      // ⭐ NEW: Log the colors so you see exactly what is being passed
+      console.log(
+        "Player colors:",
+        mapped.map((p) => ({ id: p.id, color: p.color }))
+      );
 
-    setPlayers(mapped);
-  };
+      setPlayers(mapped);
+    };
 
-  loadGame();
-}, [gameId]);
-
+    loadGame();
+  }, [gameId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,38 +99,127 @@ function Multiplayer() {
       {!gameInfo ? (
         <p>Loading game...</p>
       ) : (
-        <>
-        <div>Player {players[gameInfo.turn % players.length].id}</div>
-          <InteractiveUSMap
-            territories={gameInfo.territories ?? []}
-            players={players}
-            start={gameInfo.startingTerritory}
-          />
-
-          <form onSubmit={handleSubmit} style={{ marginTop: "20px" }}>
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Type something..."
-              style={{ padding: "5px", width: "300px" }}
-            />
-            <button type="submit" style={{ marginLeft: "10px", padding: "5px 10px" }}>
-              Submit
-            </button>
-          </form>
-
-          <div
-            style={{
-              marginTop: "20px",
-              padding: "10px",
-              border: "1px solid #ccc",
-              width: "320px",
-              backgroundColor: "#f9f9f9",
+        <Box>
+          <Typography>
+            Player: {players[gameInfo.turn % players.length].id}
+          </Typography>
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              overflowX: "auto",
             }}
           >
-            {submittedText || "Nothing submitted yet."}
-          </div>
+            {/* left - chat box */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+              }}
+            >
+              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                Game Chat
+              </Typography>
+
+              <Box
+                sx={{
+                  width: "200px",
+                  height: "400px",
+                  backgroundColor: "rgba(0,0,0,0.3)",
+                  borderRadius: "20px",
+                  marginRight: "40px",
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                  boxShadow: "-4px 4px 10px rgba(0,0,0,0.3)",
+                }}
+              >
+                {/* Input area */}
+                <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <input
+                      type="text"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder="Type something..."
+                      style={{
+                        padding: "8px",
+                        width: "100%",
+                        borderRadius: "8px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      style={{
+                        padding: "8px 14px",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Send
+                    </button>
+                  </Box>
+                </form>
+              </Box>
+            </Box>
+
+            {/* center - map */}
+            <Box
+              sx={{
+                flex: "1 1 60%",
+                display: "flex",
+                alignItems: "center", // centers map vertically within its space
+                justifyContent: "center",
+                height: "100%", // fill vertical space evenly
+                transform: "scale(0.9)",
+                transformOrigin: "center",
+                marginLeft: "-70px",
+                marginRight: "-30px",
+              }}
+            >
+              <InteractiveUSMap
+                territories={gameInfo.territories ?? []}
+                players={players}
+                start={gameInfo.startingTerritory}
+              />
+            </Box>
+
+            {/* right - story board */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+              }}
+            >
+              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                Storyboard
+              </Typography>
+
+              <Box
+                sx={{
+                  width: "300px",
+                  height: "400px",
+                  backgroundColor: "rgba(0,0,0,0.3)",
+                  borderRadius: "20px",
+                  marginRight: "40px",
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  boxShadow: "-4px 4px 10px rgba(0,0,0,0.3)",
+                  overflowY: "auto",
+                }}
+              >
+                {submittedText || "Nothing submitted yet."}
+              </Box>
+            </Box>
+          </Box>
 
           <div
             style={{
@@ -133,15 +232,16 @@ function Multiplayer() {
           >
             <strong>Game Status:</strong> {gameInfo.status}
           </div>
-
           {players[gameInfo.turn % players.length] && (
             <PlayerActionInput
               gameId={gameId!}
               playerId={players[gameInfo.turn % players.length].id}
-              onSubmitResponse={(response: string) => setSubmittedText(response)}
+              onSubmitResponse={(response: string) =>
+                setSubmittedText(response)
+              }
             />
           )}
-        </>
+        </Box>
       )}
     </div>
   );
