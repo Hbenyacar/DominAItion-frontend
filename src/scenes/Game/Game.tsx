@@ -25,7 +25,6 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import WinPopup from "../../components/WinPopup";
-import { jsPDF } from "jspdf";
 
 // test
 

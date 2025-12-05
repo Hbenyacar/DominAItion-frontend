@@ -17,6 +17,7 @@ import ResetPassword from './scenes/Profile/ResetPassword';
 import World from './scenes/World/World';
 import Lobby from './scenes/Lobby/Lobby';
 import InviteListener from "./components/InviteListener";
+import Multiplayer from './scenes/Multiplayer/Multiplayer';
 
 
 function App() {
@@ -59,6 +60,7 @@ function App() {
       <Route path="/reset" element={<ResetPassword />} />
       <Route path='/world' element={<World/>} />
       <Route path='/lobby/:lobbyId' element={<Lobby/>} />
+      <Route path='/multiplayer/:gameId' element={<Multiplayer/>}/>
     </Routes>
     </>
   );
