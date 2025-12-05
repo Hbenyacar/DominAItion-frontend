@@ -985,11 +985,16 @@ const states: USState[] = [
 
 ];
 interface InteractiveUSMapProps {
-  gameInfo?: { territoryName: string; ownerId: string | null }[]; // optional prop
-  start?: string
+  territories: { territoryName: string; ownerId: string | null }[];
+  players: { id: string; name: string; color?: string }[];
+  start?: string;
 }
 
-const InteractiveUSMap: React.FC<InteractiveUSMapProps> = ({ gameInfo, start }) => {
+const InteractiveUSMap: React.FC<InteractiveUSMapProps> = ({
+  territories,
+  players,
+  start,
+}) => {
   const [tooltip, setTooltip] = useState<Tooltip>({
     visible: false,
     name: "",
@@ -999,7 +1004,10 @@ const InteractiveUSMap: React.FC<InteractiveUSMapProps> = ({ gameInfo, start }) 
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleMouseEnter = (state: USState, e: React.MouseEvent<SVGPathElement>) => {
+  const handleMouseEnter = (
+    state: USState,
+    e: React.MouseEvent<SVGPathElement>
+  ) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     setTooltip({
@@ -1029,18 +1037,42 @@ const InteractiveUSMap: React.FC<InteractiveUSMapProps> = ({ gameInfo, start }) 
   };
 
   return (
-    <div ref={containerRef} className="map-container" style={{ position: "relative", display: "inline-block" }}>
+    <div
+      ref={containerRef}
+      className="map-container"
+      style={{ position: "relative", display: "inline-block" }}
+    >
       {tooltip.visible && (
-        <div className="tooltip" style={{ left: tooltip.x + 10, top: tooltip.y + 10 } as React.CSSProperties}>
+        <div
+          className="tooltip"
+          style={
+            {
+              left: tooltip.x + 10,
+              top: tooltip.y + 10,
+            } as React.CSSProperties
+          }
+        >
           {tooltip.name}
         </div>
       )}
 
       <svg viewBox="0 0 1000 589" width="700" height="auto">
         {states.map((state) => {
-          // If gameInfo exists, find the corresponding territory
-          const territory = gameInfo?.find((t) => t.territoryName === state.name);
-          let fillColor = territory?.ownerId ? "red" : state.style?.fill || "#f9f9f9";
+          // match territory info
+          const territory = territories.find(
+            (t) => t.territoryName === state.name
+          );
+
+          // default fill
+          let fillColor = state.style?.fill || "#f9f9f9";
+
+          // if owned, color by player color
+          if (territory?.ownerId) {
+            const owner = players.find((p) => p.id === territory.ownerId);
+            fillColor = owner?.color || "gray";
+          }
+
+          // starting state override
           if (state.name === start) {
             fillColor = "red";
           }
