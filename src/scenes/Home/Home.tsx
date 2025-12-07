@@ -52,6 +52,7 @@ import LobbyList from "../../components/LobbyList";
 import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
 import Achievements from "../Achievements/Achievements";
 import { RootState } from "../../store/store";
+import SpectateList from "../../components/SpectateList";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -753,6 +754,8 @@ function Home() {
                   <Tab label="Create Game" {...a11yProps(0)} sx={tabStyle} />
                   <Tab label="Join Game" {...a11yProps(1)} sx={tabStyle} />
                   <Tab label="History" {...a11yProps(2)} sx={tabStyle} />
+                  <Tab label="Spectate" {...a11yProps(3)} sx={tabStyle} />
+                  
                 </Tabs>
               </Box>
 
@@ -1069,7 +1072,6 @@ function Home() {
 
               {/* Join Game Tab */}
               <CustomTabPanel value={value} index={1}>
-                <Typography>Join Game Coming Soon!</Typography>
                 <Box mt={2}>
                   <Button
                     onClick={toSampleGame}
@@ -1080,6 +1082,20 @@ function Home() {
                   </Button>
                 </Box>
                 <LobbyList />
+              </CustomTabPanel>
+
+              {/* Spectate Tab */}
+              <CustomTabPanel value={value} index={3}>
+                <Box mt={2}>
+                  <Button
+                    onClick={toSampleGame}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Sample Game
+                  </Button>
+                </Box>
+                <SpectateList/>
               </CustomTabPanel>
 
               {/* History Tab */}
