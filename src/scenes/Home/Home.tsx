@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../navbar/NavBar";
 import "./Home.css";
@@ -27,6 +27,10 @@ import {
   ImageListItem,
   ImageListItemBar,
   Radio,
+  TextField,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 
 // MUI icons
@@ -37,15 +41,17 @@ import {
   Logout as LogoutIcon,
   Map as MapIcon,
   Mail,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 
 import FriendsPage from "./Friends/Friends";
 import Messages from "./Messages/Messages";
 import Settings from "./Settings/Settings";
+import CharactersPage from "./Characters/Characters";
 import { useDispatch, useSelector } from "react-redux";
 import { setMap } from "../../store/mapSlice";
 import WorldGenPanels from "../../widgets/WorldGen/WorldGen";
-import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
+//import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
 import LobbyList from "../../components/LobbyList";
 import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
 import Achievements from "../Achievements/Achievements";
@@ -66,6 +72,18 @@ export interface Lobby {
   map: string;
   users: User[];
 }
+
+interface Character {
+  id: string;
+  characterName: string;
+  characterBio: string;
+  intelligence: number;
+  wisdom: number;
+  charisma: number;
+  strength: number;
+  ingenuity: number;
+}
+
 
 function loadOpenCV(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -174,6 +192,15 @@ interface ItemData {
   imgContents: HTMLImageElement; // the loaded image instance
 }
 
+interface GameHistoryItem {
+  gameId: string;
+  worldName: string;
+  status: string;
+  pointsToWin: number;
+  leadingPlayer: string;
+  summary: string;
+}
+
 function Home() {
   const [itemData, setItemData] = useState<ItemData[]>([
     {
@@ -219,6 +246,14 @@ function Home() {
   const [mapName, setMapName] = React.useState<string | null>(null);
   const [winningPoints, setWinningPoints] = useState(30);
   const [isSingle, setIsSingle] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [historyUserId, setHistoryUserId] = useState<string | null>(null);
+  const [searchPlayerId, setSearchPlayerId] = useState("");
+  const [gameHistory, setGameHistory] = useState<GameHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [selectedCharacterId, setSelectedCharacterId] = useState<string>("");
 
   const currentUserEmail = useSelector(
     (state: RootState) => state.auth.user?.email || null
@@ -265,14 +300,107 @@ function Home() {
     name: string;
   };
 
-  const handleCreateLobby = async () => {
-    const lobbyMap = mapName || "default";
-    const newLobby = await createLobby(lobbyMap, isPrivate, isSingle); // or any map
-    if (newLobby) {
-      console.log("Lobby created:", newLobby);
-      navigate(`/lobby/${newLobby.id}`, { state: { winningPoints } });
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      if (!currentUserEmail) return;
+
+      try {
+        const res = await fetch(
+            `${API_BASE_URL}/api/users/email/${currentUserEmail}`
+        );
+        if (!res.ok) {
+          console.error("Failed to fetch current user");
+          return;
+        }
+        const userData = await res.json();
+        setCurrentUserId(userData.id);
+        setHistoryUserId(userData.id); // default history = current user
+      } catch (err) {
+        console.error("Error fetching current user:", err);
+      }
+    };
+
+    fetchCurrentUser();
+  }, [currentUserEmail]);
+
+  const fetchCharacters = useCallback(async () => {
+    if (!currentUserId) return;
+
+    try {
+      const res = await fetch(
+          `${API_BASE_URL}/api/characters/${currentUserId}`
+      );
+      if (!res.ok) {
+        console.error("Failed to fetch characters");
+        return;
+      }
+
+      const data: Character[] = await res.json();
+      setCharacters(data);
+
+      // ensure placeholder stays selected unless the user picks something
+      if (!data.some((c) => c.id === selectedCharacterId)) {
+        setSelectedCharacterId(""); // leave placeholder selected
+      }
+    } catch (err) {
+      console.error("Error fetching characters:", err);
+    }
+  }, [currentUserId, selectedCharacterId]);
+
+  // initial load when user is known
+  useEffect(() => {
+    fetchCharacters();
+  }, [fetchCharacters]);
+
+  useEffect(() => {
+    if (selectedIndex === 1) {
+      // User is viewing the Games tab -> refresh characters
+      fetchCharacters();
+    }
+  }, [selectedIndex, fetchCharacters]);
+
+  //helper to add lobby creator to game
+  const addCreatorToGame = async (gameId: string) => {
+    if (!currentUserId) {
+      console.error("currentUserId is null; cannot add creator to game.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/game/addPlayer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameId: gameId,
+          playerId: currentUserId,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Failed to add creator:", errorText);
+      } else {
+        console.log("Creator successfully added to game:", gameId);
+      }
+    } catch (err) {
+      console.error("Error calling addPlayer:", err);
     }
   };
+
+  const handleCreateLobby = async () => {
+    const lobbyMap = mapName || "default";
+    const newLobby = await createLobby(lobbyMap, isPrivate, isSingle);
+    if (newLobby) {
+      console.log("Lobby created:", newLobby);
+      navigate(`/lobby/${newLobby.id}`, {
+        state: {
+          winningPoints,
+          characterId: selectedCharacterId,
+        },
+      });
+    }
+  };
+
 
   const getAllLobbies = async (): Promise<Lobby[]> => {
     try {
@@ -417,6 +545,84 @@ function Home() {
     }
   };
 
+  const fetchGameHistory = async (targetUserId: string) => {
+    if (!currentUserId) return;
+
+    setIsLoadingHistory(true);
+    setHistoryError(null);
+
+    try {
+      const res = await fetch(
+          `${API_BASE_URL}/api/users/fetchGames/${targetUserId}/${currentUserId}`
+      );
+
+      // 🔹 Special-case: blocked (HTTP 403)
+      if (res.status === 403) {
+        let msg = "You are blocked by this user.";
+        try {
+          const data = await res.json();
+          if (data && typeof data.message === "string") {
+            msg = data.message;
+          }
+        } catch {
+          // ignore JSON parse errors, keep default msg
+        }
+
+        setGameHistory([]);
+        setHistoryError(msg);
+        return;
+      }
+
+      // 🔹 Other non-OK errors
+      if (!res.ok) {
+        setGameHistory([]);
+        setHistoryError("Failed to load game history.");
+        return;
+      }
+
+      const data = await res.json();
+
+      // 🔹 Backend-level failure with success: false
+      if (data && data.success === false) {
+        setGameHistory([]);
+        setHistoryError(
+            data.message || "Unable to view this user's history."
+        );
+        return;
+      }
+
+      // 🔹 Normal success
+      if (!data || !Array.isArray(data.games)) {
+        setGameHistory([]);
+        setHistoryError("No game history found for this player.");
+        return;
+      }
+
+      const mapped: GameHistoryItem[] = data.games.map((g: any) => ({
+        gameId: g.gameId ?? g.id ?? "Unknown",
+        worldName: g["World Name"] ?? g.worldName ?? "Unknown",
+        status: g.status ?? "Unknown",
+        pointsToWin: g.pointsToWin ?? g.winningPoints ?? 0,
+        leadingPlayer: g.leadingPlayerName ?? g.leadingPlayer ?? "N/A",
+        summary: g.summary ?? "",
+      }));
+
+      setGameHistory(mapped);
+    } catch (err) {
+      console.error("Error fetching game history:", err);
+      setGameHistory([]);
+      setHistoryError("Error fetching game history.");
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (historyUserId && currentUserId) {
+      fetchGameHistory(historyUserId);
+    }
+  }, [historyUserId, currentUserId]);
+
   return (
     <div>
       <Navbar />
@@ -508,6 +714,26 @@ function Home() {
                   <MapIcon />
                 </ListItemIcon>
                 <ListItemText primary="Maps" />
+              </ListItemButton>
+              <ListItemButton
+                  sx={{
+                    minWidth: "300px",
+                    paddingLeft: "30px",
+                    "&.Mui-selected": {
+                      backgroundColor: "rgba(230, 160, 120, 0.8)",
+                      color: "black",
+                      "&:hover": {
+                        backgroundColor: "rgba(220, 145, 105, 0.9)",
+                      },
+                    },
+                  }}
+                  selected={selectedIndex === 7}
+                  onClick={(event) => handleListItemClick(event, 7)}
+              >
+                <ListItemIcon>
+                  <PeopleIcon /> {/* or any icon you prefer */}
+                </ListItemIcon>
+                <ListItemText primary="Characters" />
               </ListItemButton>
               <ListItemButton
                 sx={{
@@ -667,7 +893,37 @@ function Home() {
                         label="Private"
                       />
                     </FormGroup>
+
+                    {/* Character Selector */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 260 }}>
+                      <Typography variant="h6" sx={{ m: 0 }}>
+                        Character
+                      </Typography>
+                      <FormControl size="small" sx={{ minWidth: 180 }}>
+                        <Select
+                            value={selectedCharacterId}
+                            onChange={(e) => setSelectedCharacterId(e.target.value as string)}
+                            displayEmpty
+                        >
+                          <MenuItem value="">
+                            <em>Select a character</em>
+                          </MenuItem>
+
+                          {characters.map((c) => (
+                              <MenuItem key={c.id} value={c.id}>
+                                {c.characterName}
+                              </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Box>
                   </Box>
+
+                  {characters.length === 0 && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        You don’t have any characters yet. Create one from the Characters tab.
+                      </Typography>
+                  )}
 
                   {/* Points to Win */}
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -861,20 +1117,16 @@ function Home() {
 
                   {/* WorldGenPanels + CharacterGen Side by Side */}
                   <Box
-                    sx={{
-                      display: "flex",
-                      gap: 3, // spacing between boxes
-                      alignItems: "flex-start",
-                      mt: 3,
-                      flexWrap: "wrap", // allows wrapping on smaller screens
-                    }}
+                      sx={{
+                        display: "flex",
+                        gap: 3,
+                        alignItems: "flex-start",
+                        mt: 3,
+                        flexWrap: "wrap",
+                      }}
                   >
                     <Box sx={{ flex: 1 }}>
                       <WorldGenPanels />
-                    </Box>
-
-                    <Box sx={{ flex: 1 }}>
-                      <CharacterGen />
                     </Box>
                   </Box>
 
@@ -882,30 +1134,38 @@ function Home() {
 
                   {/* Start Game Button */}
                   <Button
-                    onClick={() => {
-                      handleCreateLobby();
+                      onClick={() => {
+                        if (!selectedCharacterId) {
+                          alert("Please select a character before starting a game.");
+                          return;
+                        }
 
-                      if (currentUserEmail) {
-                        incrementGamesPlayed(currentUserEmail);
+                        handleCreateLobby();
+
+                        if (currentUserEmail) {
+                          incrementGamesPlayed(currentUserEmail);
+                        }
+                        const audio = new Audio("/assets/sound_effects/game_start.mp3");
+                        audio.play();
+                        toGame();
+                      }}
+                      disabled={
+                          alignment === "" ||
+                          selectedImg == null ||
+                          selectedCharacterId === "" // ⬅ block start until character chosen
                       }
-                      const audio = new Audio(
-                        "/assets/sound_effects/game_start.mp3"
-                      );
-                      audio.play();
-                      toGame();
-                    }}
-                    disabled={alignment === "" || selectedImg == null}
-                    variant="contained"
-                    sx={{
-                      borderRadius: 2,
-                      px: 3,
-                      py: 1.5,
-                      backgroundColor: "rgb(207, 78, 10)",
-                      "&:hover": { backgroundColor: "darkorange" },
-                      color: "white",
-                      mt: 4,
-                      alignSelf: "flex-start",
-                    }}
+
+                      variant="contained"
+                      sx={{
+                        borderRadius: 2,
+                        px: 3,
+                        py: 1.5,
+                        backgroundColor: "rgb(207, 78, 10)",
+                        "&:hover": { backgroundColor: "darkorange" },
+                        color: "white",
+                        mt: 4,
+                        alignSelf: "flex-start",
+                      }}
                   >
                     Start Game
                   </Button>
@@ -923,22 +1183,195 @@ function Home() {
 
               {/* Join Game Tab */}
               <CustomTabPanel value={value} index={1}>
-                <Typography>Join Game Coming Soon!</Typography>
-                <Box mt={2}>
-                  <Button
-                    onClick={toSampleGame}
-                    variant="contained"
-                    color="primary"
-                  >
-                    Sample Game
-                  </Button>
+                <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 3,
+                      alignItems: "center",
+                      mb: 3,
+                    }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 260 }}>
+                    <Typography variant="h6" sx={{ m: 0 }}>
+                      Character
+                    </Typography>
+                    <FormControl size="small" sx={{ minWidth: 180 }}>
+                      <Select
+                          value={selectedCharacterId}
+                          onChange={(e) => setSelectedCharacterId(e.target.value as string)}
+                          displayEmpty
+                      >
+                        <MenuItem value="">
+                          <em>Select a character</em>
+                        </MenuItem>
+
+                        {characters.map((c) => (
+                            <MenuItem key={c.id} value={c.id}>
+                              {c.characterName}
+                            </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
                 </Box>
-                <LobbyList />
+
+                {characters.length === 0 && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      You don’t have any characters yet. Create one from the Characters tab.
+                    </Typography>
+                )}
+                <LobbyList selectedCharacterId={selectedCharacterId} />
               </CustomTabPanel>
 
               {/* History Tab */}
               <CustomTabPanel value={value} index={2}>
-                <Typography>History Coming Soon!</Typography>
+                <Box
+                    sx={{
+                      backgroundColor: "white",
+                      borderRadius: 2,
+                      p: 3,
+                      mt: 2,
+                      width: "100%",
+                      mx: "auto",
+                      boxShadow: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 2,
+                    }}
+                >
+                  {/* Header: Title + Search */}
+                  <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 2,
+                      }}
+                  >
+                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                      Game History
+                    </Typography>
+
+                    <Box
+                        component="form"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (searchPlayerId.trim()) {
+                            setHistoryUserId(searchPlayerId.trim());
+                            fetchGameHistory(searchPlayerId.trim());
+                          } else if (currentUserId) {
+                            // reset to current player
+                            setHistoryUserId(currentUserId);
+                            fetchGameHistory(currentUserId);
+                          }
+                        }}
+                        sx={{ display: "flex", gap: 1 }}
+                    >
+                      <TextField
+                          size="small"
+                          variant="outlined"
+                          label="Player ID"
+                          value={searchPlayerId}
+                          onChange={(e) => setSearchPlayerId(e.target.value)}
+                          sx={{ minWidth: 220 }}
+                      />
+                      <Button
+                          type="submit"
+                          variant="contained"
+                          startIcon={<SearchIcon />}
+                          sx={{
+                            backgroundColor: "rgb(207, 78, 10)",
+                            "&:hover": { backgroundColor: "darkorange" },
+                          }}
+                      >
+                        Search
+                      </Button>
+                    </Box>
+                  </Box>
+
+                  {/* Status / Error */}
+                  {isLoadingHistory && (
+                      <Typography color="text.secondary">Loading history...</Typography>
+                  )}
+                  {historyError && (
+                      <Typography color="error" sx={{ mb: 1 }}>
+                        {historyError}
+                      </Typography>
+                  )}
+
+                  {/* History List */}
+                  <Box
+                      sx={{
+                        mt: 1,
+                        maxHeight: 400,
+                        overflowY: "auto",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                      }}
+                  >
+                    {gameHistory.length === 0 && !isLoadingHistory && !historyError && (
+                        <Typography color="text.secondary">
+                          No games found for this player.
+                        </Typography>
+                    )}
+
+                    {gameHistory.map((game) => (
+                        <Box
+                            key={game.gameId}
+                            sx={{
+                              borderRadius: 2,
+                              border: "1px solid #ddd",
+                              p: 2,
+                              backgroundColor: "rgba(255, 255, 255, 0.95)",
+                            }}
+                        >
+                          <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                flexWrap: "wrap",
+                                mb: 1,
+                                gap: 1,
+                              }}
+                          >
+                            <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                              Game ID: {game.gameId}
+                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              Status: {game.status}
+                            </Typography>
+                          </Box>
+
+                          <Box
+                              sx={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                                gap: 1,
+                                mb: 1,
+                              }}
+                          >
+                            <Typography variant="body2">
+                              <strong>World:</strong> {game.worldName}
+                            </Typography>
+                            <Typography variant="body2">
+                              <strong>Points to Win:</strong> {game.pointsToWin}
+                            </Typography>
+                            <Typography variant="body2">
+                              <strong>Leading Player:</strong> {game.leadingPlayer}
+                            </Typography>
+                          </Box>
+
+                          {game.summary && (
+                              <Typography variant="body2" color="text.secondary">
+                                <strong>Summary:</strong> {game.summary}
+                              </Typography>
+                          )}
+                        </Box>
+                    ))}
+                  </Box>
+                </Box>
               </CustomTabPanel>
             </Box>
           )}
@@ -946,6 +1379,7 @@ function Home() {
           {selectedIndex === 3 && <Settings />}
           {selectedIndex === 5 && <Messages />}
           {selectedIndex === 6 && <Achievements />}
+          {selectedIndex === 7 && <CharactersPage />}
         </div>
       </div>
     </div>

@@ -25,7 +25,8 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import WinPopup from "../../components/WinPopup";
-import { jsPDF } from "jspdf";
+
+// test
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/";
@@ -144,7 +145,7 @@ function Game() {
   const [storyResponses, setStoryResponses] = useState<string[]>([]);
   const storyEndRef = useRef<HTMLDivElement | null>(null);
 
-// Auto-scroll to bottom whenever new story arrives
+  // Auto-scroll to bottom whenever new story arrives
   useEffect(() => {
     if (storyEndRef.current) {
       storyEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -395,6 +396,7 @@ function Game() {
     // Check if the Notifications API is available
     if ("Notification" in window) {
       if (Notification.permission === "granted") {
+        alert("It’s your turn — take your next action!");
         const notification = new Notification("Your Turn!", {
           body: "It’s your move — take your next action!",
         });
@@ -716,7 +718,7 @@ function Game() {
               height: 10,
               borderRadius: 5,
               backgroundColor: "rgba(227, 125, 0, 0.5)",
-              "& .MuiLinearProgress-bar": { backgroundColor: "rgb(207,78,10)" },
+              "& .MuiLinearProgress-bar": { backgroundColor: "rgb(255,0,0)" },
             }}
           />
         </Box>
@@ -992,7 +994,8 @@ function Game() {
               <IconButton
                 onClick={() => {
                   const doc = new jsPDF();
-                  const content = storyResponses.join("\n\n") || "Awaiting your move...";
+                  const content =
+                    storyResponses.join("\n\n") || "Awaiting your move...";
                   const pageWidth = doc.internal.pageSize.getWidth();
                   const margin = 10;
                   const maxWidth = pageWidth - margin * 2;
@@ -1015,39 +1018,38 @@ function Game() {
 
           {/* Story Text */}
           <Box
-              sx={{
-                flexGrow: 1,
-                overflowY: "auto",
-                fontSize: "0.8rem",
-                textAlign: "justify",
-                color: "white",
-                paddingRight: "8px",
-              }}
+            sx={{
+              flexGrow: 1,
+              overflowY: "auto",
+              fontSize: "0.8rem",
+              textAlign: "justify",
+              color: "white",
+              paddingRight: "8px",
+            }}
           >
             {storyResponses.length === 0 ? (
-                <Typography
-                    sx={{ color: "lightgray", fontSize: "0.7rem", lineHeight: 1.4 }}
-                >
-                  Awaiting your move...
-                </Typography>
+              <Typography
+                sx={{ color: "lightgray", fontSize: "0.7rem", lineHeight: 1.4 }}
+              >
+                Awaiting your move...
+              </Typography>
             ) : (
-                storyResponses.map((response, index) => (
-                    <Typography
-                        key={index}
-                        sx={{
-                          color: "lightgray",
-                          fontSize: "0.75rem",
-                          lineHeight: 1.5,
-                          marginBottom: "10px",
-                        }}
-                    >
-                      {response}
-                    </Typography>
-                ))
+              storyResponses.map((response, index) => (
+                <Typography
+                  key={index}
+                  sx={{
+                    color: "lightgray",
+                    fontSize: "0.75rem",
+                    lineHeight: 1.5,
+                    marginBottom: "10px",
+                  }}
+                >
+                  {response}
+                </Typography>
+              ))
             )}
             <div ref={storyEndRef} />
           </Box>
-
 
           {/* Narration Controls */}
           <Box
@@ -1118,11 +1120,11 @@ function Game() {
         }}
       >
         <PlayerActionInput
-            gameId={gameID!}
-            playerId={currentUserID!}
-            onSubmitResponse={(newResponse: string) => {
-              setStoryResponses((prev) => [...prev, newResponse]);
-            }}
+          gameId={gameID!}
+          playerId={currentUserID!}
+          onSubmitResponse={(newResponse: string) => {
+            setStoryResponses((prev) => [...prev, newResponse]);
+          }}
         />
       </Box>
 
