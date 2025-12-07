@@ -44,6 +44,7 @@ function Lobby() {
 
   const location = useLocation();
   const passedWinningPoints = location.state?.winningPoints;
+  const passedCharacterId = location.state?.characterId as string | undefined;
 
   const [winningPoints, setWinningPoints] = useState(passedWinningPoints);
 
@@ -164,7 +165,7 @@ useEffect(() => {
 
     client.publish({
       destination: "/app/lobby/join",
-      body: JSON.stringify({ lobbyId, userId }),
+      body: JSON.stringify({ lobbyId, userId, characterId: passedCharacterId }),
     });
   };
 

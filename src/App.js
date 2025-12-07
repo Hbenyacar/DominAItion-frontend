@@ -18,6 +18,7 @@ import World from './scenes/World/World';
 import Lobby from './scenes/Lobby/Lobby';
 import InviteListener from "./components/InviteListener";
 import Multiplayer from './scenes/Multiplayer/Multiplayer';
+import Spectate from './scenes/Spectate/Spectate';
 
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
       <Route path='/world' element={<World/>} />
       <Route path='/lobby/:lobbyId' element={<Lobby/>} />
       <Route path='/multiplayer/:gameId' element={<Multiplayer/>}/>
+      <Route path='/spectate/:gameId' element={<Spectate/>}/>
     </Routes>
     </>
   );
