@@ -11,7 +11,8 @@ import {
   Alert,
 } from "@mui/material";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+    process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 // Types
 export interface User {
@@ -34,45 +35,52 @@ interface LobbyCardProps {
 
 const LobbyCard = ({ lobby, onJoin }: LobbyCardProps) => {
   return (
-    <Card
-      onClick={() => onJoin(lobby.id)}
-      sx={{
-        cursor: "pointer",
-        bgcolor: "success.main",
-        color: "white",
-        "&:hover": { transform: "translateY(-3px)", boxShadow: 6 },
-        transition: "all 0.2s ease-in-out",
-      }}
-    >
-      <CardContent>
-        <Typography variant="h6" component="div" fontWeight={600}>
-          {lobby.map} Arena
-        </Typography>
-        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-          Game Code: {lobby.code}
-        </Typography>
-        <Typography variant="body1">
-          Players: {lobby.users.length}
-        </Typography>
-      </CardContent>
-    </Card>
+      <Card
+          onClick={() => onJoin(lobby.id)}
+          sx={{
+            cursor: "pointer",
+            bgcolor: "success.main",
+            color: "white",
+            "&:hover": { transform: "translateY(-3px)", boxShadow: 6 },
+            transition: "all 0.2s ease-in-out",
+          }}
+      >
+        <CardContent>
+          <Typography variant="h6" component="div" fontWeight={600}>
+            {lobby.map} Arena
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            Game Code: {lobby.code}
+          </Typography>
+          <Typography variant="body1">
+            Players: {lobby.users.length}
+          </Typography>
+        </CardContent>
+      </Card>
   );
 };
 
 // --- Join by Game Code Component ---
 interface GameCodeSearchProps {
   onJoinByCode: (code: string) => Promise<boolean>;
+  selectedCharacterId: string;
 }
 
-const GameCodeSearch = ({ onJoinByCode }: GameCodeSearchProps) => {
+const GameCodeSearch = ({ onJoinByCode, selectedCharacterId }: GameCodeSearchProps) => {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
 
   const handleJoin = async () => {
+    if (!selectedCharacterId) {
+      setError("Please select a character before joining a lobby.");
+      return;
+    }
+
     if (!code.trim()) {
       setError("Please enter a game code");
       return;
     }
+
     const found = await onJoinByCode(code.trim());
     if (!found) {
       setError("No lobby found with that game code");
@@ -82,31 +90,39 @@ const GameCodeSearch = ({ onJoinByCode }: GameCodeSearchProps) => {
   };
 
   return (
-    <Stack direction="column" spacing={2} mb={4} alignItems="center" width="100%">
-      <Stack direction="row" spacing={2} width="100%" maxWidth={400}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          label="Enter Game Code"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        />
-        <Button
-          variant="contained"
-          color="success"
-          onClick={handleJoin}
-          sx={{ whiteSpace: "nowrap" }}
-        >
-          Join Lobby
-        </Button>
+      <Stack direction="column" spacing={2} mb={4} alignItems="center" width="100%">
+        <Stack direction="row" spacing={2} width="100%" maxWidth={400}>
+          <TextField
+              fullWidth
+              variant="outlined"
+              label="Enter Game Code"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+          />
+          <Button
+              variant="contained"
+              color="success"
+              onClick={handleJoin}
+              sx={{ whiteSpace: "nowrap" }}
+          >
+            Join Lobby
+          </Button>
+        </Stack>
+        {error && (
+            <Alert severity="error" sx={{ width: "100%", maxWidth: 400 }}>
+              {error}
+            </Alert>
+        )}
       </Stack>
-      {error && <Alert severity="error" sx={{ width: "100%", maxWidth: 400 }}>{error}</Alert>}
-    </Stack>
   );
 };
 
 // --- Main Lobby List Component ---
-function LobbyList() {
+interface LobbyListProps {
+  selectedCharacterId: string;
+}
+
+function LobbyList({ selectedCharacterId }: LobbyListProps) {
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const navigate = useNavigate();
 
@@ -136,10 +152,23 @@ function LobbyList() {
   };
 
   const handleJoin = (lobbyId: string) => {
-    navigate(`/lobby/${lobbyId}`);
+    if (!selectedCharacterId) {
+      alert("Please select a character before joining a lobby.");
+      return;
+    }
+
+    // Pass characterId into route state so the Lobby page can include it in addPlayer
+    navigate(`/lobby/${lobbyId}`, {
+      state: { characterId: selectedCharacterId },
+    });
   };
 
   const handleJoinByCode = async (code: string): Promise<boolean> => {
+    if (!selectedCharacterId) {
+      // Extra safety – UI should already block this, but this prevents misuse.
+      return false;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/lobby/code/${code}`, {
         method: "GET",
@@ -147,14 +176,15 @@ function LobbyList() {
       });
 
       if (!response.ok) {
-        console.log('Not Ok');
+        console.log("Not Ok");
         return false;
       }
 
-
       const lobby = await response.json();
       if (lobby?.id) {
-        navigate(`/lobby/${lobby.id}`);
+        navigate(`/lobby/${lobby.id}`, {
+          state: { characterId: selectedCharacterId },
+        });
         return true;
       }
       return false;
@@ -165,33 +195,36 @@ function LobbyList() {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        p: 3,
-      }}
-    >
-      <Typography variant="h4" fontWeight={600} color="success.main" mb={2}>
-        Available Lobbies
-      </Typography>
-
-      {/* Text field + button for game code */}
-      <GameCodeSearch onJoinByCode={handleJoinByCode} />
-
-      {lobbies.length === 0 ? (
-        <Typography variant="body1" color="text.secondary">
-          No lobbies found.
+      <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            p: 3,
+          }}
+      >
+        <Typography variant="h4" fontWeight={600} color="success.main" mb={2}>
+          Available Lobbies
         </Typography>
-      ) : (
-        <Stack spacing={2} width="100%" maxWidth={600}>
-          {lobbies.map((lobby) => (
-            <LobbyCard key={lobby.id} lobby={lobby} onJoin={handleJoin} />
-          ))}
-        </Stack>
-      )}
-    </Box>
+
+        {/* Text field + button for game code */}
+        <GameCodeSearch
+            onJoinByCode={handleJoinByCode}
+            selectedCharacterId={selectedCharacterId}
+        />
+
+        {lobbies.length === 0 ? (
+            <Typography variant="body1" color="text.secondary">
+              No lobbies found.
+            </Typography>
+        ) : (
+            <Stack spacing={2} width="100%" maxWidth={600}>
+              {lobbies.map((lobby) => (
+                  <LobbyCard key={lobby.id} lobby={lobby} onJoin={handleJoin} />
+              ))}
+            </Stack>
+        )}
+      </Box>
   );
 }
 
