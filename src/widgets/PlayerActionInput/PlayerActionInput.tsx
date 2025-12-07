@@ -12,6 +12,7 @@ interface PlayerActionInputProps {
   onSubmitResponse?: (response: string) => void;
   gameId?: string;
   playerId?: string;
+  userId?: string;
 }
 
 const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
@@ -20,6 +21,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
   onSubmitResponse,
   gameId,
   playerId,
+  userId,
 }) => {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,12 +163,15 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
       fontSize: "0.9rem",
       borderRadius: "6px",
       backgroundColor:
-        isSubmitting || !text.trim()
+        isSubmitting || !text.trim() || userId !== playerId
           ? "rgba(207, 78, 10, 0.6)"
           : "rgb(207, 78, 10)",
       color: "white",
       border: "none",
-      cursor: isSubmitting || !text.trim() ? "not-allowed" : "pointer",
+      cursor:
+        isSubmitting || !text.trim() || userId !== playerId
+          ? "not-allowed"
+          : "pointer",
       transition: "background-color 0.2s ease-in-out",
     },
     micButton: {
@@ -209,7 +214,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
             audio.play();
             handleSubmit();
           }}
-          disabled={isSubmitting || text.trim() === ""}
+          disabled={isSubmitting || text.trim() === "" || userId !== playerId}
           style={styles.button}
         >
           {isSubmitting ? (
