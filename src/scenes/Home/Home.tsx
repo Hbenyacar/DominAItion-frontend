@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../navbar/NavBar";
 import "./Home.css";
@@ -28,9 +28,6 @@ import {
   ImageListItemBar,
   Radio,
   TextField,
-  FormControl,
-  Select,
-  MenuItem,
 } from "@mui/material";
 
 // MUI icons
@@ -47,15 +44,15 @@ import {
 import FriendsPage from "./Friends/Friends";
 import Messages from "./Messages/Messages";
 import Settings from "./Settings/Settings";
-import CharactersPage from "./Characters/Characters";
 import { useDispatch, useSelector } from "react-redux";
 import { setMap } from "../../store/mapSlice";
 import WorldGenPanels from "../../widgets/WorldGen/WorldGen";
-//import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
+import CharacterGen from "../../widgets/CharacterGen/CharacterGen";
 import LobbyList from "../../components/LobbyList";
 import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
 import Achievements from "../Achievements/Achievements";
 import { RootState } from "../../store/store";
+import SpectateList from "../../components/SpectateList";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -72,18 +69,6 @@ export interface Lobby {
   map: string;
   users: User[];
 }
-
-interface Character {
-  id: string;
-  characterName: string;
-  characterBio: string;
-  intelligence: number;
-  wisdom: number;
-  charisma: number;
-  strength: number;
-  ingenuity: number;
-}
-
 
 function loadOpenCV(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -252,8 +237,6 @@ function Home() {
   const [gameHistory, setGameHistory] = useState<GameHistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [selectedCharacterId, setSelectedCharacterId] = useState<string>("");
 
   const currentUserEmail = useSelector(
     (state: RootState) => state.auth.user?.email || null
@@ -323,42 +306,6 @@ function Home() {
     fetchCurrentUser();
   }, [currentUserEmail]);
 
-  const fetchCharacters = useCallback(async () => {
-    if (!currentUserId) return;
-
-    try {
-      const res = await fetch(
-          `${API_BASE_URL}/api/characters/${currentUserId}`
-      );
-      if (!res.ok) {
-        console.error("Failed to fetch characters");
-        return;
-      }
-
-      const data: Character[] = await res.json();
-      setCharacters(data);
-
-      // ensure placeholder stays selected unless the user picks something
-      if (!data.some((c) => c.id === selectedCharacterId)) {
-        setSelectedCharacterId(""); // leave placeholder selected
-      }
-    } catch (err) {
-      console.error("Error fetching characters:", err);
-    }
-  }, [currentUserId, selectedCharacterId]);
-
-  // initial load when user is known
-  useEffect(() => {
-    fetchCharacters();
-  }, [fetchCharacters]);
-
-  useEffect(() => {
-    if (selectedIndex === 1) {
-      // User is viewing the Games tab -> refresh characters
-      fetchCharacters();
-    }
-  }, [selectedIndex, fetchCharacters]);
-
   //helper to add lobby creator to game
   const addCreatorToGame = async (gameId: string) => {
     if (!currentUserId) {
@@ -389,18 +336,12 @@ function Home() {
 
   const handleCreateLobby = async () => {
     const lobbyMap = mapName || "default";
-    const newLobby = await createLobby(lobbyMap, isPrivate, isSingle);
+    const newLobby = await createLobby(lobbyMap, isPrivate, isSingle); // or any map
     if (newLobby) {
       console.log("Lobby created:", newLobby);
-      navigate(`/lobby/${newLobby.id}`, {
-        state: {
-          winningPoints,
-          characterId: selectedCharacterId,
-        },
-      });
+      navigate(`/lobby/${newLobby.id}`, { state: { winningPoints } });
     }
   };
-
 
   const getAllLobbies = async (): Promise<Lobby[]> => {
     try {
@@ -716,26 +657,6 @@ function Home() {
                 <ListItemText primary="Maps" />
               </ListItemButton>
               <ListItemButton
-                  sx={{
-                    minWidth: "300px",
-                    paddingLeft: "30px",
-                    "&.Mui-selected": {
-                      backgroundColor: "rgba(230, 160, 120, 0.8)",
-                      color: "black",
-                      "&:hover": {
-                        backgroundColor: "rgba(220, 145, 105, 0.9)",
-                      },
-                    },
-                  }}
-                  selected={selectedIndex === 7}
-                  onClick={(event) => handleListItemClick(event, 7)}
-              >
-                <ListItemIcon>
-                  <PeopleIcon /> {/* or any icon you prefer */}
-                </ListItemIcon>
-                <ListItemText primary="Characters" />
-              </ListItemButton>
-              <ListItemButton
                 sx={{
                   minWidth: "300px",
                   paddingLeft: "30px",
@@ -833,6 +754,8 @@ function Home() {
                   <Tab label="Create Game" {...a11yProps(0)} sx={tabStyle} />
                   <Tab label="Join Game" {...a11yProps(1)} sx={tabStyle} />
                   <Tab label="History" {...a11yProps(2)} sx={tabStyle} />
+                  <Tab label="Spectate" {...a11yProps(3)} sx={tabStyle} />
+                  
                 </Tabs>
               </Box>
 
@@ -893,37 +816,7 @@ function Home() {
                         label="Private"
                       />
                     </FormGroup>
-
-                    {/* Character Selector */}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 260 }}>
-                      <Typography variant="h6" sx={{ m: 0 }}>
-                        Character
-                      </Typography>
-                      <FormControl size="small" sx={{ minWidth: 180 }}>
-                        <Select
-                            value={selectedCharacterId}
-                            onChange={(e) => setSelectedCharacterId(e.target.value as string)}
-                            displayEmpty
-                        >
-                          <MenuItem value="">
-                            <em>Select a character</em>
-                          </MenuItem>
-
-                          {characters.map((c) => (
-                              <MenuItem key={c.id} value={c.id}>
-                                {c.characterName}
-                              </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Box>
                   </Box>
-
-                  {characters.length === 0 && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        You don’t have any characters yet. Create one from the Characters tab.
-                      </Typography>
-                  )}
 
                   {/* Points to Win */}
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -1117,16 +1010,20 @@ function Home() {
 
                   {/* WorldGenPanels + CharacterGen Side by Side */}
                   <Box
-                      sx={{
-                        display: "flex",
-                        gap: 3,
-                        alignItems: "flex-start",
-                        mt: 3,
-                        flexWrap: "wrap",
-                      }}
+                    sx={{
+                      display: "flex",
+                      gap: 3, // spacing between boxes
+                      alignItems: "flex-start",
+                      mt: 3,
+                      flexWrap: "wrap", // allows wrapping on smaller screens
+                    }}
                   >
                     <Box sx={{ flex: 1 }}>
                       <WorldGenPanels />
+                    </Box>
+
+                    <Box sx={{ flex: 1 }}>
+                      <CharacterGen />
                     </Box>
                   </Box>
 
@@ -1134,38 +1031,30 @@ function Home() {
 
                   {/* Start Game Button */}
                   <Button
-                      onClick={() => {
-                        if (!selectedCharacterId) {
-                          alert("Please select a character before starting a game.");
-                          return;
-                        }
+                    onClick={() => {
+                      handleCreateLobby();
 
-                        handleCreateLobby();
-
-                        if (currentUserEmail) {
-                          incrementGamesPlayed(currentUserEmail);
-                        }
-                        const audio = new Audio("/assets/sound_effects/game_start.mp3");
-                        audio.play();
-                        toGame();
-                      }}
-                      disabled={
-                          alignment === "" ||
-                          selectedImg == null ||
-                          selectedCharacterId === "" // ⬅ block start until character chosen
+                      if (currentUserEmail) {
+                        incrementGamesPlayed(currentUserEmail);
                       }
-
-                      variant="contained"
-                      sx={{
-                        borderRadius: 2,
-                        px: 3,
-                        py: 1.5,
-                        backgroundColor: "rgb(207, 78, 10)",
-                        "&:hover": { backgroundColor: "darkorange" },
-                        color: "white",
-                        mt: 4,
-                        alignSelf: "flex-start",
-                      }}
+                      const audio = new Audio(
+                        "/assets/sound_effects/game_start.mp3"
+                      );
+                      audio.play();
+                      toGame();
+                    }}
+                    disabled={alignment === "" || selectedImg == null}
+                    variant="contained"
+                    sx={{
+                      borderRadius: 2,
+                      px: 3,
+                      py: 1.5,
+                      backgroundColor: "rgb(207, 78, 10)",
+                      "&:hover": { backgroundColor: "darkorange" },
+                      color: "white",
+                      mt: 4,
+                      alignSelf: "flex-start",
+                    }}
                   >
                     Start Game
                   </Button>
@@ -1183,45 +1072,30 @@ function Home() {
 
               {/* Join Game Tab */}
               <CustomTabPanel value={value} index={1}>
-                <Box
-                    sx={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 3,
-                      alignItems: "center",
-                      mb: 3,
-                    }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 260 }}>
-                    <Typography variant="h6" sx={{ m: 0 }}>
-                      Character
-                    </Typography>
-                    <FormControl size="small" sx={{ minWidth: 180 }}>
-                      <Select
-                          value={selectedCharacterId}
-                          onChange={(e) => setSelectedCharacterId(e.target.value as string)}
-                          displayEmpty
-                      >
-                        <MenuItem value="">
-                          <em>Select a character</em>
-                        </MenuItem>
-
-                        {characters.map((c) => (
-                            <MenuItem key={c.id} value={c.id}>
-                              {c.characterName}
-                            </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
+                <Box mt={2}>
+                  <Button
+                    onClick={toSampleGame}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Sample Game
+                  </Button>
                 </Box>
+                <LobbyList />
+              </CustomTabPanel>
 
-                {characters.length === 0 && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      You don’t have any characters yet. Create one from the Characters tab.
-                    </Typography>
-                )}
-                <LobbyList selectedCharacterId={selectedCharacterId} />
+              {/* Spectate Tab */}
+              <CustomTabPanel value={value} index={3}>
+                <Box mt={2}>
+                  <Button
+                    onClick={toSampleGame}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Sample Game
+                  </Button>
+                </Box>
+                <SpectateList/>
               </CustomTabPanel>
 
               {/* History Tab */}
@@ -1379,7 +1253,6 @@ function Home() {
           {selectedIndex === 3 && <Settings />}
           {selectedIndex === 5 && <Messages />}
           {selectedIndex === 6 && <Achievements />}
-          {selectedIndex === 7 && <CharactersPage />}
         </div>
       </div>
     </div>
