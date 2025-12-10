@@ -19,6 +19,8 @@ import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import { Checkbox, FormControlLabel } from "@mui/material";
+import CustomTextField from "../../components/CustomTextField"; 
+
 
 import "react-toastify/dist/ReactToastify.css";
 
@@ -47,7 +49,24 @@ function Profile() {
     useState<boolean>(true);
   const [usernameError, setUsernameError] = useState("");
 
+  const [openConvert, setOpenConvert] = useState(false);
+  const [newGuestUsername, setNewGuestUsername] = useState("");
+  const [newGuestEmail, setNewGuestEmail] = useState("");
+  const [newGuestPassword, setNewGuestPassword] = useState("");
+
   const [notificationsEnabled, setNotificationsEnabled] = useState(true); // default true
+
+  const [guestFields, setGuestFields] = useState({
+    username: { value: "", error: "" },
+    email: { value: "", error: "" },
+    password: { value: "", error: "" },
+  });
+
+  const handleGuestFieldChange = (field: string, value: string, error: string) => {
+    setGuestFields(prev => ({ ...prev, [field]: { value, error } }));
+  };
+
+  const hasGuestErrors = Object.values(guestFields).some(f => f.error !== "" || f.value === "");
 
   const currentUserEmail = useSelector(
     (state: RootState) => state.auth.user?.email || null
@@ -78,6 +97,8 @@ function Profile() {
       })
       .catch((err) => console.error(err));
   }, []);
+
+  const isGuestAccount = email && email.endsWith("@guest.local");
 
   // detect if user made any changes
   const hasChanges =
@@ -148,6 +169,41 @@ function Profile() {
     }
   };
 
+  const handleConvertGuest = async () => {
+    const newGuestUsername = guestFields.username.value
+    const newGuestEmail = guestFields.email.value
+    const newGuestPassword = guestFields.password.value
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/users/convertGuest/${currentUserEmail}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            newGuestUsername,
+            newGuestEmail,
+            newGuestPassword,
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to convert guest account");
+
+      toast.success("Your account has been converted! You may now log out and log back in under your new credentials");
+
+      // Update UI to reflect newly converted account
+      setEmail(newGuestEmail);
+      setUsername(newGuestUsername);
+      setEmailVerified(false); // now they need to verify the real email
+
+      setOpenConvert(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Error converting guest account.");
+    }
+  };
+
   return (
     <Box>
       <Navbar />
@@ -156,18 +212,18 @@ function Profile() {
           Profile
         </Typography>
 
-        <Stack spacing={3}>
-          <TextField
-            label="Username"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              setUsernameError("");
-            }}
-            error={!!usernameError}
-            helperText={usernameError}
-            fullWidth
-          />
+          <Stack spacing={3}>
+            <TextField
+              label="Username"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setUsernameError("");
+              }}
+              error={!!usernameError}
+              helperText={usernameError}
+              fullWidth
+            />
 
           {/* Email Section */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -179,8 +235,18 @@ function Profile() {
               fullWidth
             />
 
-            {/* Email Verification Chip/Button */}
-            {emailVerified ? (
+            {/* Email Verification Chip/Button (also used to confirm guest accounts)*/}
+            {isGuestAccount ? (
+              <Button
+                variant="outlined"
+                color="secondary"
+                size="small"
+                onClick={() => setOpenConvert(true)}
+              >
+                Convert to Real Account
+              </Button>
+            ) : 
+            emailVerified ? (
               <Chip
                 label="Verified"
                 color="success"
@@ -214,6 +280,51 @@ function Profile() {
               </Button>
             )}
           </Box>
+
+          <Dialog open={openConvert} onClose={() => setOpenConvert(false)}>
+            <DialogTitle>Convert Guest Account</DialogTitle>
+            <DialogContent sx={{ backgroundColor: '#EEEEEE' }}>
+              <Typography mb={2}>
+                Your account is currently a guest account.  
+                Enter a username, email and password to convert it into a permanent account.
+              </Typography>
+
+              <CustomTextField
+                title="Username"
+                placeholder="Choose a username"
+                onValueChange={(val, err) => handleGuestFieldChange("username", val, err)}
+                darkText={true}
+              />
+
+              <CustomTextField
+                title="Email"
+                type="email"
+                placeholder="you@example.com"
+                onValueChange={(val, err) => handleGuestFieldChange("email", val, err)}
+                darkText={true}
+              />
+
+              <CustomTextField
+                title="Password"
+                type="password"
+                placeholder="Enter a password"
+                onValueChange={(val, err) => handleGuestFieldChange("password", val, err)}
+                darkText={true}
+              />
+            </DialogContent>
+
+            <DialogActions>
+              <Button onClick={() => setOpenConvert(false)}>Cancel</Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleConvertGuest}
+                disabled={hasGuestErrors} // ✅ only enabled if all fields are valid
+              >
+                Convert
+              </Button>
+            </DialogActions>
+          </Dialog>
 
           <TextField
             label="Bio"
