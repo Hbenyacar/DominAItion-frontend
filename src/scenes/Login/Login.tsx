@@ -50,6 +50,10 @@ function Login() {
     navigate("/register");
   }
 
+  const toRegisterAsGuest = () => {
+    navigate("/register", { state: { guest: true } });
+  };
+
   const login = async (email: string, password: string) => {
     const response = await fetch(`${API_BASE_URL}/api/users/login`, {
       method: "POST",
@@ -159,6 +163,7 @@ function Login() {
 
           <div
             style={{ color: 'white', cursor: 'pointer', textDecoration: 'underline', fontWeight: 500 }}
+            onClick={toRegisterAsGuest}
           >
             Join as Guest
           </div>
