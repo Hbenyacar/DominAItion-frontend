@@ -7,7 +7,7 @@ import Box from '@mui/material/Box';
 import CustomTextField from '../../components/CustomTextField';
 import Button from '@mui/material/Button';
 import PersonIcon from '@mui/icons-material/Person';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { setLogin } from "../../store/authSlice";
 
 
@@ -21,6 +21,8 @@ function Register() {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
+  const isGuest = location.state?.guest === true;
 
   const [exists, setExists] = useState(true);
 
@@ -62,9 +64,31 @@ function Register() {
     }
   };
 
+  const generateGuestAccount = () => {
+    const random = Math.random().toString(36).substring(2,10)
+    return {
+      email: `guest_${random}@guest.local`,
+      password: `guest_${random}`,
+      username: `Guest_${random}`
+    }
+  }
+
+  const registerAsGuest = async () => {
+    const { email, password, username } = generateGuestAccount();
+    console.log(email)
+    await register(email, password, username);
+  };
+
+
   const toLogin = () => {
     navigate("/login");
   }
+
+  useEffect(() => {
+    if (isGuest) {
+      registerAsGuest();
+    }
+  }, [isGuest]);
 
   return (
     <div className="register">
@@ -168,7 +192,7 @@ function Register() {
           textDecoration: 'underline',
           fontWeight: 500,
         }}
-        onClick={() => console.log('Join as Guest clicked')}
+        onClick={() => registerAsGuest()}
       >
         Join as Guest
       </div>
