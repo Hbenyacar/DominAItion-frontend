@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
 import HelpTooltip from "../../components/HelpTooltip";
-import { Box, IconButton, Tooltip, Typography, Button } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography, Button, Divider } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import SockJS from "sockjs-client";
@@ -157,6 +157,7 @@ function Multiplayer() {
   const [hasPlayedWinSound, setHasPlayedWinSound] = useState(false);
   const [justScored, setJustScored] = useState(false);
   const [scoredTerritory, setScoredTerritory] = useState<string | null>(null);
+  const [spectators, setSpectators] = useState<Player[]>([]);
   const prevGameInfoRef = useRef<GameInfo | null>(null);
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
@@ -360,6 +361,44 @@ function Multiplayer() {
     }
   }, [gameInfo, currentUser, hasPlayedWinSound]);
 
+  useEffect(() => {
+    if (!gameId || !currentUser) return;
+      refreshSpectators();
+  }, [gameId, currentUser]);
+
+  useEffect(() => {
+  if (gameInfo) {
+    setSpectators(gameInfo.spectators ?? []);
+  }
+}, [gameInfo]); // <-- critical!
+
+  const refreshSpectators = async () => {
+    if (!gameId) return;
+
+    try {
+      const response = await fetch(`/api/game/spectators/names/${gameId}`);
+      if (!response.ok) {
+        console.error("Failed to fetch spectator names:", response.statusText);
+        return;
+      }
+
+      const data: Record<string, string> = await response.json();
+
+      // Convert to Player[] with gray color for spectators
+      const updatedSpectators: Player[] = Object.entries(data).map(([id, name]) => ({
+        id,
+        name,
+        color: "#888",
+      }));
+      const uniqueSpectators = Array.from(
+        new Map(updatedSpectators.map(s => [s.id, s])).values()
+      );
+      setSpectators(uniqueSpectators);
+    } catch (err) {
+      console.error("Error refreshing spectators:", err);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmittedText(inputValue);
@@ -484,6 +523,89 @@ function Multiplayer() {
               );
             })}
           </Box>
+
+{/* Players List and Spectators */}
+      <Box
+        sx={{
+          width: "250px",
+          maxHeight: "500px",
+          backgroundColor: "rgba(0,0,0,0.3)",
+          borderRadius: "12px",
+          padding: 2,
+          overflowY: "auto",
+          marginBottom: 2,
+        }}
+      >
+        {/* Players */}
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'white' }}>
+          Players
+        </Typography>
+        {players.map((p) => (
+          <Box
+            key={p.id}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mb: 0.5,
+              padding: "4px 8px",
+              borderRadius: "8px",
+              backgroundColor: p.id === currentUser?.id ? "rgba(255,255,255,0.2)" : "transparent",
+            }}
+          >
+            <Box
+              sx={{
+                width: "12px",
+                height: "12px",
+                borderRadius: "50%",
+                backgroundColor: p.color,
+              }}
+            />
+            <Typography sx={{ fontSize: "14px", color: "white" }}>{p.name}</Typography>
+          </Box>
+        ))}
+
+        <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.5)" }} />
+
+        {/* Spectators */}
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'white' }}>
+          Spectators
+        </Typography>
+        <button
+          onClick={refreshSpectators}
+          style={{
+            padding: "2px 6px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "12px",
+          }}
+        >
+          Refresh
+        </button>
+        {spectators.map((s) => (
+          <Box
+            key={s.id}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mb: 0.5,
+              padding: "4px 8px",
+              borderRadius: "8px",
+            }}
+          >
+            <Box
+              sx={{
+                width: "12px",
+                height: "12px",
+                borderRadius: "50%",
+                backgroundColor: "#888",
+              }}
+            />
+            <Typography sx={{ fontSize: "14px", color: "white" }}>{s.name}</Typography>
+          </Box>
+        ))}
+      </Box>
 
           {/* Center box, holds chat, map, story */}
           <Box

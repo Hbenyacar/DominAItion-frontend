@@ -199,7 +199,7 @@ function Spectate() {
       setPlayers(mappedPlayers);
 
       // 4️⃣ Initialize spectators from backend
-      const spectatorList: Player[] = info.spectatorIds?.map((id) => ({
+      const spectatorList: Player[] = info.spectatorIds?.map((id : string) => ({
         id,
         name: id === currentUser.id ? currentUser.username : `Spectator ${id.substring(0, 4)}`,
         color: "#888", // gray for spectators
@@ -253,8 +253,10 @@ function Spectate() {
         name,
         color: "#888",
       }));
-
-      setSpectators(updatedSpectators);
+      const uniqueSpectators = Array.from(
+        new Map(updatedSpectators.map(s => [s.id, s])).values()
+      );
+      setSpectators(uniqueSpectators);
     } catch (err) {
       console.error("Error refreshing spectators:", err);
     }
