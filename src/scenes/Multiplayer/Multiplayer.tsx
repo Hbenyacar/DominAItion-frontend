@@ -112,13 +112,28 @@ async function sendMessage(
   }
 }
 
-function checkWinner(gameInfo: GameInfo) {
-  const { playerPoints, winningPoints } = gameInfo;
+async function sendWinRequest(gameId: string | undefined, winnerId: string) {
+  try {
+    await fetch("/api/game/win", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gameId, winnerId }),
+    });
+  } catch (err) {
+    console.error("Failed to send win request:", err);
+  }
+}
 
+
+function checkWinner(gameInfo: GameInfo, gameId: string | undefined) {
+  const { playerPoints, winningPoints } = gameInfo;
+  console.log('In Check Win');
+  console.log('gameId: ' + gameId);
   // Find the first player who reached winning points
   for (const [playerId, points] of Object.entries(playerPoints)) {
-    if (points >= winningPoints) {
+    if (points >= 2) {
       // Return the winner's ID
+      sendWinRequest(gameId, playerId);
       return playerId;
     }
   }
@@ -126,6 +141,7 @@ function checkWinner(gameInfo: GameInfo) {
   // No winner yet
   return null;
 }
+
 
 function Multiplayer() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -311,7 +327,7 @@ function Multiplayer() {
   useEffect(() => {
     if (!gameInfo || !currentUser) return;
 
-    const winnerId = checkWinner(gameInfo);
+    const winnerId = checkWinner(gameInfo, gameId);
     if (!winnerId) return; // no winner yet
 
     // If I am NOT the winner, and we haven't already played the sound
@@ -329,7 +345,7 @@ function Multiplayer() {
   useEffect(() => {
     if (!gameInfo || !currentUser) return;
 
-    const winnerId = checkWinner(gameInfo);
+    const winnerId = checkWinner(gameInfo, gameId);
     if (!winnerId) return; // no winner yet
 
     // 🏆 If I am the winner and we haven't played win sound yet
@@ -359,7 +375,7 @@ function Multiplayer() {
     console.log(result);
   };
 
-  const winnerId = gameInfo ? checkWinner(gameInfo) : null;
+  const winnerId = gameInfo ? checkWinner(gameInfo, gameId) : null;
   const winnerName = winnerId ? gameInfo?.playerNames?.[winnerId] : null;
 
   const activeSnapshot =
@@ -762,6 +778,7 @@ function Multiplayer() {
               gameId={gameId!}
               playerId={players[gameInfo.turn % players.length].id}
               userId={currentUser.id}
+              color={players[gameInfo.turn % players.length].color}
               onSubmitResponse={(response: string) =>
                 setSubmittedText(response)
               }
