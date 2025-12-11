@@ -122,6 +122,10 @@ function Spectate() {
     return player ? player.color : "#FFFFFF"; // fallback
   };
 
+  const dedupeSpectators = (list: Player[]) => {
+    return Array.from(new Map(list.map(s => [s.id, s])).values());
+  };
+
   useEffect(() => {
     if (!gameId) return;
 
@@ -205,7 +209,7 @@ function Spectate() {
         color: "#888", // gray for spectators
       })) || [];
 
-      setSpectators(spectatorList);
+      dedupeSpectators(spectatorList);
 
       // 5️⃣ Setup WebSocket for live updates
       const socket = new SockJS("/ws");

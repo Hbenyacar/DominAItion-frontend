@@ -193,7 +193,7 @@ function Multiplayer() {
 
       const mapped = info.playerIds.map((id, index) => ({
         id,
-        name: `Player ${index + 1}`,
+        name: info.playerNames?.[id] || `Player ${index + 1}`,
         color: getPlayerColor(index),
       }));
 
