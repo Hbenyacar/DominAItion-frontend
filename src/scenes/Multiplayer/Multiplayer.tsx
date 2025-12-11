@@ -1,13 +1,34 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography, Button } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
-import { ArrowBack, ArrowForward, Replay } from "@mui/icons-material";
+import { ArrowBack, ArrowForward } from "@mui/icons-material";
+import { playSound } from "../../utils/sound";
+import { keyframes } from "@mui/system";
+
+const pointGlow = keyframes`
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+`;
 
 interface GameInfo {
   id: string;
@@ -108,14 +129,22 @@ function checkWinner(gameInfo: GameInfo) {
 
 function Multiplayer() {
   const { gameId } = useParams<{ gameId: string }>();
+  const navigate = useNavigate();
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [submittedText, setSubmittedText] = useState("");
   const [boardHistory, setBoardHistory] = useState<BoardSnapshot[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+  const [hasPlayedLoseSound, setHasPlayedLoseSound] = useState(false);
+  const [hasPlayedWinSound, setHasPlayedWinSound] = useState(false);
+  const [justScored, setJustScored] = useState(false);
+  const [scoredTerritory, setScoredTerritory] = useState<string | null>(null);
+  const prevGameInfoRef = useRef<GameInfo | null>(null);
 
   const currentUser = useSelector((state: RootState) => state.auth.user);
+
+  const prevChatLengthRef = useRef<number | null>(null);
 
   const getPlayerColor = (index: number) => {
     const colors = [
@@ -171,7 +200,10 @@ function Multiplayer() {
         // Subscribe to refresh topic
         stompClient.subscribe(`/topic/game/${gameId}/refresh`, (msg) => {
           console.log("🔄 Refresh signal received!");
-          window.location.reload(); // ⬅️ RELOAD ENTIRE PAGE
+
+          setTimeout(() => {
+            window.location.reload();
+          }, 300); // ⏳ delay 2 seconds
         });
       },
     });
@@ -228,6 +260,88 @@ function Multiplayer() {
       return updated;
     });
   }, [gameInfo]);
+
+  useEffect(() => {
+    if (!gameInfo || !currentUser) return;
+
+    const prev = prevGameInfoRef.current;
+    if (prev) {
+      const prevPoints = prev.playerPoints?.[currentUser.id] ?? 0;
+      const newPoints = gameInfo.playerPoints?.[currentUser.id] ?? 0;
+
+      // ⚡ user just gained at least 1 point
+      if (newPoints > prevPoints) {
+        // figure out which territory/ies are new for this user
+        const prevOwned = new Set(
+          prev.territories
+            .filter((t) => t.ownerId === currentUser.id)
+            .map((t) => t.territoryName)
+        );
+
+        const newOwned = gameInfo.territories
+          .filter((t) => t.ownerId === currentUser.id)
+          .map((t) => t.territoryName);
+
+        const newlyGained =
+          newOwned.find((name) => !prevOwned.has(name)) ?? null;
+
+        setScoredTerritory(newlyGained);
+        setJustScored(true);
+
+        // optional: play separate “point gained” sound
+        try {
+          playSound("/assets/sound_effects/point_gain.mp3");
+        } catch (e) {
+          console.error("Failed to play point-gain sound", e);
+        }
+
+        // auto-hide animation after ~1.2s
+        setTimeout(() => {
+          setJustScored(false);
+          setScoredTerritory(null);
+        }, 1200);
+      }
+    }
+
+    // always update ref at the end
+    prevGameInfoRef.current = gameInfo;
+  }, [gameInfo, currentUser]);
+
+  // lose sound
+  useEffect(() => {
+    if (!gameInfo || !currentUser) return;
+
+    const winnerId = checkWinner(gameInfo);
+    if (!winnerId) return; // no winner yet
+
+    // If I am NOT the winner, and we haven't already played the sound
+    if (winnerId !== currentUser.id && !hasPlayedLoseSound) {
+      try {
+        playSound("/assets/sound_effects/game_lost.mp3");
+        setHasPlayedLoseSound(true);
+      } catch (e) {
+        console.error("Failed to play lose sound", e);
+      }
+    }
+  }, [gameInfo, currentUser, hasPlayedLoseSound]);
+
+  // win sound
+  useEffect(() => {
+    if (!gameInfo || !currentUser) return;
+
+    const winnerId = checkWinner(gameInfo);
+    if (!winnerId) return; // no winner yet
+
+    // 🏆 If I am the winner and we haven't played win sound yet
+    if (winnerId === currentUser.id && !hasPlayedWinSound) {
+      try {
+        playSound("/assets/sound_effects/game_won.mp3");
+        setHasPlayedWinSound(true);
+      } catch (e) {
+        console.error("Failed to play win sound", e);
+      }
+    }
+  }, [gameInfo, currentUser, hasPlayedWinSound]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -426,7 +540,10 @@ function Multiplayer() {
                   />
                   <button
                     type="submit"
-                    onClick={handleSend}
+                    onClick={() => {
+                      handleSend();
+                      playSound("/assets/sound_effects/chat_noti.mp3");
+                    }}
                     style={{
                       padding: "8px 14px",
                       borderRadius: "8px",
@@ -453,11 +570,6 @@ function Multiplayer() {
                 marginRight: "-30px",
               }}
             >
-              {/*  <InteractiveUSMap
-                territories={gameInfo.territories ?? []}
-                players={players}
-                start={gameInfo.startingTerritory}
-            /> */}
               <InteractiveUSMap
                 territories={territoriesToRender}
                 players={players}
@@ -465,20 +577,65 @@ function Multiplayer() {
               />
             </Box>
 
+            {/* Full-screen Game Over / Win overlay */}
             {winnerName && (
               <Box
                 sx={{
-                  width: "100%",
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100vw",
+                  height: "100vh",
+                  backgroundColor: "rgba(0, 0, 0, 0.85)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 3000,
+                  color: "white",
                   textAlign: "center",
-                  padding: "10px 0",
-                  backgroundColor: "#FFD700",
-                  borderRadius: "10px",
-                  marginBottom: "20px",
+                  backdropFilter: "blur(5px)",
                 }}
               >
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  🎉 {winnerName} wins the game! 🎉
+                <Typography
+                  variant="h3"
+                  sx={{
+                    fontWeight: "bold",
+                    color:
+                      winnerId === currentUser.id
+                        ? "rgb(207, 255, 120)"
+                        : "rgb(255, 180, 120)",
+                    textShadow: "0 0 12px rgba(0,0,0,0.8)",
+                    mb: 2,
+                  }}
+                >
+                  {winnerId === currentUser.id ? "You Won!" : "Game Over"}
                 </Typography>
+
+                <Typography
+                  variant="h5"
+                  sx={{ mb: 4, maxWidth: 600, lineHeight: 1.5 }}
+                >
+                  {winnerId === currentUser.id
+                    ? "Your domination is complete. The world is yours."
+                    : `${winnerName} has conquered the world this time.`}
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  sx={{
+                    backgroundColor: "rgb(207,78,10)",
+                    "&:hover": { backgroundColor: "darkorange" },
+                    px: 4,
+                    py: 1,
+                    fontSize: "1.1rem",
+                    fontWeight: "bold",
+                    borderRadius: "8px",
+                  }}
+                  onClick={() => navigate("/home")}
+                >
+                  Back to Home
+                </Button>
               </Box>
             )}
 
