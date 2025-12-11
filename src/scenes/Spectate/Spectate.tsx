@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
-import { Box, Typography } from "@mui/material";
+import { Box, Divider, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import SockJS from "sockjs-client";
@@ -102,7 +102,8 @@ function Spectate() {
   const [inputValue, setInputValue] = useState("");
   const [submittedText, setSubmittedText] = useState("");
   const currentUser = useSelector((state: RootState) => state.auth.user);
-  
+  const [spectators, setSpectators] = useState<Player[]>([]);
+
 
   const getPlayerColor = (index: number) => {
     const colors = [
@@ -134,10 +135,8 @@ function Spectate() {
       const mapped = info.playerIds.map((id, index) => ({
         id,
         name: `Player ${index + 1}`,
-        realName: info.playerNames?.[id] || `Player ${index + 1}`,
         color: getPlayerColor(index),
       }));
-      setPlayers(mapped)
 
       // ⭐ NEW: Log the colors so you see exactly what is being passed
       console.log(
@@ -172,6 +171,94 @@ function Spectate() {
     stompClient.deactivate();
   };
   }, [gameId]);
+
+  useEffect(() => {
+  if (!gameId || !currentUser) return;
+
+  const joinAsSpectator = async () => {
+    try {
+      // 1️⃣ Call backend to add current user as spectator
+      await fetch("/api/game/addSpectator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId, userId: currentUser.id }),
+      });
+
+      // 2️⃣ Fetch the latest game info after adding spectator
+      const info = await getInfo(gameId);
+      if (!info) return;
+
+      setGameInfo(info);
+
+      // 3️⃣ Map players with colors
+      const mappedPlayers = info.playerIds.map((id, index) => ({
+        id,
+        name: info.playerNames?.[id] || `Player ${index + 1}`,
+        color: getPlayerColor(index),
+      }));
+      setPlayers(mappedPlayers);
+
+      // 4️⃣ Initialize spectators from backend
+      const spectatorList: Player[] = info.spectatorIds?.map((id) => ({
+        id,
+        name: id === currentUser.id ? currentUser.username : `Spectator ${id.substring(0, 4)}`,
+        color: "#888", // gray for spectators
+      })) || [];
+
+      setSpectators(spectatorList);
+
+      // 5️⃣ Setup WebSocket for live updates
+      const socket = new SockJS("/ws");
+      const stompClient = new Client({
+        webSocketFactory: () => socket as any,
+        onConnect: () => {
+          stompClient.subscribe(`/topic/game/${gameId}/spectators`, (msg) => {
+            const spectatorIds: string[] = JSON.parse(msg.body);
+            const newSpectators = spectatorIds.map((id) => ({
+              id,
+              name: id === currentUser.id ? currentUser.username : `Spectator ${id.substring(0, 4)}`,
+              color: "#888",
+            }));
+            setSpectators(newSpectators);
+          });
+        },
+      });
+
+      stompClient.activate();
+
+      return () => stompClient.deactivate();
+    } catch (err) {
+      console.error("Failed to join as spectator:", err);
+    }
+  };
+
+  joinAsSpectator();
+}, [gameId, currentUser]);
+
+  const refreshSpectators = async () => {
+    if (!gameId) return;
+
+    try {
+      const response = await fetch(`/api/game/spectators/names/${gameId}`);
+      if (!response.ok) {
+        console.error("Failed to fetch spectator names:", response.statusText);
+        return;
+      }
+
+      const data: Record<string, string> = await response.json();
+
+      // Convert to Player[] with gray color for spectators
+      const updatedSpectators: Player[] = Object.entries(data).map(([id, name]) => ({
+        id,
+        name,
+        color: "#888",
+      }));
+
+      setSpectators(updatedSpectators);
+    } catch (err) {
+      console.error("Error refreshing spectators:", err);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,6 +360,93 @@ function Spectate() {
     );
   })}
 </Box>
+
+
+
+{/* Players List and Spectators */}
+      <Box
+        sx={{
+          width: "250px",
+          maxHeight: "500px",
+          backgroundColor: "rgba(0,0,0,0.3)",
+          borderRadius: "12px",
+          padding: 2,
+          overflowY: "auto",
+          marginBottom: 2,
+        }}
+      >
+        {/* Players */}
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'white' }}>
+          Players
+        </Typography>
+        {players.map((p) => (
+          <Box
+            key={p.id}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mb: 0.5,
+              padding: "4px 8px",
+              borderRadius: "8px",
+              backgroundColor: p.id === currentUser?.id ? "rgba(255,255,255,0.2)" : "transparent",
+            }}
+          >
+            <Box
+              sx={{
+                width: "12px",
+                height: "12px",
+                borderRadius: "50%",
+                backgroundColor: p.color,
+              }}
+            />
+            <Typography sx={{ fontSize: "14px", color: "white" }}>{p.name}</Typography>
+          </Box>
+        ))}
+
+        <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.5)" }} />
+
+        {/* Spectators */}
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'white' }}>
+          Spectators
+        </Typography>
+        <button
+          onClick={refreshSpectators}
+          style={{
+            padding: "2px 6px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "12px",
+          }}
+        >
+          Refresh
+        </button>
+        {spectators.map((s) => (
+          <Box
+            key={s.id}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mb: 0.5,
+              padding: "4px 8px",
+              borderRadius: "8px",
+            }}
+          >
+            <Box
+              sx={{
+                width: "12px",
+                height: "12px",
+                borderRadius: "50%",
+                backgroundColor: "#888",
+              }}
+            />
+            <Typography sx={{ fontSize: "14px", color: "white" }}>{s.name}</Typography>
+          </Box>
+        ))}
+      </Box>
+
+
 
 
 
