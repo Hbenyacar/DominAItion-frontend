@@ -20,9 +20,10 @@ import { RootState } from "../../../store/store";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import {playSound} from "../../../utils/sound";
 
 const API_BASE_URL =
-    process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+    process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/";
 
 type Character = {
     id: string; // stored, used for key and delete
@@ -153,6 +154,9 @@ export default function CharactersPage() {
         try {
             setCreating(true);
 
+            alert(userId)
+            alert(newDescription.trim())
+
             const res = await fetch(`${API_BASE_URL}/api/ai/character`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -167,6 +171,12 @@ export default function CharactersPage() {
             }
 
             toast.success("Character created!");
+
+            try {
+                playSound("/assets/sound_effects/character_upload.mp3");
+            } catch (e) {
+                console.error("Failed to play lose sound", e);
+            }
 
             // Close modal and clear input
             setOpenCreate(false);
@@ -232,7 +242,7 @@ export default function CharactersPage() {
 
                 {!loading && !error && characters.length === 0 && (
                     <Typography color="text.secondary">
-                        You don&apos;t have any characters yet.
+                        You don't have any characters yet.
                     </Typography>
                 )}
 
