@@ -134,8 +134,10 @@ function Spectate() {
       const mapped = info.playerIds.map((id, index) => ({
         id,
         name: `Player ${index + 1}`,
+        realName: info.playerNames?.[id] || `Player ${index + 1}`,
         color: getPlayerColor(index),
       }));
+      setPlayers(mapped)
 
       // ⭐ NEW: Log the colors so you see exactly what is being passed
       console.log(
