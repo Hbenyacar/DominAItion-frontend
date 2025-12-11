@@ -398,16 +398,12 @@ function Multiplayer() {
           >
             {players.map((player) => {
               const playerPoints = gameInfo.playerPoints[player.id] ?? 0;
-              const totalPoints =
-                Object.values(gameInfo.playerPoints).reduce(
-                  (a, b) => a + (b as number),
-                  0
-                ) || 1;
               const widthPercent =
                 (playerPoints / gameInfo.winningPoints) * 100;
 
-              // Get actual username from backend response
               const playerName = gameInfo.playerNames[player.id] ?? player.name;
+
+              const isCurrentUser = player.id === currentUser.id;
 
               return (
                 <Box
@@ -416,14 +412,13 @@ function Multiplayer() {
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
-                    width: "100%", // allows centering child
+                    width: "100%",
                     justifyContent: "center",
                   }}
                 >
-                  {/* Player name on the left */}
                   <Typography
                     sx={{
-                      width: "100px", // fixed width for names
+                      width: "100px",
                       fontSize: "12px",
                       fontWeight: 600,
                       color: player.color,
@@ -433,11 +428,10 @@ function Multiplayer() {
                     {playerName}
                   </Typography>
 
-                  {/* Bar */}
                   <Box
                     sx={{
                       height: "20px",
-                      width: "250px", // wider bar
+                      width: "250px",
                       backgroundColor: "#555",
                       borderRadius: "10px",
                       overflow: "hidden",
@@ -455,6 +449,15 @@ function Multiplayer() {
                         fontSize: "12px",
                         color: "white",
                         fontWeight: 600,
+
+                        // 🔥 smooth grow/shrink whenever points change
+                        transition: "width 0.4s ease-out",
+
+                        // ✨ optional: glow animation when *you* just scored
+                        animation: isCurrentUser
+                          ? `${pointGlow} 0.9s ease-out`
+                          : "none",
+                        transformOrigin: "left center",
                       }}
                     >
                       {widthPercent >= 10 ? playerPoints : ""}
