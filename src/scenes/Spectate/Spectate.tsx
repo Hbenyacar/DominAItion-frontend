@@ -122,6 +122,10 @@ function Spectate() {
     return player ? player.color : "#FFFFFF"; // fallback
   };
 
+  const dedupeSpectators = (list: Player[]) => {
+    return Array.from(new Map(list.map(s => [s.id, s])).values());
+  };
+
   useEffect(() => {
     if (!gameId) return;
 
@@ -199,13 +203,13 @@ function Spectate() {
       setPlayers(mappedPlayers);
 
       // 4️⃣ Initialize spectators from backend
-      const spectatorList: Player[] = info.spectatorIds?.map((id) => ({
+      const spectatorList: Player[] = info.spectatorIds?.map((id : string) => ({
         id,
         name: id === currentUser.id ? currentUser.username : `Spectator ${id.substring(0, 4)}`,
         color: "#888", // gray for spectators
       })) || [];
 
-      setSpectators(spectatorList);
+      dedupeSpectators(spectatorList);
 
       // 5️⃣ Setup WebSocket for live updates
       const socket = new SockJS("/ws");
@@ -253,8 +257,10 @@ function Spectate() {
         name,
         color: "#888",
       }));
-
-      setSpectators(updatedSpectators);
+      const uniqueSpectators = Array.from(
+        new Map(updatedSpectators.map(s => [s.id, s])).values()
+      );
+      setSpectators(uniqueSpectators);
     } catch (err) {
       console.error("Error refreshing spectators:", err);
     }
