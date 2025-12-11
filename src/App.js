@@ -17,6 +17,7 @@ import ResetPassword from './scenes/Profile/ResetPassword';
 import World from './scenes/World/World';
 import Lobby from './scenes/Lobby/Lobby';
 import InviteListener from "./components/InviteListener";
+import FriendListener from "./components/FriendListener";
 import Multiplayer from './scenes/Multiplayer/Multiplayer';
 import Spectate from './scenes/Spectate/Spectate';
 
@@ -48,6 +49,7 @@ function App() {
   return (
     <>
     <InviteListener />
+    <FriendListener />
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
