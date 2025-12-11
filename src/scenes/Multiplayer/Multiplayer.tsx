@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
+import HelpTooltip from "../../components/HelpTooltip";
 import { Box, IconButton, Tooltip, Typography, Button } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
@@ -509,6 +510,9 @@ function Multiplayer() {
               }}
             >
               {/* Chat messages */}
+                      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+  <HelpTooltip description="This is the in-game chat. Send messages to other players here." />
+</Box>
               <Box
                 sx={{
                   flex: 1,
@@ -542,8 +546,12 @@ function Multiplayer() {
                 ))}
               </Box>
 
+ <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+    <HelpTooltip description="Type your chat messages here. Press Enter to send." />
+  </Box>
               {/* Input area */}
               <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+                
                 <Box sx={{ display: "flex", gap: 1 }}>
                   <input
                     type="text"
@@ -576,6 +584,7 @@ function Multiplayer() {
             </Box>
 
             {/* center - map */}
+            
             <Box
               sx={{
                 flex: "1 1 60%",
@@ -589,6 +598,16 @@ function Multiplayer() {
                 marginRight: "-30px",
               }}
             >
+              <Box
+  sx={{
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 10,
+  }}
+>
+  <HelpTooltip description="This is the game map showing the ownership status of each territory." />
+</Box>
               <InteractiveUSMap
                 territories={territoriesToRender}
                 players={players}
@@ -670,6 +689,7 @@ function Multiplayer() {
                 Storyboard
               </Typography>
 
+              
               <Box
                 sx={{
                   width: "300px",
@@ -684,6 +704,9 @@ function Multiplayer() {
                   boxShadow: "-4px 4px 10px rgba(0,0,0,0.3)",
                 }}
               >
+                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+  <HelpTooltip description="This shows the evolving story and events of the game. Scroll to view history." />
+</Box>
                 {/* Scrollable storyboard text */}
                 <Box
                   sx={{
@@ -774,6 +797,17 @@ function Multiplayer() {
 
           {/* Bottom text box*/}
           {players[gameInfo.turn % players.length] && (
+            <>
+            <Box
+      sx={{
+        position: "absolute",
+        bottom: 100, // adjust based on where PlayerActionInput sits
+        right: 20,
+        zIndex: 1000,
+      }}
+    >
+      <HelpTooltip description="This is your action input. Enter your moves or commands for your turn here." />
+    </Box>
             <PlayerActionInput
               gameId={gameId!}
               playerId={players[gameInfo.turn % players.length].id}
@@ -783,6 +817,7 @@ function Multiplayer() {
                 setSubmittedText(response)
               }
             />
+            </>
           )}
         </Box>
       )}
