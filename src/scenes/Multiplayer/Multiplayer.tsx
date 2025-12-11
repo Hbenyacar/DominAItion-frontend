@@ -1,13 +1,34 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
-import { Box, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography, Button } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
+import { ArrowBack, ArrowForward } from "@mui/icons-material";
+import { playSound } from "../../utils/sound";
+import { keyframes } from "@mui/system";
 
+const pointGlow = keyframes`
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+`;
 
 interface GameInfo {
   id: string;
@@ -34,11 +55,18 @@ interface ChatMessage {
   isRead: boolean;
 }
 
-
 interface Player {
   id: string;
   name: string;
   color: string;
+}
+
+interface BoardSnapshot {
+  turn: number;
+  territories: GameInfo["territories"];
+  storyboard: string;
+  playerPoints: GameInfo["playerPoints"];
+  createdAt: string; // when we stored this snapshot (client-side)
 }
 
 async function getInfo(gameId: string | undefined) {
@@ -60,7 +88,12 @@ async function getInfo(gameId: string | undefined) {
   }
 }
 
-async function sendMessage(gameId: string, name: string, contents: string, color: string): Promise<Record<string, any>> {
+async function sendMessage(
+  gameId: string,
+  name: string,
+  contents: string,
+  color: string
+): Promise<Record<string, any>> {
   try {
     const response = await fetch("/api/game/message", {
       method: "POST",
@@ -94,15 +127,24 @@ function checkWinner(gameInfo: GameInfo) {
   return null;
 }
 
-
 function Multiplayer() {
   const { gameId } = useParams<{ gameId: string }>();
+  const navigate = useNavigate();
   const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [submittedText, setSubmittedText] = useState("");
+  const [boardHistory, setBoardHistory] = useState<BoardSnapshot[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+  const [hasPlayedLoseSound, setHasPlayedLoseSound] = useState(false);
+  const [hasPlayedWinSound, setHasPlayedWinSound] = useState(false);
+  const [justScored, setJustScored] = useState(false);
+  const [scoredTerritory, setScoredTerritory] = useState<string | null>(null);
+  const prevGameInfoRef = useRef<GameInfo | null>(null);
+
   const currentUser = useSelector((state: RootState) => state.auth.user);
-  
+
+  const prevChatLengthRef = useRef<number | null>(null);
 
   const getPlayerColor = (index: number) => {
     const colors = [
@@ -144,32 +186,162 @@ function Multiplayer() {
       );
 
       setPlayers(mapped);
-      
     };
 
     loadGame();
 
     // --- WebSocket Connection ---
-  const socket = new SockJS("/ws");
-  const stompClient = new Client({
-    webSocketFactory: () => socket as any,
-    onConnect: () => {
-      console.log("Connected to WS for game", gameId);
+    const socket = new SockJS("/ws");
+    const stompClient = new Client({
+      webSocketFactory: () => socket as any,
+      onConnect: () => {
+        console.log("Connected to WS for game", gameId);
 
-      // Subscribe to refresh topic
-      stompClient.subscribe(`/topic/game/${gameId}/refresh`, (msg) => {
-        console.log("🔄 Refresh signal received!");
-        window.location.reload();   // ⬅️ RELOAD ENTIRE PAGE
-      });
-    },
-  });
+        // Subscribe to refresh topic
+        stompClient.subscribe(`/topic/game/${gameId}/refresh`, (msg) => {
+          console.log("🔄 Refresh signal received!");
 
-  stompClient.activate();
+          setTimeout(() => {
+            window.location.reload();
+          }, 300); // ⏳ delay 2 seconds
+        });
+      },
+    });
 
-  return () => {
-    stompClient.deactivate();
-  };
+    stompClient.activate();
+
+    return () => {
+      stompClient.deactivate();
+    };
   }, [gameId]);
+
+  // Load existing history from localStorage for this game
+  useEffect(() => {
+    if (!gameId) return;
+
+    const key = `boardHistory_${gameId}`;
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as BoardSnapshot[];
+        setBoardHistory(parsed);
+      } catch (e) {
+        console.error("Failed to parse board history", e);
+      }
+    }
+  }, [gameId]);
+
+  // save history to localStorage whenever it changes
+  useEffect(() => {
+    if (!gameId) return;
+    const key = `boardHistory_${gameId}`;
+    localStorage.setItem(key, JSON.stringify(boardHistory));
+  }, [boardHistory, gameId]);
+
+  // whenever gameInfo updates, append snapshot of board
+  useEffect(() => {
+    if (!gameInfo) return;
+
+    setBoardHistory((prev) => {
+      const last = prev[prev.length - 1];
+
+      // Avoid duplicates if we already stored this turn
+      if (last && last.turn === gameInfo.turn) return prev;
+
+      const snapshot: BoardSnapshot = {
+        turn: gameInfo.turn,
+        territories: gameInfo.territories,
+        storyboard: gameInfo.storyboard,
+        playerPoints: gameInfo.playerPoints,
+        createdAt: new Date().toISOString(),
+      };
+
+      const updated = [...prev, snapshot];
+      return updated;
+    });
+  }, [gameInfo]);
+
+  useEffect(() => {
+    if (!gameInfo || !currentUser) return;
+
+    const prev = prevGameInfoRef.current;
+    if (prev) {
+      const prevPoints = prev.playerPoints?.[currentUser.id] ?? 0;
+      const newPoints = gameInfo.playerPoints?.[currentUser.id] ?? 0;
+
+      // ⚡ user just gained at least 1 point
+      if (newPoints > prevPoints) {
+        // figure out which territory/ies are new for this user
+        const prevOwned = new Set(
+          prev.territories
+            .filter((t) => t.ownerId === currentUser.id)
+            .map((t) => t.territoryName)
+        );
+
+        const newOwned = gameInfo.territories
+          .filter((t) => t.ownerId === currentUser.id)
+          .map((t) => t.territoryName);
+
+        const newlyGained =
+          newOwned.find((name) => !prevOwned.has(name)) ?? null;
+
+        setScoredTerritory(newlyGained);
+        setJustScored(true);
+
+        // optional: play separate “point gained” sound
+        try {
+          playSound("/assets/sound_effects/point_gain.mp3");
+        } catch (e) {
+          console.error("Failed to play point-gain sound", e);
+        }
+
+        // auto-hide animation after ~1.2s
+        setTimeout(() => {
+          setJustScored(false);
+          setScoredTerritory(null);
+        }, 1200);
+      }
+    }
+
+    // always update ref at the end
+    prevGameInfoRef.current = gameInfo;
+  }, [gameInfo, currentUser]);
+
+  // lose sound
+  useEffect(() => {
+    if (!gameInfo || !currentUser) return;
+
+    const winnerId = checkWinner(gameInfo);
+    if (!winnerId) return; // no winner yet
+
+    // If I am NOT the winner, and we haven't already played the sound
+    if (winnerId !== currentUser.id && !hasPlayedLoseSound) {
+      try {
+        playSound("/assets/sound_effects/game_lost.mp3");
+        setHasPlayedLoseSound(true);
+      } catch (e) {
+        console.error("Failed to play lose sound", e);
+      }
+    }
+  }, [gameInfo, currentUser, hasPlayedLoseSound]);
+
+  // win sound
+  useEffect(() => {
+    if (!gameInfo || !currentUser) return;
+
+    const winnerId = checkWinner(gameInfo);
+    if (!winnerId) return; // no winner yet
+
+    // 🏆 If I am the winner and we haven't played win sound yet
+    if (winnerId === currentUser.id && !hasPlayedWinSound) {
+      try {
+        playSound("/assets/sound_effects/game_won.mp3");
+        setHasPlayedWinSound(true);
+      } catch (e) {
+        console.error("Failed to play win sound", e);
+      }
+    }
+  }, [gameInfo, currentUser, hasPlayedWinSound]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,16 +350,34 @@ function Multiplayer() {
   };
 
   const handleSend = () => {
-    const result = sendMessage(gameId!, currentUser.username, inputValue, getCurrentUserColor());
+    const result = sendMessage(
+      gameId!,
+      currentUser.username,
+      inputValue,
+      getCurrentUserColor()
+    );
     console.log(result);
-  }
+  };
 
   const winnerId = gameInfo ? checkWinner(gameInfo) : null;
   const winnerName = winnerId ? gameInfo?.playerNames?.[winnerId] : null;
 
+  const activeSnapshot =
+    historyIndex !== null && boardHistory[historyIndex]
+      ? boardHistory[historyIndex]
+      : null;
+
+  const territoriesToRender =
+    activeSnapshot?.territories ?? gameInfo?.territories ?? [];
+
+  const storyboardToRender =
+    activeSnapshot?.storyboard ?? gameInfo?.storyboard ?? "";
+
+  const turnLabel = activeSnapshot?.turn ?? gameInfo?.turn;
+  const isHistoryMode = historyIndex !== null;
+
   return (
     <div style={{ padding: "20px" }}>
-      
       {!gameInfo ? (
         <p>Loading game...</p>
       ) : (
@@ -195,85 +385,90 @@ function Multiplayer() {
           <Typography>
             Player: {players[gameInfo.turn % players.length].id}
           </Typography>
-          
 
-         {/* Player Points Vertical Bars */}
-<Box
-  sx={{
-    display: "flex",
-    flexDirection: "column",
-    gap: 1,
-    mb: 2,
-    alignItems: "center", // center the bars horizontally
-  }}
->
-  {players.map((player) => {
-    const playerPoints = gameInfo.playerPoints[player.id] ?? 0;
-    const totalPoints =
-      Object.values(gameInfo.playerPoints).reduce((a, b) => a + (b as number), 0) || 1;
-    const widthPercent = (playerPoints / gameInfo.winningPoints) * 100;
-
-    // Get actual username from backend response
-    const playerName = gameInfo.playerNames[player.id] ?? player.name;
-
-    return (
-      <Box
-        key={player.id}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          width: "100%", // allows centering child
-          justifyContent: "center",
-        }}
-      >
-        {/* Player name on the left */}
-        <Typography
-          sx={{
-            width: "100px", // fixed width for names
-            fontSize: "12px",
-            fontWeight: 600,
-            color: player.color,
-            textAlign: "right",
-          }}
-        >
-          {playerName}
-        </Typography>
-
-        {/* Bar */}
-        <Box
-          sx={{
-            height: "20px",
-            width: "250px", // wider bar
-            backgroundColor: "#555",
-            borderRadius: "10px",
-            overflow: "hidden",
-          }}
-        >
+          {/* Player Points Vertical Bars */}
           <Box
             sx={{
-              height: "100%",
-              width: `${widthPercent}%`,
-              backgroundColor: player.color,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              px: 1,
-              fontSize: "12px",
-              color: "white",
-              fontWeight: 600,
+              flexDirection: "column",
+              gap: 1,
+              mb: 2,
+              alignItems: "center", // center the bars horizontally
             }}
           >
-            {widthPercent >= 10 ? playerPoints : ""}
+            {players.map((player) => {
+              const playerPoints = gameInfo.playerPoints[player.id] ?? 0;
+              const widthPercent =
+                (playerPoints / gameInfo.winningPoints) * 100;
+
+              const playerName = gameInfo.playerNames[player.id] ?? player.name;
+
+              const isCurrentUser = player.id === currentUser.id;
+
+              return (
+                <Box
+                  key={player.id}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    width: "100%",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      width: "100px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: player.color,
+                      textAlign: "right",
+                    }}
+                  >
+                    {playerName}
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      height: "20px",
+                      width: "250px",
+                      backgroundColor: "#555",
+                      borderRadius: "10px",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        height: "100%",
+                        width: `${widthPercent}%`,
+                        backgroundColor: player.color,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                        px: 1,
+                        fontSize: "12px",
+                        color: "white",
+                        fontWeight: 600,
+
+                        // 🔥 smooth grow/shrink whenever points change
+                        transition: "width 0.4s ease-out",
+
+                        // ✨ optional: glow animation when *you* just scored
+                        animation: isCurrentUser
+                          ? `${pointGlow} 0.9s ease-out`
+                          : "none",
+                        transformOrigin: "left center",
+                      }}
+                    >
+                      {widthPercent >= 10 ? playerPoints : ""}
+                    </Box>
+                  </Box>
+                </Box>
+              );
+            })}
           </Box>
-        </Box>
-      </Box>
-    );
-  })}
-</Box>
 
-
-
+          {/* Center box, holds chat, map, story */}
           <Box
             sx={{
               flex: 1,
@@ -284,75 +479,85 @@ function Multiplayer() {
             }}
           >
             <Box
-  sx={{
-    width: "200px",
-    height: "400px",
-    backgroundColor: "rgba(0,0,0,0.3)",
-    borderRadius: "20px",
-    marginRight: "40px",
-    p: 2,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "flex-end",
-    boxShadow: "-4px 4px 10px rgba(0,0,0,0.3)",
-  }}
->
-  {/* Chat messages */}
-  <Box
-    sx={{
-      flex: 1,
-      overflowY: "auto",
-      display: "flex",
-      flexDirection: "column",
-      gap: 1,
-      paddingRight: "6px",
-    }}
-  >
-    {gameInfo.chat?.map((msg, idx) => (
-      <Box key={idx} sx={{ marginBottom: "8px" }}>
-        <Box key={idx} sx={{ marginBottom: "8px", display: "flex", gap: 1 }}>
-  <span style={{ fontSize: "12px", fontWeight: 600, color: msg.color }}>
-    {msg.senderName}:
-  </span>
-  <span style={{ fontSize: "13px", color: "white" }}>
-    {msg.contents}
-  </span>
-</Box>
+              sx={{
+                width: "200px",
+                height: "400px",
+                backgroundColor: "rgba(0,0,0,0.3)",
+                borderRadius: "20px",
+                marginRight: "40px",
+                p: 2,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "flex-end",
+                boxShadow: "-4px 4px 10px rgba(0,0,0,0.3)",
+              }}
+            >
+              {/* Chat messages */}
+              <Box
+                sx={{
+                  flex: 1,
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1,
+                  paddingRight: "6px",
+                }}
+              >
+                {gameInfo.chat?.map((msg, idx) => (
+                  <Box key={idx} sx={{ marginBottom: "8px" }}>
+                    <Box
+                      key={idx}
+                      sx={{ marginBottom: "8px", display: "flex", gap: 1 }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: msg.color,
+                        }}
+                      >
+                        {msg.senderName}:
+                      </span>
+                      <span style={{ fontSize: "13px", color: "white" }}>
+                        {msg.contents}
+                      </span>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
 
-      </Box>
-    ))}
-  </Box>
-
-  {/* Input area */}
-  <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-    <Box sx={{ display: "flex", gap: 1 }}>
-      <input
-        type="text"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        placeholder="Type something..."
-        style={{
-          padding: "8px",
-          width: "100%",
-          borderRadius: "8px",
-          border: "1px solid #ccc",
-        }}
-      />
-      <button
-        type="submit"
-        onClick={handleSend}
-        style={{
-          padding: "8px 14px",
-          borderRadius: "8px",
-          cursor: "pointer",
-        }}
-      >
-        Send
-      </button>
-    </Box>
-  </form>
-</Box>
-
+              {/* Input area */}
+              <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Type something..."
+                    style={{
+                      padding: "8px",
+                      width: "100%",
+                      borderRadius: "8px",
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    onClick={() => {
+                      handleSend();
+                      playSound("/assets/sound_effects/chat_noti.mp3");
+                    }}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Send
+                  </button>
+                </Box>
+              </form>
+            </Box>
 
             {/* center - map */}
             <Box
@@ -369,29 +574,73 @@ function Multiplayer() {
               }}
             >
               <InteractiveUSMap
-                territories={gameInfo.territories ?? []}
+                territories={territoriesToRender}
                 players={players}
                 start={gameInfo.startingTerritory}
               />
             </Box>
 
+            {/* Full-screen Game Over / Win overlay */}
             {winnerName && (
-  <Box
-    sx={{
-      width: "100%",
-      textAlign: "center",
-      padding: "10px 0",
-      backgroundColor: "#FFD700",
-      borderRadius: "10px",
-      marginBottom: "20px",
-    }}
-  >
-    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-      🎉 {winnerName} wins the game! 🎉
-    </Typography>
-  </Box>
-)}
+              <Box
+                sx={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100vw",
+                  height: "100vh",
+                  backgroundColor: "rgba(0, 0, 0, 0.85)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 3000,
+                  color: "white",
+                  textAlign: "center",
+                  backdropFilter: "blur(5px)",
+                }}
+              >
+                <Typography
+                  variant="h3"
+                  sx={{
+                    fontWeight: "bold",
+                    color:
+                      winnerId === currentUser.id
+                        ? "rgb(207, 255, 120)"
+                        : "rgb(255, 180, 120)",
+                    textShadow: "0 0 12px rgba(0,0,0,0.8)",
+                    mb: 2,
+                  }}
+                >
+                  {winnerId === currentUser.id ? "You Won!" : "Game Over"}
+                </Typography>
 
+                <Typography
+                  variant="h5"
+                  sx={{ mb: 4, maxWidth: 600, lineHeight: 1.5 }}
+                >
+                  {winnerId === currentUser.id
+                    ? "Your domination is complete. The world is yours."
+                    : `${winnerName} has conquered the world this time.`}
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  sx={{
+                    backgroundColor: "rgb(207,78,10)",
+                    "&:hover": { backgroundColor: "darkorange" },
+                    px: 4,
+                    py: 1,
+                    fontSize: "1.1rem",
+                    fontWeight: "bold",
+                    borderRadius: "8px",
+                  }}
+                  onClick={() => navigate("/home")}
+                >
+                  Back to Home
+                </Button>
+              </Box>
+            )}
 
             {/* right - story board */}
             <Box
@@ -417,14 +666,97 @@ function Multiplayer() {
                   flexDirection: "column",
                   justifyContent: "space-between",
                   boxShadow: "-4px 4px 10px rgba(0,0,0,0.3)",
-                  overflowY: "auto",
                 }}
               >
-                {gameInfo.storyboard}
+                {/* Scrollable storyboard text */}
+                <Box
+                  sx={{
+                    flex: 1,
+                    overflowY: "auto",
+                    pr: 1,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ whiteSpace: "pre-line", color: "white" }}
+                  >
+                    {storyboardToRender}
+                  </Typography>
+                </Box>
+
+                {/* Bottom nav: left / right history buttons */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mt: 1,
+                  }}
+                >
+                  {/* LEFT: previous turn */}
+                  <IconButton
+                    size="small"
+                    sx={{ color: "white" }}
+                    disabled={boardHistory.length <= 1}
+                    onClick={() => {
+                      if (boardHistory.length <= 1) return;
+
+                      setHistoryIndex((prev) => {
+                        // from live -> jump to most recent *previous* snapshot
+                        if (prev === null) {
+                          return boardHistory.length > 1
+                            ? boardHistory.length - 2
+                            : null;
+                        }
+                        // already in history -> step back if possible
+                        if (prev > 0) return prev - 1;
+                        return prev;
+                      });
+                    }}
+                  >
+                    <ArrowBack />
+                  </IconButton>
+
+                  {/* Middle label: which turn / mode */}
+                  <Typography variant="caption" sx={{ color: "white" }}>
+                    {turnLabel !== undefined
+                      ? isHistoryMode
+                        ? `Turn ${turnLabel} (history)`
+                        : `Turn ${turnLabel} (live)`
+                      : "No turn info"}
+                  </Typography>
+
+                  {/* RIGHT: next turn / go back to live */}
+                  <IconButton
+                    size="small"
+                    sx={{ color: "white" }}
+                    disabled={boardHistory.length <= 1}
+                    onClick={() => {
+                      if (boardHistory.length <= 1) return;
+
+                      setHistoryIndex((prev) => {
+                        // if we're live, nothing to "go forward" to
+                        if (prev === null) return prev;
+
+                        // if there is another historical snapshot ahead, move forward
+                        if (prev < boardHistory.length - 2) {
+                          return prev + 1;
+                        }
+
+                        // if we were on the last historical snapshot (length - 2),
+                        // going forward brings us back to live
+                        return null;
+                      });
+                    }}
+                  >
+                    <ArrowForward />
+                  </IconButton>
+                </Box>
               </Box>
             </Box>
           </Box>
 
+          {/* Bottom text box*/}
           {players[gameInfo.turn % players.length] && (
             <PlayerActionInput
               gameId={gameId!}

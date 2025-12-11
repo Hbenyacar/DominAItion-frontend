@@ -7,10 +7,11 @@ interface CustomTextFieldProps {
     placeholder?: string;
     type?: "text" | "email" | "password";
     onValueChange?: (value: string, error: string) => void; // <--- add this
+    darkText?: boolean
 }
 
 
-function CustomTextField({ title, placeholder, type = "text", onValueChange }: CustomTextFieldProps) {
+function CustomTextField({ title, placeholder, type = "text", onValueChange, darkText = false}: CustomTextFieldProps) {
     const [value, setValue] = useState("");
     const [touched, setTouched] = useState(false);
     const [error, setError] = useState("");
@@ -64,11 +65,11 @@ function CustomTextField({ title, placeholder, type = "text", onValueChange }: C
                 helperText={error}
                 sx={{
                     width: '280px',
-                    '& label': { color: 'white' },
-                    '& label.Mui-focused': { color: 'white' },
-                    '& .MuiOutlinedInput-root fieldset': { borderColor: 'white' },
-                    '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: 'white' },
-                    '& input': { color: 'white' },
+                    '& label': { color: darkText ? 'black' : 'white' },
+                    '& label.Mui-focused': { color: darkText ? 'black' : 'white' },
+                    '& .MuiOutlinedInput-root fieldset': { borderColor: darkText ? 'black' : 'white' },
+                    '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: darkText ? 'black' : 'white' },
+                    '& input': { color: darkText ? 'black' : 'white' },
                     '& .MuiFormHelperText-root': { color: '#ff6b6b' },
                 }}
             />
