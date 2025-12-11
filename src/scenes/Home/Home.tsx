@@ -54,6 +54,7 @@ import Achievements from "../Achievements/Achievements";
 import { RootState } from "../../store/store";
 import SpectateList from "../../components/SpectateList";
 import CharactersPage from "./Characters/Characters";
+import PopupButton from "../../components/PopupButton";
 
 const API_BASE_URL =
     process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -101,6 +102,29 @@ function loadOpenCV(): Promise<void> {
     document.body.appendChild(script);
   });
 }
+
+async function getHistory(userId: string | undefined) {
+  try {
+    const response = await fetch("/api/users/history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to fetch game info:", response.statusText);
+      return null;
+    }
+
+    const data = await response.json();  // <-- read JSON once
+    console.log("history:", data);       // <-- now you can log safely
+    return data;
+  } catch (error) {
+    console.error("Error fetching game info:", error);
+    return null;
+  }
+}
+
 
 declare const cv: any; // OpenCV global
 
@@ -250,6 +274,10 @@ function Home() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string>("");
 
+  const currUserID = useSelector(
+    (state: RootState) => state.auth.user?.id || null
+  );
+
   const currentUserEmail = useSelector(
       (state: RootState) => state.auth.user?.email || null
   );
@@ -288,6 +316,8 @@ function Home() {
       audio.pause();
       audio.currentTime = 0;
     }
+
+    getHistory(currUserID);
   }, []);
 
   type Friend = {
@@ -1404,6 +1434,7 @@ function Home() {
                                     <strong>Summary:</strong> {game.summary}
                                   </Typography>
                               )}
+                              <PopupButton userId={currUserID}/>
                             </Box>
                         ))}
                       </Box>

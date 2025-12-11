@@ -12,6 +12,7 @@ interface PlayerActionInputProps {
   onSubmitResponse?: (response: string) => void;
   gameId?: string;
   playerId?: string;
+  color?: string;
   userId?: string;
 }
 
@@ -21,6 +22,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
   onSubmitResponse,
   gameId,
   playerId,
+  color,
   userId,
 }) => {
   const [text, setText] = useState("");
@@ -110,6 +112,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
           playerId,
           request: text.trim(),
           difficulty: 4,
+          color,
         }),
       });
 
