@@ -47,6 +47,7 @@ import Settings from "./Settings/Settings";
 import { useDispatch, useSelector } from "react-redux";
 import { setMap } from "../../store/mapSlice";
 import WorldGenPanels from "../../widgets/WorldGen/WorldGen";
+import AdvancedGameSettings from "../../widgets/AdvancedGameSettings/AdvancedGameSettings";
 // import CharacterGen from "../../widgets/CharacterGen/CharacterGen"; // ⬅ removed old character UI
 import LobbyList from "../../components/LobbyList";
 import AIPlayerSettings from "../../widgets/AIPlayerSettings/AIPlayerSettings";
@@ -1156,6 +1157,14 @@ function Home() {
                           <WorldGenPanels />
                         </Box>
                       </Box>
+
+                      <Box>
+                        <AdvancedGameSettings
+                            title="Advanced Settings"
+                            onChange={(val) => console.log("Slider changed:", val)}
+                        />
+                      </Box>
+
 
                       {alignment === "single" && <AIPlayerSettings />}
 
