@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useLocation, useParams } from "react-router-dom";
+import { useState, useEffect, useRef, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal} from "react";
+import {useDispatch, useSelector} from "react-redux";
+import {useLocation, useParams} from "react-router-dom";
 import InteractiveUSMap from "../../widgets/Maps/USA/USA";
 import PlayerActionInput from "../../widgets/PlayerActionInput/PlayerActionInput";
 import Navbar from "../navbar/NavBar";
-import { RootState } from "../../store/store";
-import { setWins } from "../../store/authSlice";
+import {RootState} from "../../store/store";
+import {setWins} from "../../store/authSlice";
 import "./Game.css";
+
 import {
   Box,
   Button,
@@ -23,13 +24,14 @@ import {
   SkipNext,
   PictureAsPdf,
 } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import WinPopup from "../../components/WinPopup";
+import jsPDF from "jspdf";
 
 // test
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/";
+    process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/";
 
 interface RouteParams {
   gameId: string;
@@ -41,6 +43,7 @@ interface GameInfo {
   players: any[];
   status: string;
   createdAt: string;
+
   [key: string]: any;
 }
 
@@ -51,7 +54,7 @@ async function getPoints(gameId: string): Promise<GameInfo | null> {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ gameId }),
+      body: JSON.stringify({gameId}),
     });
 
     if (!response.ok) {
@@ -69,11 +72,11 @@ async function getPoints(gameId: string): Promise<GameInfo | null> {
 }
 
 async function sendStory({
-  gameId,
-  playerId,
-  request,
-  difficulty,
-}: {
+                           gameId,
+                           playerId,
+                           request,
+                           difficulty,
+                         }: {
   gameId: string;
   playerId: string;
   request: string;
@@ -82,7 +85,7 @@ async function sendStory({
   try {
     const response = await fetch("/api/ai/story", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         gameId,
         playerId,
@@ -109,10 +112,10 @@ function Game() {
   const params = useParams<{ gameId: string }>();
   const gameID = params.gameId;
   const currentUserEmail = useSelector(
-    (state: RootState) => state.auth.user?.email || null
+      (state: RootState) => state.auth.user?.email || null
   );
   const currentUserID = useSelector(
-    (state: RootState) => state.auth.user?.id || null
+      (state: RootState) => state.auth.user?.id || null
   );
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const navigate = useNavigate();
@@ -129,7 +132,7 @@ function Game() {
   const [score, setScore] = useState(0);
   const [totalWins, setTotalWins] = useState(0);
   const [messages, setMessages] = useState<{ sender: string; text: string }[]>(
-    []
+      []
   );
   const [isNarrating, setIsNarrating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -139,7 +142,7 @@ function Game() {
   const [gameId, setGameId] = useState<string | null>(null);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState<
-    boolean | undefined
+      boolean | undefined
   >(undefined);
 
   const [storyResponses, setStoryResponses] = useState<string[]>([]);
@@ -148,21 +151,21 @@ function Game() {
   // Auto-scroll to bottom whenever new story arrives
   useEffect(() => {
     if (storyEndRef.current) {
-      storyEndRef.current.scrollIntoView({ behavior: "smooth" });
+      storyEndRef.current.scrollIntoView({behavior: "smooth"});
     }
   }, [storyResponses]);
 
   /* ---------------------- START BACKGROUND MUSIC ---------------------------- */
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(
-    Number(localStorage.getItem("currentTrackIndex")) || 0
+      Number(localStorage.getItem("currentTrackIndex")) || 0
   );
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
 
   const [musicEnabled, setMusicEnabled] = useState<boolean | null>(null);
 
   const [currentTime, setCurrentTime] = useState<number>(
-    Number(localStorage.getItem("currentTime")) || 0
+      Number(localStorage.getItem("currentTime")) || 0
   );
 
   const [story, setStory] = useState("");
@@ -193,7 +196,7 @@ function Game() {
     const fetchMusicPreference = async () => {
       try {
         const res = await fetch(
-          `${API_BASE_URL}/api/users/email/${currentUserEmail}`
+            `${API_BASE_URL}/api/users/email/${currentUserEmail}`
         );
         if (!res.ok) throw new Error("Failed to fetch user");
         const user = await res.json();
@@ -225,7 +228,7 @@ function Game() {
 
     if (!audioRef.current) {
       const audio = new Audio(
-        `/assets/audio/Track${currentTrackIndex + 1}.mp3`
+          `/assets/audio/Track${currentTrackIndex + 1}.mp3`
       );
       audio.volume = 0.4;
       audio.currentTime = currentTime;
@@ -243,15 +246,16 @@ function Game() {
       localStorage.setItem("currentTrackIndex", String(next));
       audio.src = `/assets/audio/Track${next + 1}.mp3`;
       audio.currentTime = 0;
-      audio.play().catch(() => {});
+      audio.play().catch(() => {
+      });
     };
     audio.addEventListener("ended", handleEnded);
 
     // 🔹 Auto play if isPlaying is true
     if (isPlaying) {
       audio
-        .play()
-        .catch(() => console.log("Autoplay blocked until user interaction"));
+          .play()
+          .catch(() => console.log("Autoplay blocked until user interaction"));
     } else {
       audio.pause();
     }
@@ -301,7 +305,7 @@ function Game() {
     if (!chatInput.trim()) return;
 
     // For now, hardcode the sender (later this will be the logged-in user)
-    const newMessage = { sender: "You", text: chatInput.trim() };
+    const newMessage = {sender: "You", text: chatInput.trim()};
     setMessages((prev) => [...prev, newMessage]);
     setChatInput("");
 
@@ -343,7 +347,7 @@ function Game() {
 
       // Update the score for newly claimed territory
       const claimedTerritory = updatedGameInfo.find(
-        (t: any) => t.territoryName === territoryName
+          (t: any) => t.territoryName === territoryName
       );
       if (claimedTerritory) {
         setScore((prevScore) => prevScore + claimedTerritory.pointValue);
@@ -358,27 +362,27 @@ function Game() {
     {
       title: "Your Mission (Should you choose to accept it)",
       content:
-        "Take over the world! You and the other players have a map divided out into regions. " +
-        "You will think of unique actions you can take to gain more territory. " +
-        "With each territory you take over, you gain more points. " +
-        "The first one to get to the set number of points wins the game!",
+          "Take over the world! You and the other players have a map divided out into regions. " +
+          "You will think of unique actions you can take to gain more territory. " +
+          "With each territory you take over, you gain more points. " +
+          "The first one to get to the set number of points wins the game!",
     },
     {
       title: "All About The Map",
       content:
-        "The map is divided into several regions you can take over. The resources and terrain in each region are determined based on the world description created on game creation.",
+          "The map is divided into several regions you can take over. The resources and terrain in each region are determined based on the world description created on game creation.",
     },
     {
       title: "Who ARE you?",
       content:
-        "The character you defined at the beginning of the game will have different traits that can make the actions you want to take more or less feasible. Plan your domination strategies wisely!",
+          "The character you defined at the beginning of the game will have different traits that can make the actions you want to take more or less feasible. Plan your domination strategies wisely!",
     },
-    { title: "Good luck, and have fun!" },
+    {title: "Good luck, and have fun!"},
   ];
   const handlePrevSlide = () =>
-    setCurrentSlide((prev) => Math.max(prev - 1, 0));
+      setCurrentSlide((prev) => Math.max(prev - 1, 0));
   const handleNextSlide = () =>
-    setCurrentSlide((prev) => Math.min(prev + 1, tutorialSlides.length - 1));
+      setCurrentSlide((prev) => Math.min(prev + 1, tutorialSlides.length - 1));
   useEffect(() => {
     const modalShown = sessionStorage.getItem("modalShown");
     if (!modalShown) {
@@ -426,8 +430,8 @@ function Game() {
     try {
       const response = await fetch("/api/game/territories", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameId }),
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({gameId}),
       });
 
       if (!response.ok) {
@@ -474,8 +478,8 @@ function Game() {
         //       console.log("Owner:", territory.ownerId);
         //       console.log("----------------------");
         if (
-          territory.ownerId !== null ||
-          territory.territoryName === territoryName
+            territory.ownerId !== null ||
+            territory.territoryName === territoryName
         ) {
           currPoints += territory.pointValue;
         }
@@ -489,6 +493,7 @@ function Game() {
       setLoading(false);
     }
   };
+
   async function incrementWins(email: string): Promise<number> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/wins/${email}`, {
@@ -550,7 +555,7 @@ function Game() {
 
       const voices = window.speechSynthesis.getVoices();
       const preferredVoice = voices.find((v) =>
-        v.name.toLowerCase().includes("female")
+          v.name.toLowerCase().includes("female")
       );
       if (preferredVoice) utterance.voice = preferredVoice;
 
@@ -612,10 +617,10 @@ function Game() {
       if (sessionStartRef.current) {
         const sessionEnd = new Date();
         const durationMs =
-          sessionEnd.getTime() - sessionStartRef.current.getTime();
+            sessionEnd.getTime() - sessionStartRef.current.getTime();
         const durationHours = durationMs / (1000 * 60 * 60);
         console.log(
-          `User spent ${durationHours.toFixed(2)} hours on Game page`
+            `User spent ${durationHours.toFixed(2)} hours on Game page`
         );
 
         if (currentUserEmail) {
@@ -628,25 +633,25 @@ function Game() {
   const savePlaytime = async (email: string, hours: number) => {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/users/totalPlayTime/${email}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ hours }),
-        }
+          `${API_BASE_URL}/api/users/totalPlayTime/${email}`,
+          {
+            method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({hours}),
+          }
       );
 
       if (!response.ok) {
         console.error(
-          "Failed to increment totalPlayTime:",
-          response.statusText
+            "Failed to increment totalPlayTime:",
+            response.statusText
         );
       } else {
         const data = await response.json();
         console.log(
-          "✅ Incremented totalPlayTime:",
-          data.totalPlayTime.toFixed(3),
-          "hours total"
+            "✅ Incremented totalPlayTime:",
+            data.totalPlayTime.toFixed(3),
+            "hours total"
         );
       }
     } catch (error) {
@@ -655,596 +660,603 @@ function Game() {
   };
 
   // @ts-ignore
+  // @ts-ignore
+  // @ts-ignore
   return (
-    <Box
-      sx={{
-        height: "100vh",
-        width: "100vw",
-        display: "flex",
-        flexDirection: "column",
-        overflowX: "auto",
-        overflowY: "auto",
-        backgroundColor: "bisque",
-      }}
-    >
-      {/* ✅ Navbar fixed top */}
-      <Navbar />
-
-      {/* ✅ Top bar (score + music) */}
       <Box
-        sx={{
-          display: "flex",
-          justifyContent: musicEnabled ? "space-between" : "center",
-          alignItems: "center",
-          width: "40%",
-          maxWidth: "1400px",
-          height: "10vh",
-          margin: "0 auto",
-          mt: 10,
-          px: 2,
-        }}
-      >
-        {/* Scoreboard */}
-        <Box
           sx={{
-            backgroundColor: "rgba(0,0,0,0.3)",
-            borderRadius: "12px", // match music box radius
-            px: 2,
-            py: 1,
+            height: "100vh",
+            width: "100vw",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center",
-            color: "white",
-            backdropFilter: "blur(4px)", // same subtle blur
-            boxShadow: "0 2px 8px rgba(0,0,0,0.4)", // match drop shadow
-            width: "35%", // same sizing logic
-            gap: "8px",
+            overflowX: "auto",
+            overflowY: "auto",
+            backgroundColor: "bisque",
           }}
+      >
+        {/* ✅ Navbar fixed top */}
+        <Navbar/>
+
+        {/* ✅ Top bar (score + music) */}
+        <Box
+            sx={{
+              display: "flex",
+              justifyContent: musicEnabled ? "space-between" : "center",
+              alignItems: "center",
+              width: "40%",
+              maxWidth: "1400px",
+              height: "10vh",
+              margin: "0 auto",
+              mt: 10,
+              px: 2,
+            }}
         >
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: "bold",
-              textShadow: "0px 0px 6px rgba(0,0,0,0.4)",
-              textAlign: "center",
-            }}
+          {/* Scoreboard */}
+          <Box
+              sx={{
+                backgroundColor: "rgba(0,0,0,0.3)",
+                borderRadius: "12px", // match music box radius
+                px: 2,
+                py: 1,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                color: "white",
+                backdropFilter: "blur(4px)", // same subtle blur
+                boxShadow: "0 2px 8px rgba(0,0,0,0.4)", // match drop shadow
+                width: "35%", // same sizing logic
+                gap: "8px",
+              }}
           >
-            {score} / {winPoints}
-          </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={(score / winPoints) * 100}
+            <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: "bold",
+                  textShadow: "0px 0px 6px rgba(0,0,0,0.4)",
+                  textAlign: "center",
+                }}
+            >
+              {score} / {winPoints}
+            </Typography>
+            <LinearProgress
+                variant="determinate"
+                value={(score / winPoints) * 100}
+                sx={{
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: "rgba(227, 125, 0, 0.5)",
+                  "& .MuiLinearProgress-bar": {backgroundColor: "rgb(255,0,0)"},
+                }}
+            />
+          </Box>
+
+          <div style={{padding: "1rem"}}>
+            <label
+                style={{display: "flex", alignItems: "center", gap: "0.5rem"}}
+            >
+              <input
+                  type="checkbox"
+                  checked={notificationsEnabled}
+                  onChange={(e) => setNotificationsEnabled(e.target.checked)}
+              />
+              Enable Notifications?
+            </label>
+          </div>
+
+          {/* Music box */}
+          {musicEnabled && (
+              <Box
+                  sx={{
+                    backgroundColor: "rgba(0,0,0,0.3)",
+                    borderRadius: "12px",
+                    px: 2,
+                    py: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    color: "white",
+                    backdropFilter: "blur(4px)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                  }}
+              >
+                <Typography variant="body2" sx={{fontWeight: "bold"}}>
+                  Track {currentTrackIndex + 1}
+                </Typography>
+
+                <IconButton
+                    onClick={() => {
+                      if (!audioRef.current) return;
+                      if (audioRef.current.paused) {
+                        audioRef.current.play().catch(() => {
+                        });
+                        setIsPlaying(true);
+                      } else {
+                        audioRef.current.pause();
+                        setIsPlaying(false);
+                      }
+                    }}
+                    sx={{
+                      backgroundColor: "rgb(207,78,10)",
+                      "&:hover": {backgroundColor: "darkorange"},
+                      color: "white",
+                    }}
+                >
+                  {isPlaying ? <Pause/> : <PlayArrow/>}
+                </IconButton>
+
+                <IconButton
+                    onClick={() => {
+                      if (!audioRef.current) return;
+                      const next = (currentTrackIndex + 1) % 10;
+                      setCurrentTrackIndex(next);
+                      audioRef.current.src = `/assets/audio/Track${next + 1}.mp3`;
+                      audioRef.current.currentTime = 0;
+                      if (isPlaying) audioRef.current.play().catch(() => {
+                      });
+                    }}
+                    sx={{
+                      backgroundColor: "rgb(207,78,10)",
+                      "&:hover": {backgroundColor: "darkorange"},
+                      color: "white",
+                    }}
+                >
+                  <SkipNext/>
+                </IconButton>
+              </Box>
+          )}
+        </Box>
+
+        {/* ✅ Middle section (chat + map + story) */}
+        <Box
             sx={{
-              height: 10,
-              borderRadius: 5,
-              backgroundColor: "rgba(227, 125, 0, 0.5)",
-              "& .MuiLinearProgress-bar": { backgroundColor: "rgb(255,0,0)" },
+              flex: 1,
+              display: "flex",
+              alignItems: "center", // centers vertically in the row
+              width: "100%",
+              overflowX: "auto",
             }}
+        >
+          {/* Left Chat Box */}
+          <Box
+              sx={{
+                flex: "0 0 20%",
+                height: "75%",
+                backgroundColor: "rgba(0,0,0,0.3)",
+                borderRadius: "20px",
+                padding: 2,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                boxShadow: "4px 4px 10px rgba(0,0,0,0.3)",
+                marginLeft: "40px",
+              }}
+          >
+            {/* Title row with mute button */}
+            <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 1,
+                }}
+            >
+              <Typography
+                  variant="h6"
+                  sx={{color: "white", fontWeight: "bold"}}
+              >
+                Game Chat
+              </Typography>
+
+              {/* Mute button */}
+              <button
+                  onClick={handleMuteToggle}
+                  style={{
+                    backgroundColor: isMuted
+                        ? "rgba(255, 0, 0, 0.2)"
+                        : "rgba(255, 255, 255, 0.1)",
+                    border: "none",
+                    color: "white",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+              >
+                {isMuted ? "Unmute" : "Mute"}
+              </button>
+            </Box>
+
+            {/* Scrollable message area */}
+            <Box
+                id="chat-messages"
+                sx={{
+                  flexGrow: 1,
+                  overflowY: "auto",
+                  fontSize: "0.9rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  mb: 1,
+                }}
+            >
+              {!isMuted && (
+                  <>
+                    {messages.length === 0 ? (
+                        <Typography
+                            sx={{
+                              opacity: 0.6,
+                              color: "lightgray",
+                              fontSize: "0.7rem",
+                              lineHeight: 1.4,
+                            }}
+                        >
+                          No messages yet...
+                        </Typography>
+                    ) : (
+                        messages.map((msg, i) => (
+                            <Box
+                                key={i}
+                                sx={{
+                                  backgroundColor: "rgba(255,255,255,0.1)",
+                                  borderRadius: "6px",
+                                  p: "4px 6px",
+                                  wordBreak: "break-word",
+                                }}
+                            >
+                              <strong style={{color: "rgb(207,78,10)"}}>
+                                {msg.sender}:
+                              </strong>{" "}
+                              {msg.text}
+                            </Box>
+                        ))
+                    )}
+                  </>
+              )}
+            </Box>
+
+            {/* Input + send button */}
+            <Box sx={{display: "flex", gap: "5px"}}>
+              <input
+                  type="text"
+                  placeholder="Type a message..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  style={{
+                    flexGrow: 1,
+                    borderRadius: "6px",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    backgroundColor: "rgba(0,0,0,0.1)",
+                    padding: "6px",
+                    fontSize: "0.85rem",
+                    color: "white",
+                  }}
+              />
+              <button
+                  onClick={handleSendMessage}
+                  style={{
+                    border: "none",
+                    borderRadius: "6px",
+                    backgroundColor: "rgb(207,78,10)",
+                    color: "white",
+                    padding: "6px 10px",
+                    cursor: "pointer",
+                  }}
+              >
+                Send
+              </button>
+            </Box>
+          </Box>
+
+          {/* Center Map */}
+          <Box
+              sx={{
+                flex: "1 1 60%",
+                display: "flex",
+                alignItems: "center", // centers map vertically within its space
+                justifyContent: "center",
+                height: "100%", // fill vertical space evenly
+                transform: "scale(0.9)",
+                transformOrigin: "center",
+                marginLeft: "-70px",
+                marginRight: "-30px",
+              }}
+          >
+            {/* @ts-ignore */}
+            {map === "USA" && (
+                <InteractiveUSMap gameInfo={gameInfo} start={territoryName} territories={[]} players={[]}/>
+            )}
+            {map === "Medieval Europe" && <Europe/>}
+          </Box>
+
+          {/* Right Story Box */}
+          <Box
+              sx={{
+                flex: "0 0 20%",
+                height: "75%",
+                backgroundColor: "rgba(0,0,0,0.3)",
+                borderRadius: "20px",
+                marginRight: "40px",
+                p: 2,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                boxShadow: "-4px 4px 10px rgba(0,0,0,0.3)",
+              }}
+          >
+            {/* Header with PDF Icon */}
+            <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 1,
+                }}
+            >
+              <Typography
+                  variant="h6"
+                  sx={{color: "white", fontWeight: "bold"}}
+              >
+                Story Board
+              </Typography>
+
+              <Tooltip title="Download as PDF">
+                <IconButton
+                    onClick={() => {
+                      const doc = new jsPDF();
+                      const content =
+                          storyResponses.join("\n\n") || "Awaiting your move...";
+                      const pageWidth = doc.internal.pageSize.getWidth();
+                      const margin = 10;
+                      const maxWidth = pageWidth - margin * 2;
+
+                      doc.setFont("helvetica", "normal");
+                      doc.setFontSize(12);
+                      const lines = doc.splitTextToSize(content, maxWidth);
+                      doc.text(lines, margin, 20);
+                      doc.save("storyboard.pdf");
+                    }}
+                    sx={{
+                      color: "white",
+                      "&:hover": {color: "orange"},
+                    }}
+                >
+                  <PictureAsPdf/>
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            {/* Story Text */}
+            <Box
+                sx={{
+                  flexGrow: 1,
+                  overflowY: "auto",
+                  fontSize: "0.8rem",
+                  textAlign: "justify",
+                  color: "white",
+                  paddingRight: "8px",
+                }}
+            >
+              {storyResponses.length === 0 ? (
+                  <Typography
+                      sx={{color: "lightgray", fontSize: "0.7rem", lineHeight: 1.4}}
+                  >
+                    Awaiting your move...
+                  </Typography>
+              ) : (
+                  storyResponses.map((response, index) => (
+                      <Typography
+                          key={index}
+                          sx={{
+                            color: "lightgray",
+                            fontSize: "0.75rem",
+                            lineHeight: 1.5,
+                            marginBottom: "10px",
+                          }}
+                      >
+                        {response}
+                      </Typography>
+                  ))
+              )}
+              <div ref={storyEndRef}/>
+            </Box>
+
+            {/* Narration Controls */}
+            <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "10px",
+                  mt: 1,
+                }}
+            >
+              {isNarrating && !isPaused && (
+                  <Tooltip title="Pause Narration">
+                    <IconButton
+                        onClick={handlePauseNarration}
+                        sx={{
+                          backgroundColor: "rgb(207, 78, 10)",
+                          color: "white",
+                          "&:hover": {backgroundColor: "darkorange"},
+                        }}
+                    >
+                      <Pause/>
+                    </IconButton>
+                  </Tooltip>
+              )}
+
+              {isNarrating && isPaused && (
+                  <Tooltip title="Resume Narration">
+                    <IconButton
+                        onClick={handleResumeNarration}
+                        sx={{
+                          backgroundColor: "rgb(207, 78, 10)",
+                          color: "white",
+                          "&:hover": {backgroundColor: "darkorange"},
+                        }}
+                    >
+                      <PlayArrow/>
+                    </IconButton>
+                  </Tooltip>
+              )}
+
+              {isNarrating && (
+                  <Tooltip title="Skip Narration">
+                    <IconButton
+                        onClick={handleSkipNarration}
+                        disabled={!isNarrating}
+                        sx={{
+                          backgroundColor: "rgb(207, 78, 10)",
+                          color: "white",
+                          "&:hover": {backgroundColor: "darkorange"},
+                          opacity: !isNarrating ? 0.5 : 1,
+                        }}
+                    >
+                      <SkipNext/>
+                    </IconButton>
+                  </Tooltip>
+              )}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* ✅ Player action input (bottom) */}
+        <Box
+            sx={{
+              height: "10vh",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+        >
+          <PlayerActionInput
+              gameId={gameID!}
+              playerId={currentUserID!}
+              onSubmitResponse={(newResponse: string) => {
+                setStoryResponses((prev) => [...prev, newResponse]);
+              }}
           />
         </Box>
 
-        <div style={{ padding: "1rem" }}>
-          <label
-            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-          >
-            <input
-              type="checkbox"
-              checked={notificationsEnabled}
-              onChange={(e) => setNotificationsEnabled(e.target.checked)}
-            />
-            Enable Notifications?
-          </label>
-        </div>
-
-        {/* Music box */}
-        {musicEnabled && (
-          <Box
-            sx={{
-              backgroundColor: "rgba(0,0,0,0.3)",
-              borderRadius: "12px",
-              px: 2,
-              py: 2,
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              color: "white",
-              backdropFilter: "blur(4px)",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-            }}
-          >
-            <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-              Track {currentTrackIndex + 1}
-            </Typography>
-
-            <IconButton
-              onClick={() => {
-                if (!audioRef.current) return;
-                if (audioRef.current.paused) {
-                  audioRef.current.play().catch(() => {});
-                  setIsPlaying(true);
-                } else {
-                  audioRef.current.pause();
-                  setIsPlaying(false);
-                }
-              }}
-              sx={{
-                backgroundColor: "rgb(207,78,10)",
-                "&:hover": { backgroundColor: "darkorange" },
-                color: "white",
-              }}
-            >
-              {isPlaying ? <Pause /> : <PlayArrow />}
-            </IconButton>
-
-            <IconButton
-              onClick={() => {
-                if (!audioRef.current) return;
-                const next = (currentTrackIndex + 1) % 10;
-                setCurrentTrackIndex(next);
-                audioRef.current.src = `/assets/audio/Track${next + 1}.mp3`;
-                audioRef.current.currentTime = 0;
-                if (isPlaying) audioRef.current.play().catch(() => {});
-              }}
-              sx={{
-                backgroundColor: "rgb(207,78,10)",
-                "&:hover": { backgroundColor: "darkorange" },
-                color: "white",
-              }}
-            >
-              <SkipNext />
-            </IconButton>
-          </Box>
-        )}
-      </Box>
-
-      {/* ✅ Middle section (chat + map + story) */}
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center", // centers vertically in the row
-          width: "100%",
-          overflowX: "auto",
-        }}
-      >
-        {/* Left Chat Box */}
-        <Box
-          sx={{
-            flex: "0 0 20%",
-            height: "75%",
-            backgroundColor: "rgba(0,0,0,0.3)",
-            borderRadius: "20px",
-            padding: 2,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "4px 4px 10px rgba(0,0,0,0.3)",
-            marginLeft: "40px",
-          }}
-        >
-          {/* Title row with mute button */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 1,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ color: "white", fontWeight: "bold" }}
-            >
-              Game Chat
-            </Typography>
-
-            {/* Mute button */}
-            <button
-              onClick={handleMuteToggle}
-              style={{
-                backgroundColor: isMuted
-                  ? "rgba(255, 0, 0, 0.2)"
-                  : "rgba(255, 255, 255, 0.1)",
-                border: "none",
-                color: "white",
-                padding: "4px 8px",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              {isMuted ? "Unmute" : "Mute"}
-            </button>
-          </Box>
-
-          {/* Scrollable message area */}
-          <Box
-            id="chat-messages"
-            sx={{
-              flexGrow: 1,
-              overflowY: "auto",
-              fontSize: "0.9rem",
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              mb: 1,
-            }}
-          >
-            {!isMuted && (
-              <>
-                {messages.length === 0 ? (
-                  <Typography
-                    sx={{
-                      opacity: 0.6,
-                      color: "lightgray",
-                      fontSize: "0.7rem",
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    No messages yet...
-                  </Typography>
-                ) : (
-                  messages.map((msg, i) => (
-                    <Box
-                      key={i}
-                      sx={{
-                        backgroundColor: "rgba(255,255,255,0.1)",
-                        borderRadius: "6px",
-                        p: "4px 6px",
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      <strong style={{ color: "rgb(207,78,10)" }}>
-                        {msg.sender}:
-                      </strong>{" "}
-                      {msg.text}
-                    </Box>
-                  ))
-                )}
-              </>
-            )}
-          </Box>
-
-          {/* Input + send button */}
-          <Box sx={{ display: "flex", gap: "5px" }}>
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              style={{
-                flexGrow: 1,
-                borderRadius: "6px",
-                border: "1px solid rgba(255,255,255,0.2)",
-                backgroundColor: "rgba(0,0,0,0.1)",
-                padding: "6px",
-                fontSize: "0.85rem",
-                color: "white",
-              }}
-            />
-            <button
-              onClick={handleSendMessage}
-              style={{
-                border: "none",
-                borderRadius: "6px",
-                backgroundColor: "rgb(207,78,10)",
-                color: "white",
-                padding: "6px 10px",
-                cursor: "pointer",
-              }}
-            >
-              Send
-            </button>
-          </Box>
-        </Box>
-
-        {/* Center Map */}
-        <Box
-          sx={{
-            flex: "1 1 60%",
-            display: "flex",
-            alignItems: "center", // centers map vertically within its space
-            justifyContent: "center",
-            height: "100%", // fill vertical space evenly
-            transform: "scale(0.9)",
-            transformOrigin: "center",
-            marginLeft: "-70px",
-            marginRight: "-30px",
-          }}
-        >
-          {/* @ts-ignore */}
-          {map === "USA" && (
-            <InteractiveUSMap gameInfo={gameInfo} start={territoryName} />
-          )}
-          {map === "Medieval Europe" && <Europe />}
-        </Box>
-
-        {/* Right Story Box */}
-        <Box
-          sx={{
-            flex: "0 0 20%",
-            height: "75%",
-            backgroundColor: "rgba(0,0,0,0.3)",
-            borderRadius: "20px",
-            marginRight: "40px",
-            p: 2,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "-4px 4px 10px rgba(0,0,0,0.3)",
-          }}
-        >
-          {/* Header with PDF Icon */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              mb: 1,
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ color: "white", fontWeight: "bold" }}
-            >
-              Story Board
-            </Typography>
-
-            <Tooltip title="Download as PDF">
-              <IconButton
-                onClick={() => {
-                  const doc = new jsPDF();
-                  const content =
-                    storyResponses.join("\n\n") || "Awaiting your move...";
-                  const pageWidth = doc.internal.pageSize.getWidth();
-                  const margin = 10;
-                  const maxWidth = pageWidth - margin * 2;
-
-                  doc.setFont("helvetica", "normal");
-                  doc.setFontSize(12);
-                  const lines = doc.splitTextToSize(content, maxWidth);
-                  doc.text(lines, margin, 20);
-                  doc.save("storyboard.pdf");
-                }}
+        {/* ✅ Win screen overlay */}
+        {wonGame && (
+            <Box
                 sx={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100vw",
+                  height: "100vh",
+                  backgroundColor: "rgba(0, 0, 0, 0.85)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 3000,
                   color: "white",
-                  "&:hover": { color: "orange" },
+                  backdropFilter: "blur(5px)",
+                  textAlign: "center",
                 }}
-              >
-                <PictureAsPdf />
-              </IconButton>
-            </Tooltip>
-          </Box>
-
-          {/* Story Text */}
-          <Box
-            sx={{
-              flexGrow: 1,
-              overflowY: "auto",
-              fontSize: "0.8rem",
-              textAlign: "justify",
-              color: "white",
-              paddingRight: "8px",
-            }}
-          >
-            {storyResponses.length === 0 ? (
-              <Typography
-                sx={{ color: "lightgray", fontSize: "0.7rem", lineHeight: 1.4 }}
-              >
-                Awaiting your move...
-              </Typography>
-            ) : (
-              storyResponses.map((response, index) => (
-                <Typography
-                  key={index}
-                  sx={{
-                    color: "lightgray",
-                    fontSize: "0.75rem",
-                    lineHeight: 1.5,
-                    marginBottom: "10px",
-                  }}
-                >
-                  {response}
-                </Typography>
-              ))
-            )}
-            <div ref={storyEndRef} />
-          </Box>
-
-          {/* Narration Controls */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "10px",
-              mt: 1,
-            }}
-          >
-            {isNarrating && !isPaused && (
-              <Tooltip title="Pause Narration">
-                <IconButton
-                  onClick={handlePauseNarration}
-                  sx={{
-                    backgroundColor: "rgb(207, 78, 10)",
-                    color: "white",
-                    "&:hover": { backgroundColor: "darkorange" },
-                  }}
-                >
-                  <Pause />
-                </IconButton>
-              </Tooltip>
-            )}
-
-            {isNarrating && isPaused && (
-              <Tooltip title="Resume Narration">
-                <IconButton
-                  onClick={handleResumeNarration}
-                  sx={{
-                    backgroundColor: "rgb(207, 78, 10)",
-                    color: "white",
-                    "&:hover": { backgroundColor: "darkorange" },
-                  }}
-                >
-                  <PlayArrow />
-                </IconButton>
-              </Tooltip>
-            )}
-
-            {isNarrating && (
-              <Tooltip title="Skip Narration">
-                <IconButton
-                  onClick={handleSkipNarration}
-                  disabled={!isNarrating}
-                  sx={{
-                    backgroundColor: "rgb(207, 78, 10)",
-                    color: "white",
-                    "&:hover": { backgroundColor: "darkorange" },
-                    opacity: !isNarrating ? 0.5 : 1,
-                  }}
-                >
-                  <SkipNext />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        </Box>
-      </Box>
-
-      {/* ✅ Player action input (bottom) */}
-      <Box
-        sx={{
-          height: "10vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <PlayerActionInput
-          gameId={gameID!}
-          playerId={currentUserID!}
-          onSubmitResponse={(newResponse: string) => {
-            setStoryResponses((prev) => [...prev, newResponse]);
-          }}
-        />
-      </Box>
-
-      {/* ✅ Win screen overlay */}
-      {wonGame && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.85)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 3000,
-            color: "white",
-            backdropFilter: "blur(5px)",
-            textAlign: "center",
-          }}
-        >
-          <Typography
-            variant="h3"
-            sx={{
-              fontWeight: "bold",
-              color: "rgb(207,78,10)",
-              textShadow: "0 0 12px rgba(207,78,10,0.8)",
-              mb: 2,
-            }}
-          >
-            Game Won!
-          </Typography>
-
-          <Typography
-            variant="h5"
-            sx={{ mb: 4, maxWidth: "600px", lineHeight: 1.5 }}
-          >
-            {summary}
-          </Typography>
-
-          <Box sx={{ width: "60%", mb: 4 }}>
-            <LinearProgress
-              variant="determinate"
-              value={100}
-              sx={{
-                height: 14,
-                borderRadius: 7,
-                backgroundColor: "rgba(255,255,255,0.2)",
-                "& .MuiLinearProgress-bar": {
-                  backgroundColor: "rgb(207,78,10)",
-                },
-              }}
-            />
-          </Box>
-
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: "rgb(207,78,10)",
-              "&:hover": { backgroundColor: "darkorange" },
-              px: 4,
-              py: 1,
-              fontSize: "1.1rem",
-              fontWeight: "bold",
-              borderRadius: "8px",
-            }}
-            onClick={() => navigate("/home")}
-          >
-            Home
-          </Button>
-          <WinPopup wonGame={wonGame} message={message} />
-        </Box>
-      )}
-
-      {/* Tutorial Modal */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>{tutorialSlides[currentSlide].title}</h2>
-            <h3>{tutorialSlides[currentSlide].content}</h3>
-            <div className="modal-navigation">
-              <button onClick={handlePrevSlide} disabled={currentSlide === 0}>
-                ←
-              </button>
-              <button
-                onClick={handleNextSlide}
-                disabled={currentSlide === tutorialSlides.length - 1}
-              >
-                →
-              </button>
-            </div>
-            <button className="close-button" onClick={handleCloseModal}>
-              {currentSlide === tutorialSlides.length - 1
-                ? "Close"
-                : "Skip Tutorial"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Territory Selection Modal */}
-      {showTerritoryModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Select Your Starting Territory</h2>
-            <p>Please select the territory you would like to start at:</p>
-
-            <select
-              value={territoryName}
-              onChange={(e) => setTerritoryName(e.target.value)}
-              style={{ padding: "6px", borderRadius: "4px", width: "80%" }}
             >
-              <option value="N/A">N/A</option>
+              <Typography
+                  variant="h3"
+                  sx={{
+                    fontWeight: "bold",
+                    color: "rgb(207,78,10)",
+                    textShadow: "0 0 12px rgba(207,78,10,0.8)",
+                    mb: 2,
+                  }}
+              >
+                Game Won!
+              </Typography>
 
-              {gameInfo?.map((territory, index) => (
-                <option key={index} value={territory.territoryName}>
-                  {territory.territoryName}
-                </option>
+              <Typography
+                  variant="h5"
+                  sx={{mb: 4, maxWidth: "600px", lineHeight: 1.5}}
+              >
+                {summary}
+              </Typography>
+
+              <Box sx={{width: "60%", mb: 4}}>
+                <LinearProgress
+                    variant="determinate"
+                    value={100}
+                    sx={{
+                      height: 14,
+                      borderRadius: 7,
+                      backgroundColor: "rgba(255,255,255,0.2)",
+                      "& .MuiLinearProgress-bar": {
+                        backgroundColor: "rgb(207,78,10)",
+                      },
+                    }}
+                />
+              </Box>
+
+              <Button
+                  variant="contained"
+                  sx={{
+                    backgroundColor: "rgb(207,78,10)",
+                    "&:hover": {backgroundColor: "darkorange"},
+                    px: 4,
+                    py: 1,
+                    fontSize: "1.1rem",
+                    fontWeight: "bold",
+                    borderRadius: "8px",
+                  }}
+                  onClick={() => navigate("/home")}
+              >
+                Home
+              </Button>
+              <WinPopup wonGame={wonGame} message={message}/>
+            </Box>
+        )}
+
+        {/* Tutorial Modal */}
+        {showModal && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <h2>{tutorialSlides[currentSlide].title}</h2>
+                <h3>{tutorialSlides[currentSlide].content}</h3>
+                <div className="modal-navigation">
+                  <button onClick={handlePrevSlide} disabled={currentSlide === 0}>
+                    ←
+                  </button>
+                  <button
+                      onClick={handleNextSlide}
+                      disabled={currentSlide === tutorialSlides.length - 1}
+                  >
+                    →
+                  </button>
+                </div>
+                <button className="close-button" onClick={handleCloseModal}>
+                  {currentSlide === tutorialSlides.length - 1
+                      ? "Close"
+                      : "Skip Tutorial"}
+                </button>
+              </div>
+            </div>
+        )}
+
+        {/* Territory Selection Modal */}
+        {showTerritoryModal && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <h2>Select Your Starting Territory</h2>
+                <p>Please select the territory you would like to start at:</p>
+
+                <select
+                    value={territoryName}
+                    onChange={(e) => setTerritoryName(e.target.value)}
+                    style={{padding: "6px", borderRadius: "4px", width: "80%"}}
+                >
+                  <option value="N/A">N/A</option>
+
+                  {gameInfo?.map((territory: {
+                    territoryName: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined;
+                  }, index: Key | null | undefined) => (
+                      <option key={index}
+                      >
+                        {territory.territoryName}
+                      </option>
               ))}
             </select>
 
