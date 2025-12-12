@@ -3,6 +3,7 @@ import Navbar from "../navbar/NavBar";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
+import Leaderboard from "../../widgets/Leaderboard/Leaderboard";
 
 const achievements = [
   {
@@ -187,6 +188,23 @@ function Achievements() {
               )}
             </Box>
           </Modal>
+
+            {/* Show the leaderboard */}
+            <Typography
+                variant="h4"
+                sx={{
+                    fontWeight: "bold",
+                    color: "#2c2c2c",
+                    mb: 4,
+                    alignSelf: "flex-start",
+                }}
+            >
+                Leaderboard
+                <Leaderboard/>
+
+            </Typography>
+
+
         </Box>
       </Box>
     </Box>

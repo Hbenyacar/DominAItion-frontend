@@ -154,9 +154,6 @@ export default function CharactersPage() {
         try {
             setCreating(true);
 
-            alert(userId)
-            alert(newDescription.trim())
-
             const res = await fetch(`${API_BASE_URL}/api/ai/character`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
