@@ -931,6 +931,7 @@ function Multiplayer() {
                 </Box>
               </Box>
             </Box>
+            
           </Box>
 
           {/* Bottom text box*/}
@@ -944,7 +945,6 @@ function Multiplayer() {
         zIndex: 1000,
       }}
     >
-      <HelpTooltip description="This is your action input. Enter your moves or commands for your turn here." />
     </Box>
             <PlayerActionInput
               gameId={gameId!}
@@ -958,7 +958,12 @@ function Multiplayer() {
             </>
           )}
         </Box>
+        
+        
       )}
+            <HelpTooltip description="This is your action input. Enter your moves or commands for your turn here." />
+
+      
     </div>
   );
 }
