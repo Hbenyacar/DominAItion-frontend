@@ -10,7 +10,7 @@ export default function HelpTooltip({ description }: { description: string }) {
       <Tooltip title="What is this?">
         <IconButton
           size="small"
-          sx={{ color: "white" }}
+          sx={{ color: "black" }}
           onClick={(e) => setAnchorEl(e.currentTarget)}
         >
           <HelpOutlineIcon fontSize="small" />
