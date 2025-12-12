@@ -65,7 +65,7 @@ function Register() {
   };
 
   const generateGuestAccount = () => {
-    const random = Math.random().toString(36).substring(2,10)
+    const random = Math.random().toString(36).substring(2,11)
     return {
       email: `guest_${random}@guest.local`,
       password: `guest_${random}`,
