@@ -525,87 +525,103 @@ function Multiplayer() {
           </Box>
 
 {/* Players List and Spectators */}
+<Box
+  sx={{
+    width: "250px",
+    maxHeight: "250px",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: "12px",
+    padding: 2,
+    overflowY: "hidden", // remove scroll from outer box
+    marginBottom: 2,
+  }}
+>
+  {/* Players */}
+  <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'white' }}>
+    Players
+  </Typography>
+  <Box
+    sx={{
+      maxHeight: "200px", // fixed height for players list
+      overflowY: "auto",  // scrollable if list is too long
+      mb: 1,
+    }}
+  >
+    {players.map((p) => (
       <Box
+        key={p.id}
         sx={{
-          width: "250px",
-          maxHeight: "500px",
-          backgroundColor: "rgba(0,0,0,0.3)",
-          borderRadius: "12px",
-          padding: 2,
-          overflowY: "auto",
-          marginBottom: 2,
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: 0.5,
+          padding: "4px 8px",
+          borderRadius: "8px",
+          backgroundColor: p.id === currentUser?.id ? "rgba(255,255,255,0.2)" : "transparent",
         }}
       >
-        {/* Players */}
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'white' }}>
-          Players
-        </Typography>
-        {players.map((p) => (
-          <Box
-            key={p.id}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              mb: 0.5,
-              padding: "4px 8px",
-              borderRadius: "8px",
-              backgroundColor: p.id === currentUser?.id ? "rgba(255,255,255,0.2)" : "transparent",
-            }}
-          >
-            <Box
-              sx={{
-                width: "12px",
-                height: "12px",
-                borderRadius: "50%",
-                backgroundColor: p.color,
-              }}
-            />
-            <Typography sx={{ fontSize: "14px", color: "white" }}>{p.name}</Typography>
-          </Box>
-        ))}
-
-        <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.5)" }} />
-
-        {/* Spectators */}
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'white' }}>
-          Spectators
-        </Typography>
-        <button
-          onClick={refreshSpectators}
-          style={{
-            padding: "2px 6px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "12px",
+        <Box
+          sx={{
+            width: "12px",
+            height: "12px",
+            borderRadius: "50%",
+            backgroundColor: p.color,
           }}
-        >
-          Refresh
-        </button>
-        {spectators.map((s) => (
-          <Box
-            key={s.id}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              mb: 0.5,
-              padding: "4px 8px",
-              borderRadius: "8px",
-            }}
-          >
-            <Box
-              sx={{
-                width: "12px",
-                height: "12px",
-                borderRadius: "50%",
-                backgroundColor: "#888",
-              }}
-            />
-            <Typography sx={{ fontSize: "14px", color: "white" }}>{s.name}</Typography>
-          </Box>
-        ))}
+        />
+        <Typography sx={{ fontSize: "14px", color: "white" }}>{p.name}</Typography>
       </Box>
+    ))}
+  </Box>
+
+  <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.5)" }} />
+
+  {/* Spectators */}
+  <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: 'white' }}>
+    Spectators
+  </Typography>
+  <button
+    onClick={refreshSpectators}
+    style={{
+      padding: "2px 6px",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontSize: "12px",
+    }}
+  >
+    Refresh
+  </button>
+  <Box
+    sx={{
+      maxHeight: "200px", // fixed height for spectators list
+      overflowY: "auto",  // scrollable if list is too long
+      mt: 1,
+    }}
+  >
+    {spectators.map((s) => (
+      <Box
+        key={s.id}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: 0.5,
+          padding: "4px 8px",
+          borderRadius: "8px",
+        }}
+      >
+        <Box
+          sx={{
+            width: "12px",
+            height: "12px",
+            borderRadius: "50%",
+            backgroundColor: "#888",
+          }}
+        />
+        <Typography sx={{ fontSize: "14px", color: "white" }}>{s.name}</Typography>
+      </Box>
+    ))}
+  </Box>
+</Box>
 
           {/* Center box, holds chat, map, story */}
           <Box
