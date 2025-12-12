@@ -23,6 +23,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Slider,
+  Switch,
   Radio,
   TextField,
   FormControl,
@@ -303,6 +304,19 @@ function Home() {
       null
   );
   const [newMessage, setNewMessage] = useState("");
+
+  // toggle: are custom points enabled?
+  const [pointsEnabled, setPointsEnabled] = useState(true);
+
+// handle toggle
+  const handleTogglePoints = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const enabled = e.target.checked;
+    setPointsEnabled(enabled);
+
+    if (!enabled) {
+      setWinningPoints(110); // force max when toggle is OFF
+    }
+  };
 
   useEffect(() => {
     // Stop any global background music playing from the Game page
@@ -969,64 +983,87 @@ function Home() {
                         <Typography variant="h6" sx={{ m: 0 }}>
                           Points to Win
                         </Typography>
-                        <Slider
-                            aria-label="Points to Win"
-                            value={winningPoints}
-                            onChange={(e, newValue) =>
-                                setWinningPoints(newValue as number)
+                        <FormControlLabel
+                            control={
+                              <Switch
+                                  checked={pointsEnabled}
+                                  onChange={handleTogglePoints}
+                                  sx={{
+                                    color: "rgb(207,78,10)",
+                                    "& .MuiSwitch-switchBase.Mui-checked": {
+                                      color: "rgb(207,78,10)",
+                                    },
+                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                                      backgroundColor: "rgb(207,78,10)",
+                                    },
+                                  }}
+                              />
                             }
-                            getAriaValueText={(val) => val.toString()}
-                            valueLabelDisplay="auto"
-                            step={5}
-                            marks
-                            min={5}
-                            max={110}
-                            sx={{
-                              ml: "10px",
-                              width: 250,
-                              color: "rgb(207, 78, 10)",
-                              "& .MuiSlider-thumb": {
-                                height: 24,
-                                width: 24,
-                                backgroundColor: "white",
-                                border: "3px solid rgb(207, 78, 10)",
-                                "&:hover, &.Mui-focusVisible": {
-                                  boxShadow:
-                                      "0px 0px 0px 8px rgba(207,78,10,0.16)",
-                                },
-                              },
-                              "& .MuiSlider-track": {
-                                height: 8,
-                                border: "none",
-                                backgroundColor: "rgb(207, 78, 10)",
-                              },
-                              "& .MuiSlider-rail": {
-                                height: 8,
-                                opacity: 0.3,
-                                backgroundColor: "#d0d0d0",
-                                borderRadius: 4,
-                              },
-                              "& .MuiSlider-mark": {
-                                backgroundColor: "#aaa",
-                                height: 8,
-                                width: 2,
-                                "&.MuiSlider-markActive": {
-                                  opacity: 1,
-                                  backgroundColor: "rgb(207,78,10)",
-                                },
-                              },
-                              "& .MuiSlider-valueLabel": {
-                                backgroundColor: "rgb(207, 78, 10)",
-                                color: "white",
-                                borderRadius: "6px",
-                                fontWeight: "bold",
-                              },
-                            }}
+                            label="Take All Territories To Win?"
                         />
 
+                        {/* Only show the slider when enabled */}
+                        {!pointsEnabled && (
+                            <Slider
+                                aria-label="Points to Win"
+                                value={winningPoints}
+                                onChange={(e, newValue) =>
+                                    setWinningPoints(newValue as number)
+                                }
+                                getAriaValueText={(val) => val.toString()}
+                                valueLabelDisplay="auto"
+                                step={5}
+                                marks
+                                min={5}
+                                max={110}
+                                sx={{
+                                  ml: "10px",
+                                  width: 250,
+                                  color: "rgb(207, 78, 10)",
+                                  "& .MuiSlider-thumb": {
+                                    height: 24,
+                                    width: 24,
+                                    backgroundColor: "white",
+                                    border: "3px solid rgb(207, 78, 10)",
+                                    "&:hover, &.Mui-focusVisible": {
+                                      boxShadow: "0px 0px 0px 8px rgba(207,78,10,0.16)",
+                                    },
+                                  },
+                                  "& .MuiSlider-track": {
+                                    height: 8,
+                                    border: "none",
+                                    backgroundColor: "rgb(207, 78, 10)",
+                                  },
+                                  "& .MuiSlider-rail": {
+                                    height: 8,
+                                    opacity: 0.3,
+                                    backgroundColor: "#d0d0d0",
+                                    borderRadius: 4,
+                                  },
+                                  "& .MuiSlider-mark": {
+                                    backgroundColor: "#aaa",
+                                    height: 8,
+                                    width: 2,
+                                    "&.MuiSlider-markActive": {
+                                      opacity: 1,
+                                      backgroundColor: "rgb(207,78,10)",
+                                    },
+                                  },
+                                  "& .MuiSlider-valueLabel": {
+                                    backgroundColor: "rgb(207, 78, 10)",
+                                    color: "white",
+                                    borderRadius: "6px",
+                                    fontWeight: "bold",
+                                  },
+                                }}
+                            />
+                        )}
+
+                        {!pointsEnabled && (
                         <Typography sx={{ whiteSpace: "nowrap" }}>
                           {winningPoints}
-                        </Typography>
+                        </Typography>)}
+
                       </Box>
 
                       {/* Maps Section */}
