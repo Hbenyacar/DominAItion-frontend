@@ -265,6 +265,7 @@ function Home() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [mapName, setMapName] = React.useState<string | null>(null);
   const [winningPoints, setWinningPoints] = useState(30);
+  const [maxInputLen, setMaxInputLen] = useState(10);
   const [isSingle, setIsSingle] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [historyUserId, setHistoryUserId] = useState<string | null>(null);
@@ -422,6 +423,7 @@ function Home() {
         state: {
           winningPoints,
           characterId: selectedCharacterId,
+          maxInputLen,
         },
       });
     }
@@ -465,6 +467,7 @@ function Home() {
           map: map,
           privateLobby: isPrivate,
           winningPoints: winningPoints,
+          maxInputLen: maxInputLen,
           single: isSingle,
         }),
       });
@@ -624,6 +627,7 @@ function Home() {
         worldName: g["World Name"] ?? g.worldName ?? "Unknown",
         status: g.status ?? "Unknown",
         pointsToWin: g.pointsToWin ?? g.winningPoints ?? 0,
+        maxInputLen: g.maxInputLen ?? g.maxInputLength ?? 0,
         leadingPlayer: g.leadingPlayerName ?? g.leadingPlayer ?? "N/A",
         summary: g.summary ?? "",
       }));
@@ -1158,13 +1162,6 @@ function Home() {
                         <Box sx={{ flex: 1 }}>
                           <WorldGenPanels />
                         </Box>
-                      </Box>
-
-                      <Box>
-                        <AdvancedGameSettings
-                            title="Advanced Settings"
-                            onChange={(val) => console.log("Slider changed:", val)}
-                        />
                       </Box>
 
 

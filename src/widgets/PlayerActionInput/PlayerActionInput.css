@@ -3,3 +3,97 @@
     flexDirection: column;
     width: 200px;
 }
+
+/* Container */
+.player-input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    position: relative;
+}
+
+/* Input wrapper */
+.player-input-wrapper {
+    position: relative;
+    width: 90%;
+    display: flex;
+    align-items: center;
+}
+
+/* Text Area */
+.player-input-textarea {
+    width: 100%;
+    padding: 10px 60px 10px 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    resize: none;
+    font-family: inherit;
+    box-sizing: border-box;
+    outline: none;
+    background-color: rgba(0, 0, 0, 0.3);
+    color: white;
+    backdrop-filter: blur(4px);
+}
+
+/* Send Button */
+.player-input-button {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    background-color: rgb(207, 78, 10);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+.player-input-button.disabled {
+    background-color: rgba(207, 78, 10, 0.6);
+    cursor: not-allowed;
+}
+
+/* Mic Button */
+.player-input-mic {
+    margin-left: 8px;
+    color: white;
+}
+.player-input-mic.listening {
+    color: red;
+}
+
+/* Counter */
+.player-input-counter {
+    align-self: flex-end;
+    margin-top: 5px;
+    font-size: 0.85rem;
+    color: #666;
+    padding-right: 5%;
+}
+.player-input-counter.maxed {
+    color: red;
+}
+
+/* Settings toggle */
+.player-settings-toggle {
+    cursor: pointer;
+    user-select: none;
+    color: white;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+/* Slider container */
+.player-slider-box {
+    width: 85%;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}

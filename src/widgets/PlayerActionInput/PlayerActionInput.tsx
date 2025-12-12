@@ -1,10 +1,11 @@
-import { Button, IconButton, CircularProgress } from "@mui/material";
+import { Button, IconButton, CircularProgress, Slider, Collapse } from "@mui/material";
 import React, { useState, useEffect, useRef } from "react";
 import MicIcon from "@mui/icons-material/Mic";
 import MicOffIcon from "@mui/icons-material/MicOff";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+    process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
 
 interface PlayerActionInputProps {
   maxLength?: number;
@@ -17,31 +18,35 @@ interface PlayerActionInputProps {
 }
 
 const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
-  maxLength = 250,
-  placeholder = "Make Your Move...",
-  onSubmitResponse,
-  gameId,
-  playerId,
-  color,
-  userId,
-}) => {
+                                                               maxLength = 250,
+                                                               placeholder = "Make Your Move...",
+                                                               onSubmitResponse,
+                                                               gameId,
+                                                               playerId,
+                                                               color,
+                                                               userId,
+                                                             }) => {
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [internalMaxLength, setInternalMaxLength] = useState(maxLength);
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   const recognitionRef = useRef<any | null>(null);
 
-  // Speech to text
+  // Speech Recognition
   useEffect(() => {
     if (
-      !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
+        !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
     ) {
       console.warn("Speech Recognition API not supported in this browser.");
       return;
     }
 
     const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
@@ -49,13 +54,10 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
     recognition.lang = "en-US";
 
     recognition.onresult = (event: any) => {
-      let interimTranscript = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          setText((prev) => (prev + transcript).slice(0, maxLength));
-        } else {
-          interimTranscript += transcript;
+          setText((prev) => (prev + transcript).slice(0, internalMaxLength));
         }
       }
     };
@@ -66,7 +68,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
     };
 
     recognitionRef.current = recognition;
-  }, [maxLength]);
+  }, [internalMaxLength]);
 
   const toggleListening = () => {
     if (!recognitionRef.current) return;
@@ -82,7 +84,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
   /* ---------------------- HANDLE TEXT INPUT ---------------------- */
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
-    if (value.length <= maxLength) {
+    if (value.length <= internalMaxLength) {
       setText(value);
     }
   };
@@ -94,7 +96,7 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
     }
   };
 
-  /* ---------------------- SUBMIT USER PROMPT ---------------------- */
+  //Submit Prompt
   const handleSubmit = async () => {
     if (!text.trim() || !gameId || !playerId) {
       console.warn("❌ Missing required fields:", { gameId, playerId });
@@ -158,6 +160,23 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
       color: "white",
       backdropFilter: "blur(4px)",
     },
+    settingsToggle: {
+      cursor: "pointer",
+      userSelect: "none" as const,
+      color: "white",
+      marginTop: "10px",
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      fontSize: "0.9rem",
+    },
+    sliderBox: {
+      width: "85%",
+      marginTop: "10px",
+      padding: "10px",
+      backgroundColor: "rgba(255,255,255,0.05)",
+      borderRadius: "8px",
+    },
     button: {
       position: "absolute" as const,
       right: "10px",
@@ -166,15 +185,15 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
       fontSize: "0.9rem",
       borderRadius: "6px",
       backgroundColor:
-        isSubmitting || !text.trim() || userId !== playerId
-          ? "rgba(207, 78, 10, 0.6)"
-          : "rgb(207, 78, 10)",
+          isSubmitting || !text.trim() || userId !== playerId
+              ? "rgba(207, 78, 10, 0.6)"
+              : "rgb(207, 78, 10)",
       color: "white",
       border: "none",
       cursor:
-        isSubmitting || !text.trim() || userId !== playerId
-          ? "not-allowed"
-          : "pointer",
+          isSubmitting || !text.trim() || userId !== playerId
+              ? "not-allowed"
+              : "pointer",
       transition: "background-color 0.2s ease-in-out",
     },
     micButton: {
@@ -185,54 +204,89 @@ const PlayerActionInput: React.FC<PlayerActionInputProps> = ({
       alignSelf: "flex-end",
       marginTop: "5px",
       fontSize: "0.85rem",
-      color: text.length === maxLength ? "red" : "#666",
+      color: text.length === internalMaxLength ? "red" : "#666",
       paddingRight: "5%",
     },
   };
 
   return (
-    <div style={styles.container}>
-      {/* Mic Button */}
-      <IconButton onClick={toggleListening} style={styles.micButton}>
-        {isListening ? <MicIcon /> : <MicOffIcon />}
-      </IconButton>
+      <div className="player-input-container">
 
-      {/* Input Row */}
+        <IconButton
+            onClick={toggleListening}
+            className={`player-input-mic ${isListening ? "listening" : ""}`}
+        >
+          {isListening ? <MicIcon /> : <MicOffIcon />}
+        </IconButton>
 
-      <div style={styles.inputWrapper}>
-        {/* Text Input */}
-        <textarea
+        <div className="player-input-wrapper">
+      <textarea
           value={text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           rows={4}
-          style={styles.textarea}
-        />
+          className="player-input-textarea"
+      />
 
-        {/* Send Button */}
-        <Button
-          onClick={() => {
-            const audio = new Audio("/assets/sound_effects/submit_prompt.mp3");
-            audio.play();
-            handleSubmit();
-          }}
-          disabled={isSubmitting || text.trim() === "" || userId !== playerId}
-          style={styles.button}
+          <Button
+              onClick={() => {
+                const audio = new Audio("/assets/sound_effects/submit_prompt.mp3");
+                audio.play();
+                handleSubmit();
+              }}
+              disabled={isSubmitting || text.trim() === "" || userId !== playerId}
+              className={`player-input-button ${
+                  isSubmitting || text.trim() === "" || userId !== playerId
+                      ? "disabled"
+                      : ""
+              }`}
+          >
+            {isSubmitting ? (
+                <CircularProgress size={18} thickness={4} sx={{ color: "white" }} />
+            ) : (
+                "Send"
+            )}
+          </Button>
+        </div>
+
+        <div
+            className={`player-input-counter ${
+                text.length === internalMaxLength ? "maxed" : ""
+            }`}
         >
-          {isSubmitting ? (
-            <CircularProgress size={18} thickness={4} sx={{ color: "white" }} />
-          ) : (
-            "Send"
-          )}
-        </Button>
-      </div>
+          {text.length} / {internalMaxLength}
+        </div>
 
-      {/* Counter Below */}
-      <div style={styles.counter}>
-        {text.length} / {maxLength}
+        <div
+            className="player-settings-toggle"
+            onClick={() => setSettingsOpen(!settingsOpen)}
+        >
+          <ExpandMoreIcon
+              style={{
+                transform: settingsOpen ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "0.2s",
+              }}
+          />
+          Message Settings
+        </div>
+
+        <Collapse in={settingsOpen} timeout={200}>
+          <div className="player-slider-box">
+            <div style={{ color: "white", marginBottom: "5px" }}>
+              Max message length: {internalMaxLength}
+            </div>
+
+            <Slider
+                value={internalMaxLength}
+                onChange={(_, v) => setInternalMaxLength(v as number)}
+                min={50}
+                max={1000}
+                step={10}
+            />
+          </div>
+        </Collapse>
       </div>
-    </div>
   );
 };
 
