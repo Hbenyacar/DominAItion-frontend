@@ -130,9 +130,11 @@ function checkWinner(gameInfo: GameInfo, gameId: string | undefined) {
   const { playerPoints, winningPoints } = gameInfo;
   console.log('In Check Win');
   console.log('gameId: ' + gameId);
+  
   // Find the first player who reached winning points
   for (const [playerId, points] of Object.entries(playerPoints)) {
     if (points >= 2) {
+      
       // Return the winner's ID
       sendWinRequest(gameId, playerId);
       return playerId;
