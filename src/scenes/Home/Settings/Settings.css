@@ -1,0 +1,44 @@
+.two-col-wrapper {
+    width: 100%;
+}
+
+.two-col-title {
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #222;
+}
+
+.two-col-box {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: white;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.row {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.dates-col {
+    font-weight: bold;
+    color: #555;
+}
+
+.text-col {
+    color: #222;
+}

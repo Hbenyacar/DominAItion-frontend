@@ -22,6 +22,7 @@ import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 import { Switch, FormControlLabel } from "@mui/material";
+import "./Settings.css";
 
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -48,6 +49,11 @@ export default function Settings() {
   const [musicEnabled, setMusicEnabled] = useState<boolean>(
     localStorage.getItem("musicEnabled") !== "false" // default true
   );
+
+  interface TwoColumnBoxProps {
+    title?: string;
+    entries: { date: string; text: string }[];
+  }
 
   // Handle background music
   useEffect(() => {
@@ -118,6 +124,35 @@ export default function Settings() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setScreenshot(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const TwoColumnBox: React.FC<TwoColumnBoxProps> = ({
+                                                       title = "Patch Notes",
+                                                       entries,
+                                                     }) => {
+    return (
+        <div className="two-col-wrapper">
+          <h2 className="two-col-title">{title}</h2>
+
+          <div className="two-col-box">
+            <div className="col dates-col">
+              {entries.map((e, i) => (
+                  <div key={i} className="row">
+                    {e.date}
+                  </div>
+              ))}
+            </div>
+
+            <div className="col text-col">
+              {entries.map((e, i) => (
+                  <div key={i} className="row">
+                    {e.text}
+                  </div>
+              ))}
+            </div>
+          </div>
+        </div>
+    );
   };
 
   const handleSubmit = async () => {
@@ -397,6 +432,14 @@ export default function Settings() {
           {toast.msg}
         </Alert>
       </Snackbar>
+      <Box>
+        <TwoColumnBox entries={[
+            { date: "12-11-2025", text: "Added Game Spectating" },
+            { date: "12-11-2025", text: "Added Character Upload Sound Effects" },
+            { date: "12-11-2025", text: "Added Patch Notes Log" }
+        ]} />
+      </Box>
+
     </div>
   );
 }
