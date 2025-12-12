@@ -56,6 +56,7 @@ import { RootState } from "../../store/store";
 import SpectateList from "../../components/SpectateList";
 import CharactersPage from "./Characters/Characters";
 import PopupButton from "../../components/PopupButton";
+import SavedGamesList from "../../components/SavedGames";
 
 const API_BASE_URL =
     process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
@@ -853,6 +854,7 @@ function Home() {
                       <Tab label="Join Game" {...a11yProps(1)} sx={tabStyle} />
                       <Tab label="History" {...a11yProps(2)} sx={tabStyle} />
                       <Tab label="Spectate" {...a11yProps(3)} sx={tabStyle} />
+                      <Tab label="Saved Games" {...a11yProps(4)} sx={tabStyle} />
                     </Tabs>
                   </Box>
 
@@ -1285,6 +1287,12 @@ function Home() {
                     <SpectateList />
                   </CustomTabPanel>
 
+
+                  {/* Spectate Tab */}
+                  <CustomTabPanel value={value} index={4}>
+                    <SavedGamesList userId={currUserID}/>
+                  </CustomTabPanel>
+
                   {/* History Tab */}
                   <CustomTabPanel value={value} index={2}>
                     <Box
@@ -1447,6 +1455,7 @@ function Home() {
                             </Box>
                         ))}
                       </Box>
+
                     </Box>
                   </CustomTabPanel>
                 </Box>
